@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --espresso: #4a2f24;
+  --ink: #050505;
+  --charcoal: #1b1b1b;
+  --cream: #f4f0e8;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--ink); font-family: var(--font-montserrat), sans-serif; }
+button, select, input, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+
+.hero-image {
+  background:
+    linear-gradient(90deg, rgba(5,5,5,.3), transparent 28%),
+    url("https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=1800&q=90") center 20% / cover no-repeat;
+}
+
+.link-line { position: relative; }
+.link-line::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -7px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transition: transform .4s cubic-bezier(.22,1,.36,1);
+}
+.link-line:hover::after { transform: scaleX(1); }
+
+.admin-field { display: grid; gap: .5rem; font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; }
+.admin-field input, .admin-field select, .admin-field textarea {
+  border: 1px solid rgba(0,0,0,.25);
+  background: transparent;
+  padding: .85rem;
+  outline: none;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.admin-field input:focus, .admin-field select:focus, .admin-field textarea:focus { border-color: var(--espresso); }
+
+@media (max-width: 1023px) {
+  .hero-image { order: -1; min-height: 58vh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
