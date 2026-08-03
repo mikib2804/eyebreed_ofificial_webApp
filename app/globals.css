@@ -18,8 +18,26 @@ button { cursor: pointer; }
 
 .hero-image {
   background:
-    linear-gradient(90deg, rgba(5,5,5,.3), transparent 28%),
-    url("https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=1800&q=90") center 20% / cover no-repeat;
+    linear-gradient(90deg, var(--ink) 0%, rgba(5,5,5,.85) 12%, rgba(5,5,5,.45) 28%, transparent 42%),
+    url("https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=2400&q=90") center 20% / cover no-repeat;
+}
+
+[dir="rtl"] .hero-image {
+  background:
+    linear-gradient(270deg, var(--ink) 0%, rgba(5,5,5,.85) 12%, rgba(5,5,5,.45) 28%, transparent 42%),
+    url("https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=2400&q=90") center 20% / cover no-repeat;
+}
+
+.hero-section {
+  position: relative;
+  isolation: isolate;
+}
+
+
+
+
+[dir="rtl"] .hero-text-fade::after {
+  background: linear-gradient(270deg, transparent 0%, var(--ink) 100%);
 }
 
 .link-line { position: relative; }
@@ -31,9 +49,17 @@ button { cursor: pointer; }
   height: 1px;
   background: currentColor;
   transform: scaleX(0);
+  transform-origin: right;
   transition: transform .4s cubic-bezier(.22,1,.36,1);
 }
-.link-line:hover::after { transform: scaleX(1); }
+.link-line:hover::after { transform: scaleX(1); transform-origin: left; }
+
+[dir="rtl"] .link-line::after {
+  transform-origin: left;
+}
+[dir="rtl"] .link-line:hover::after {
+  transform-origin: right;
+}
 
 .admin-field { display: grid; gap: .5rem; font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; }
 .admin-field input, .admin-field select, .admin-field textarea {

@@ -7,10 +7,15 @@ export function Hero() {
   const { t } = useStore();
 
   return (
-    <section className="grid min-h-[650px] bg-ink text-white lg:grid-cols-[42%_58%]">
-      <div className="flex  flex-col justify-center px-7 py-20 sm:px-12 lg:px-[9vw]">
+    <section className="hero-section relative grid min-h-[650px] bg-ink text-white lg:grid-cols-[30%_70%]">
+      <div
+        className="hero-image absolute inset-y-0 end-0 w-[70%]"
+        role="img"
+        aria-label="Model wearing an espresso tailored suit"
+      />
+      <div className="hero-text-fade relative z-15 flex flex-col justify-center py-20 pl-12 pr-16 lg:pl-8 lg:pr-10 xl:pl-6 xl:pr-8">
         <p className="mb-9 text-[10px] tracking-[.38em]">{t.collection}</p>
-        <h1 className="font-display  text-[clamp(4rem,7vw,8.5rem)] font-light leading-[.75] tracking-[-.035em]">
+        <h1 className="font-display text-[clamp(4rem,7vw,8.5rem)] font-light leading-[.75] tracking-[-.035em]">
           <span className="block">{t.headlineA}</span>
           <span className="mt-5 block">{t.headlineB}</span>
           <span className="mt-5 block text-espresso-500">{t.headlineC}</span>
@@ -29,11 +34,6 @@ export function Hero() {
           />
         </a>
       </div>
-      <div
-        className="hero-image min-h-[550px]"
-        role="img"
-        aria-label="Model wearing an espresso tailored suit"
-      />
     </section>
   );
 }

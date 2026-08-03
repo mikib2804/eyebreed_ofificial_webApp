@@ -18,21 +18,25 @@ export function CartDrawer() {
           <button onClick={() => setCartOpen(false)} aria-label="Close"><X strokeWidth={1.3} /></button>
         </div>
         <div className="flex-1 overflow-y-auto px-6">
-          {cart.length === 0 ? <p className="py-16 text-center text-sm text-black/60">{t.empty}</p> : cart.map((item) => (
-            <div key={item.id} className="grid grid-cols-[90px_1fr_auto] gap-4 border-b border-black/15 py-6">
-              <div className="relative aspect-[4/5] bg-white"><Image src={item.image} alt={item.name} fill className="object-cover" sizes="90px" /></div>
-              <div>
-                <h3 className="text-xs uppercase tracking-wider">{locale === "he" ? item.nameHe : item.name}</h3>
-                <p className="mt-2 text-xs text-black/55">{money(item.prices[currency], currency, locale)}</p>
-                <div className="mt-5 flex w-fit items-center border border-black/30">
-                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-2"><Minus size={12} /></button>
-                  <span className="min-w-7 text-center text-xs">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-2"><Plus size={12} /></button>
+          {cart.length === 0 ? <p className="py-16 text-center text-sm text-black/60">{t.empty}</p> : cart.map((item) => {
+            const lineId = `${item.id}:${item.selectedSize}`;
+            return (
+              <div key={lineId} className="grid grid-cols-[90px_1fr_auto] gap-4 border-b border-black/15 py-6">
+                <div className="relative aspect-[4/5] bg-white"><Image src={item.image} alt={item.name} fill className="object-cover" sizes="90px" /></div>
+                <div>
+                  <h3 className="text-xs uppercase tracking-wider">{locale === "he" ? item.nameHe : item.name}</h3>
+                  <p className="mt-2 text-xs text-black/55">{money(item.prices[currency], currency, locale)}</p>
+                  <p className="mt-2 text-[10px] tracking-wider text-black/55">SIZE {item.selectedSize}</p>
+                  <div className="mt-5 flex w-fit items-center border border-black/30">
+                    <button onClick={() => updateQuantity(lineId, item.quantity - 1)} className="p-2"><Minus size={12} /></button>
+                    <span className="min-w-7 text-center text-xs">{item.quantity}</span>
+                    <button onClick={() => updateQuantity(lineId, item.quantity + 1)} className="p-2"><Plus size={12} /></button>
+                  </div>
                 </div>
+                <button onClick={() => removeFromCart(lineId)} className="self-start text-[10px] uppercase underline">Remove</button>
               </div>
-              <button onClick={() => removeFromCart(item.id)} className="self-start text-[10px] uppercase underline">Remove</button>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="border-t border-black/20 p-6">
           <div className="mb-6 flex justify-between text-sm tracking-wider"><span>{t.subtotal}</span><strong>{money(total, currency, locale)}</strong></div>

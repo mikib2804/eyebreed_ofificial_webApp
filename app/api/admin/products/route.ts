@@ -24,7 +24,16 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const { imageUrl, ...data } = parsed.data;
   const product = await prisma.product.create({
-    data: { ...data, images: [imageUrl], videoUrl: data.videoUrl || null, status: "ACTIVE" }
+    data: {
+      ...data,
+      images: [imageUrl],
+      videoUrl: data.videoUrl || null,
+      story: data.description,
+      status: "ACTIVE",
+      variants: {
+        create: ["XS", "S", "M", "L", "XL"].map((size) => ({ size, inventory: Math.floor(data.inventory / 5) }))
+      }
+    }
   });
   return NextResponse.json(product, { status: 201 });
 }

@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { StoreProduct } from "@/lib/catalog";
 import { copy, type Currency, type Locale } from "@/lib/i18n";
 
-type CartLine = StoreProduct & { quantity: number };
+type CartLine = StoreProduct & { quantity: number; selectedSize: string };
 type StoreState = {
   locale: Locale;
   currency: Currency;
@@ -14,9 +14,9 @@ type StoreState = {
   setLocale: (locale: Locale) => void;
   setCurrency: (currency: Currency) => void;
   setCartOpen: (open: boolean) => void;
-  addToCart: (product: StoreProduct) => void;
-  updateQuantity: (id: string, quantity: number) => void;
-  removeFromCart: (id: string) => void;
+  addToCart: (product: StoreProduct, size?: string) => void;
+  updateQuantity: (lineId: string, quantity: number) => void;
+  removeFromCart: (lineId: string) => void;
 };
 
 const StoreContext = createContext<StoreState | null>(null);
@@ -32,12 +32,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  const addToCart = (product: StoreProduct) => {
+  const addToCart = (product: StoreProduct, size?: string) => {
+    const selectedSize = size ?? product.sizes.find((variant) => variant.inventory > 0)?.size ?? "ONE SIZE";
+    const lineId = `${product.id}:${selectedSize}`;
     setCart((current) => {
-      const existing = current.find((item) => item.id === product.id);
+      const existing = current.find((item) => `${item.id}:${item.selectedSize}` === lineId);
       return existing
-        ? current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item)
-        : [...current, { ...product, quantity: 1 }];
+        ? current.map((item) => `${item.id}:${item.selectedSize}` === lineId ? { ...item, quantity: item.quantity + 1 } : item)
+        : [...current, { ...product, selectedSize, quantity: 1 }];
     });
     setCartOpen(true);
   };
@@ -45,9 +47,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(() => ({
     locale, currency, cart, cartOpen, t: copy[locale],
     setLocale, setCurrency, setCartOpen, addToCart,
-    updateQuantity: (id: string, quantity: number) =>
-      setCart((current) => quantity < 1 ? current.filter((i) => i.id !== id) : current.map((i) => i.id === id ? { ...i, quantity } : i)),
-    removeFromCart: (id: string) => setCart((current) => current.filter((i) => i.id !== id))
+    updateQuantity: (lineId: string, quantity: number) =>
+      setCart((current) => quantity < 1 ? current.filter((i) => `${i.id}:${i.selectedSize}` !== lineId) : current.map((i) => `${i.id}:${i.selectedSize}` === lineId ? { ...i, quantity } : i)),
+    removeFromCart: (lineId: string) => setCart((current) => current.filter((i) => `${i.id}:${i.selectedSize}` !== lineId))
   }), [locale, currency, cart, cartOpen]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
