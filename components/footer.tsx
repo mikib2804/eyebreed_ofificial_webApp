@@ -16,7 +16,7 @@ export function Footer() {
         <div className="lg:border-e lg:border-white/25 lg:pe-16">
           {/* <p className="font-display text-5xl tracking-[.18em]">EYEBREED</p> */}
           <p className="font-display text-5xl tracking-[.18em]">
-            <Image height={240} width={240} alt="EYEBREED" src="/logo.jpg" />
+            <Image height={96} width={240} alt="EYEBREED" src="/app_icons/logo.jpg" className="h-24 w-60 object-contain" />
           </p>
           <p className="mt-6 max-w-xs text-[11px] leading-6 tracking-[.14em] text-white/65">
             SUBSCRIBE TO RECEIVE UPDATES
