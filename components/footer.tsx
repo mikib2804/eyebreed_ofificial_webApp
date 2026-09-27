@@ -16,7 +16,13 @@ export function Footer() {
         <div className="lg:border-e lg:border-white/25 lg:pe-16">
           {/* <p className="font-display text-5xl tracking-[.18em]">EYEBREED</p> */}
           <p className="font-display text-5xl tracking-[.18em]">
-            <Image height={96} width={240} alt="EYEBREED" src="/app_icons/logo.jpg" className="h-24 w-60 object-contain" />
+            <Image
+              height={96}
+              width={240}
+              alt="EYEBREED"
+              src="/app_icons/logo.jpg"
+              className="h-24 w-60 object-contain"
+            />
           </p>
           <p className="mt-6 max-w-xs text-[11px] leading-6 tracking-[.14em] text-white/65">
             SUBSCRIBE TO RECEIVE UPDATES
@@ -103,16 +109,27 @@ export function Footer() {
   );
 }
 
-function FooterLinks({ title, links }: { title: string; links: Array<string | { label: string; href: string }> }) {
+function FooterLinks({
+  title,
+  links,
+}: {
+  title: string;
+  links: Array<string | { label: string; href: string }>;
+}) {
   return (
     <div>
       <h3 className="text-xs tracking-[.16em]">{title}</h3>
       <ul className="mt-6 space-y-4 text-[11px] uppercase tracking-wider text-white/65">
         {links.map((link) => {
-          const item = typeof link === "string" ? { label: link, href: "#" } : link;
-          return <li key={item.label}>
-            <a className="transition hover:text-white" href={item.href}>{item.label}</a>
-          </li>
+          const item =
+            typeof link === "string" ? { label: link, href: "#" } : link;
+          return (
+            <li key={item.label}>
+              <a className="transition hover:text-white" href={item.href}>
+                {item.label}
+              </a>
+            </li>
+          );
         })}
       </ul>
     </div>

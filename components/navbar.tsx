@@ -42,7 +42,7 @@ export function Navbar() {
         </button>
         <Link
           href="/"
-          className="flex h-full items-center justify-center"
+          className="flex h-full items-center justify-center overflow-hidden"
         >
           <Image
             height={108}
@@ -50,7 +50,7 @@ export function Navbar() {
             alt="EYEBREED"
             src="/app_icons/logo.jpg"
             priority
-            className="h-16 w-44 object-contain sm:h-20 sm:w-56 md:h-[108px] md:w-[290px]"
+            className="h-14 w-40 object-contain sm:h-16 sm:w-48 md:h-20 md:w-56"
           />
         </Link>
         <div className="flex items-center justify-self-end gap-3 md:gap-5">

@@ -11,7 +11,7 @@ export function MediaSection() {
     <section className="grid bg-ink text-white lg:grid-cols-2">
       <div className="group relative min-h-[420px] overflow-hidden lg:min-h-[620px]">
         <Image
-          src="/campaign/skyline.webp"
+          src="/campaign/modernAll/DSCF0127.JPG"
           alt="EYEBREED Vision campaign overlooking the city"
           fill
           className="object-cover opacity-65 transition duration-1000 group-hover:scale-105"
@@ -30,7 +30,7 @@ export function MediaSection() {
       <div className="grid grid-cols-2">
         <div className="relative min-h-[420px] lg:min-h-[620px]">
           <Image
-            src="/campaign/graffiti.webp"
+            src="/campaign/modernAll/DSCF0415.JPG"
             alt="EYEBREED Vision campaign at the graffiti wall"
             fill
             className="object-cover grayscale-[20%]"
@@ -39,7 +39,7 @@ export function MediaSection() {
         </div>
         <div className="relative min-h-[420px] lg:min-h-[620px]">
           <Image
-            src="/campaign/woman.webp"
+            src="/campaign/modernAll/DSCF0479.JPG"
             alt="EYEBREED Vision hoodie campaign portrait"
             fill
             className="object-cover grayscale-[10%]"
