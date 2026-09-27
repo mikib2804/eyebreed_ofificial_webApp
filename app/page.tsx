@@ -6,19 +6,35 @@ import { Footer } from "@/components/footer";
 import { CartDrawer } from "@/components/cart-drawer";
 import { prisma } from "@/lib/prisma";
 import { productWithVariants, toStoreProduct } from "@/lib/products";
+import { campaignProducts, campaignProductToStoreProduct } from "@/lib/campaign-catalog";
 
 export default async function Home() {
-  const dbProducts = await prisma.product.findMany({
-    where: { status: "ACTIVE" },
-    include: productWithVariants,
-    orderBy: [{ featured: "desc" }, { createdAt: "desc" }]
-  });
-  const products = dbProducts.map(toStoreProduct);
+  const visionSlugs = campaignProducts.map((item) => item.slug);
+  const products = await prisma.product
+    .findMany({
+      where: { status: "ACTIVE", slug: { in: visionSlugs } },
+      include: productWithVariants,
+    })
+    .then((items) => {
+      const databaseBySlug = new Map(items.map((item) => {
+        const product = toStoreProduct(item);
+        return [product.slug, product] as const;
+      }));
+      return campaignProducts.map((item) =>
+        campaignProductToStoreProduct(item, databaseBySlug.get(item.slug)),
+      );
+    })
+    .catch(() => campaignProducts.map((item) => campaignProductToStoreProduct(item)));
 
   return (
     <>
+      <link rel="icon" href="/icon.ico" />
       <Navbar />
-      <main><Hero /><ProductGrid products={products} /><MediaSection /></main>
+      <main>
+        <Hero />
+        <ProductGrid products={products} />
+        <MediaSection />
+      </main>
       <Footer />
       <CartDrawer />
     </>

@@ -17,15 +17,20 @@ button, a { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 
 .hero-image {
-  background:
-    linear-gradient(90deg, var(--ink) 0%, rgba(5,5,5,.85) 12%, rgba(5,5,5,.45) 28%, transparent 42%),
-    url("https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=2400&q=90") center 20% / cover no-repeat;
+  background: var(--ink);
 }
 
-[dir="rtl"] .hero-image {
-  background:
-    linear-gradient(270deg, var(--ink) 0%, rgba(5,5,5,.85) 12%, rgba(5,5,5,.45) 28%, transparent 42%),
-    url("https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=2400&q=90") center 20% / cover no-repeat;
+.hero-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--ink) 0%, rgba(5,5,5,.88) 10%, rgba(5,5,5,.48) 27%, transparent 48%);
+}
+
+[dir="rtl"] .hero-image::after {
+  background: linear-gradient(270deg, var(--ink) 0%, rgba(5,5,5,.88) 10%, rgba(5,5,5,.48) 27%, transparent 48%);
 }
 
 .hero-section {

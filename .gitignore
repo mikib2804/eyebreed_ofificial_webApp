@@ -4,4 +4,5 @@ node_modules
 .env.local
 public/uploads
 *.log
+.codex-dev.*.log
 *.tsbuildinfo

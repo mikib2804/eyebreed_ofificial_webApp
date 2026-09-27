@@ -33,7 +33,10 @@ export function Footer() {
               aria-label="Email"
               className="min-w-0 flex-1 bg-transparent px-5 py-4 text-[10px] tracking-luxury outline-none"
             />
-            <button className="px-5" aria-label="Subscribe">
+            <button
+              className="px-5 hover:translate-x-0.5 transition-all duration-300"
+              aria-label="Subscribe"
+            >
               →
             </button>
           </form>
@@ -50,7 +53,13 @@ export function Footer() {
         />
         <FooterLinks
           title="HELP"
-          links={["Size guide", "Shipping", "Returns", "FAQ", "Privacy"]}
+          links={[
+            { label: "Sizing", href: "/size-guide" },
+            { label: "Shipping", href: "#" },
+            { label: "Returns", href: "#" },
+            { label: "FAQ", href: "#" },
+            { label: "Privacy", href: "#" },
+          ]}
         />
         <div>
           <h3 className="text-xs tracking-[.16em]">{t.contact}</h3>
@@ -81,10 +90,10 @@ export function Footer() {
       <div className="mx-auto mt-16 flex max-w-[1600px] flex-col gap-3 border-t border-white/15 pt-6 text-[9px] tracking-wider text-white/45 sm:flex-row sm:justify-between">
         <span>© 2026 EYEBREED-STUDIO™. All Rights Reserved.</span>
         <span className="flex gap-2 justify-center text-center items-center sm:justify-end">
-          DESIGNED AND POWERED BY INFOSYSTEAMDEV
+          DESIGNED AND POWERED BY EASYPASSPROJECTS ©
           <Image
-            src="/infosysteamdevLogo.png"
-            alt="Infosysteamdev"
+            src="/easyPassProjects.png"
+            alt="EASYPASSPROJECTS"
             width={20}
             height={20}
           />
@@ -94,16 +103,17 @@ export function Footer() {
   );
 }
 
-function FooterLinks({ title, links }: { title: string; links: string[] }) {
+function FooterLinks({ title, links }: { title: string; links: Array<string | { label: string; href: string }> }) {
   return (
     <div>
       <h3 className="text-xs tracking-[.16em]">{title}</h3>
       <ul className="mt-6 space-y-4 text-[11px] uppercase tracking-wider text-white/65">
-        {links.map((link) => (
-          <li key={link}>
-            <a href="#">{link}</a>
+        {links.map((link) => {
+          const item = typeof link === "string" ? { label: link, href: "#" } : link;
+          return <li key={item.label}>
+            <a className="transition hover:text-white" href={item.href}>{item.label}</a>
           </li>
-        ))}
+        })}
       </ul>
     </div>
   );

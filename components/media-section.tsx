@@ -11,8 +11,8 @@ export function MediaSection() {
     <section className="grid bg-ink text-white lg:grid-cols-2">
       <div className="group relative min-h-[420px] overflow-hidden lg:min-h-[620px]">
         <Image
-          src="https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=1600&q=85"
-          alt="Autumn editorial film"
+          src="/campaign/skyline.webp"
+          alt="EYEBREED Vision campaign overlooking the city"
           fill
           className="object-cover opacity-65 transition duration-1000 group-hover:scale-105"
           sizes="(max-width: 1024px) 100vw, 50vw"
@@ -30,8 +30,8 @@ export function MediaSection() {
       <div className="grid grid-cols-2">
         <div className="relative min-h-[420px] lg:min-h-[620px]">
           <Image
-            src="https://images.unsplash.com/photo-1506629082955-511b1aa562c8?auto=format&fit=crop&w=1000&q=85"
-            alt="Man in black tailoring"
+            src="/campaign/graffiti.webp"
+            alt="EYEBREED Vision campaign at the graffiti wall"
             fill
             className="object-cover grayscale-[20%]"
             sizes="25vw"
@@ -39,8 +39,8 @@ export function MediaSection() {
         </div>
         <div className="relative min-h-[420px] lg:min-h-[620px]">
           <Image
-            src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=1000&q=85"
-            alt="Man in cream knitwear"
+            src="/campaign/woman.webp"
+            alt="EYEBREED Vision hoodie campaign portrait"
             fill
             className="object-cover grayscale-[10%]"
             sizes="25vw"

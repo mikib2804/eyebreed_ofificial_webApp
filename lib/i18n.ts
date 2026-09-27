@@ -38,8 +38,13 @@ export const copy = {
 } as const;
 
 export type Locale = keyof typeof copy;
-export type Currency = "USD" | "ILS" | "EUR";
+export const Currency = {
+  USD: "USD",
+  ILS: "ILS",
+  EUR: "EUR",
+} as const;
 
+export type Currency = (typeof Currency)[keyof typeof Currency];
 export const money = (amount: number, currency: Currency, locale: Locale) =>
   new Intl.NumberFormat(locale === "he" ? "he-IL" : "en-US", {
     style: "currency",

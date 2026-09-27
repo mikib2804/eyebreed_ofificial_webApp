@@ -5,6 +5,7 @@ export type StoreProduct = {
   nameHe: string;
   material: string;
   image: string;
+  images: string[];
   description: string;
   descriptionHe: string;
   story: string;

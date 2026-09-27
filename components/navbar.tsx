@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Menu, Search, ShoppingBag, UserRound } from "lucide-react";
 import Image from "next/image";
 import { useStore } from "@/components/store-provider";
-
+import React from "react";
+import { Currency } from "@/lib/i18n";
 export function Navbar() {
   const { locale, setLocale, currency, setCurrency, cart, setCartOpen, t } =
     useStore();
@@ -68,11 +69,13 @@ export function Navbar() {
             aria-label="Currency"
             value={currency}
             onChange={(e) => setCurrency(e.target.value as typeof currency)}
-            className="bg-transparent text-[10px] tracking-wider outline-none p-2 text-white"
+            className="bg-transparent text-[10px] tracking-wider outline-none p-2 cursor-pointer text-white"
           >
-            <option>USD</option>
-            <option>ILS</option>
-            <option>EUR</option>
+            {Object.values(Currency).map((currency) => (
+              <option key={currency} className="cursor-pointer">
+                {currency}
+              </option>
+            ))}
           </select>
           <button
             onClick={() => setLocale(locale === "en" ? "he" : "en")}

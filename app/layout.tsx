@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Montserrat } from "next/font/google";
 import { StoreProvider } from "@/components/store-provider";
+import { CookieConsent } from "@/components/cookie-consent";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -17,7 +18,7 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "EYEBREED — Elevated essentials",
   icons: {
-    icon: "/appIcon.ico",
+    icon: "/icon.ico",
   },
   description: "Timeless clothing, considered for modern life.",
 };
@@ -28,7 +29,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${cormorant.variable} ${montserrat.variable}`}>
-        <StoreProvider>{children}</StoreProvider>
+        <StoreProvider>
+          {children}
+          <CookieConsent />
+        </StoreProvider>
       </body>
     </html>
   );

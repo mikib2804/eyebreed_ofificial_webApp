@@ -13,6 +13,7 @@ export function toStoreProduct(product: DbProduct): StoreProduct {
     nameHe: product.nameHe ?? product.name,
     material: product.material ?? "",
     image: product.images[0] ?? "/logo.jpg",
+    images: product.images.length ? product.images : ["/logo.jpg"],
     description: product.description,
     descriptionHe: product.descriptionHe ?? product.description,
     story: product.story ?? "Designed as a lasting part of the modern wardrobe, with considered proportions and an uncompromising attention to material.",
