@@ -18,11 +18,11 @@ export function ProductGrid({ products }: { products: StoreProduct[] }) {
       className="bg-cream px-5 py-20 text-ink md:px-10 lg:py-28"
     >
       <div className="mx-auto max-w-[1600px]">
-        <div className="mb-12 flex items-center gap-8">
-          <h2 className="whitespace-nowrap -skew-x-6 font-display text-5xl italic tracking-[0.2em] md:text-7xl">
+        <div className="mb-8 flex min-w-0 items-center gap-3 sm:mb-12 sm:gap-8">
+          <h2 className="shrink-0 whitespace-nowrap -skew-x-6 font-display text-[clamp(1.75rem,9vw,4.5rem)] italic tracking-[clamp(.08em,1.5vw,.2em)]">
             {t.edit}
           </h2>
-          <span className="h-px w-full bg-ink/30" />
+          <span className="h-px min-w-0 flex-1 bg-ink/30" />
         </div>
         {products.length === 0 ? (
           <p className="border-y border-black/20 py-16 text-center text-xs tracking-luxury">

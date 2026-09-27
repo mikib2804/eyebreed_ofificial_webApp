@@ -19,8 +19,8 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="hero-section relative grid min-h-[650px] bg-ink text-white lg:grid-cols-[30%_70%]">
-      <div className="hero-image absolute inset-y-0 end-0 w-[70%] overflow-hidden" role="img" aria-label="EYEBREED campaign collection">
+    <section className="hero-section relative min-h-[620px] overflow-hidden bg-ink text-white sm:min-h-[650px]">
+      <div className="hero-image absolute inset-0 w-full overflow-hidden lg:inset-y-0 lg:start-auto lg:end-0 lg:w-[70%]" role="img" aria-label="EYEBREED campaign collection">
         {modernAllImages.map((src, index) => (
           <Image
             key={src}
@@ -32,25 +32,25 @@ export function Hero() {
             sizes="(max-width: 1024px) 100vw, 70vw"
           />
         ))}
-        <div className="absolute bottom-8 end-8 z-[3] flex gap-2">
+        <div className="absolute bottom-5 end-5 z-[3] hidden gap-2 sm:flex lg:bottom-8 lg:end-8">
           {modernAllImages.map((_, index) => (
             <button key={index} onClick={() => setSlide(index)} aria-label={`Show campaign image ${index + 1}`} className={`h-1 transition-all ${slide === index ? "w-8 bg-white" : "w-3 bg-white/40"}`} />
           ))}
         </div>
       </div>
-      <div className="hero-text-fade relative z-15 flex flex-col justify-center py-20 pl-12 pr-16 lg:pl-8 lg:pr-10 xl:pl-6 xl:pr-8">
-        <p className="mb-9 text-[10px] tracking-[.38em]">{t.collection}</p>
-        <h1 className="font-display text-[clamp(4rem,7vw,8.5rem)] font-light leading-[.75] tracking-[-.035em]">
+      <div className="hero-text-fade relative z-10 flex min-h-[620px] w-full flex-col justify-center px-5 py-16 sm:min-h-[650px] sm:px-10 lg:w-[48%] lg:px-8 lg:py-20 xl:px-6">
+        <p className="mb-7 text-[9px] tracking-[.32em] sm:mb-9 sm:text-[10px] sm:tracking-[.38em]">{t.collection}</p>
+        <h1 className="font-display text-[clamp(3rem,13vw,5.25rem)] font-light leading-[.82] tracking-[-.035em] lg:text-[clamp(4rem,7vw,8.5rem)] lg:leading-[.75]">
           <span className="block">{t.headlineA}</span>
           <span className="mt-5 block">{t.headlineB}</span>
           <span className="mt-5 block text-espresso-500">{t.headlineC}</span>
         </h1>
-        <p className="mt-10 max-w-sm text-sm leading-7 text-white/70">
+        <p className="mt-8 max-w-sm text-xs leading-6 text-white/70 sm:mt-10 sm:text-sm sm:leading-7">
           {t.intro}
         </p>
         <a
           href="#products"
-          className="group mt-9 flex w-fit items-center gap-8 border border-espresso-500 px-7 py-4 text-[10px] tracking-[.22em] transition duration-500 hover:bg-espresso-700"
+          className="group mt-7 flex w-fit items-center gap-6 border border-espresso-500 px-5 py-3.5 text-[9px] tracking-[.18em] transition duration-500 hover:bg-espresso-700 sm:mt-9 sm:gap-8 sm:px-7 sm:py-4 sm:text-[10px] sm:tracking-[.22em]"
         >
           {t.cta}
           <ArrowDownRight
