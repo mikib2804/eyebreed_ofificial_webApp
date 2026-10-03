@@ -30,14 +30,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" style={paletteVariables(palettes[0]) as CSSProperties} suppressHydrationWarning>
+    <html
+      lang="en"
+      style={paletteVariables(palettes[0]) as CSSProperties}
+      suppressHydrationWarning
+    >
       <body className={`${cormorant.variable} ${montserrat.variable}`}>
         <script dangerouslySetInnerHTML={{ __html: paletteBootstrap }} />
         <PaletteProvider>
-        <StoreProvider>
-          {children}
-          <CookieConsent />
-        </StoreProvider>
+          <StoreProvider>
+            {children}
+            <CookieConsent />
+          </StoreProvider>
         </PaletteProvider>
       </body>
     </html>

@@ -28,21 +28,13 @@ export function instagramReelEmbedUrl(link: string): string | null {
 
 // Add individual reel URLs here; Instagram supplies the video and its preview.
 export const INSTAGRAM_REEL_LINKS: string[] = [
-  "https://www.instagram.com/reel/Dd-_7tzM_jH/",
   "https://www.instagram.com/reel/DeCrxOesnXz/",
-  "https://www.instagram.com/reel/Dd6uQrcsGMv/",
   "https://www.instagram.com/reel/DdzC3TlMv_Z/",
   "https://www.instagram.com/reel/DYuFiGAMqbI/",
+  "https://www.instagram.com/reel/DYpQ4E-M7cP/",
+  "https://www.instagram.com/reel/DYY-ZVIs4oy/",
+  "https://www.instagram.com/reel/Dd-_7tzM_jH/",
 ];
-
-// Verified from Instagram embeds on 2026-10-03; these are snapshots, not live counts.
-const INSTAGRAM_LIKES: Record<string, number> = {
-  "https://www.instagram.com/reel/Dd-_7tzM_jH/": 15,
-  "https://www.instagram.com/reel/DeCrxOesnXz/": 5,
-  "https://www.instagram.com/reel/Dd6uQrcsGMv/": 7,
-  "https://www.instagram.com/reel/DdzC3TlMv_Z/": 38,
-  "https://www.instagram.com/reel/DYuFiGAMqbI/": 28,
-};
 
 export const INSTAGRAM_REELS: ReelItem[] = INSTAGRAM_REEL_LINKS.filter((link) =>
   instagramReelEmbedUrl(link),
@@ -53,7 +45,6 @@ export const INSTAGRAM_REELS: ReelItem[] = INSTAGRAM_REEL_LINKS.filter((link) =>
   link,
   title: `EYEBREED Reel ${index + 1}`,
   account: "eyebreed_official",
-  likes: INSTAGRAM_LIKES[link],
 }));
 
 // Campaign previews until reel video files and individual Instagram URLs are supplied.
