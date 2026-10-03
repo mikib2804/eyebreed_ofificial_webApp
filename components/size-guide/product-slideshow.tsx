@@ -25,7 +25,7 @@ export function ProductSlideshow({
   return (
     <section
       dir="ltr"
-      className="relative min-h-[56vh] overflow-hidden bg-[#171717] lg:sticky lg:top-0 lg:h-screen"
+      className="order-first relative min-h-[46vh] overflow-hidden bg-[#171717] sm:min-h-[56vh] lg:order-none lg:sticky lg:top-0 lg:h-screen"
     >
       {images.map((src, i) => (
         <Image
@@ -53,7 +53,7 @@ export function ProductSlideshow({
       >
         <ChevronLeft className="rtl:rotate-180" />
       </button>
-      <div className="absolute inset-x-5 bottom-5 flex gap-2 overflow-x-auto">
+      <div className="absolute inset-x-4 bottom-4 flex gap-2 overflow-x-auto sm:inset-x-5 sm:bottom-5">
         {images.map((src, i) => (
           <button
             key={src}

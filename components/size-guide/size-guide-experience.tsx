@@ -12,11 +12,11 @@ export function SizeGuideExperience() {
   const guide = sizeGuides[active];
   return <main dir="rtl" className="min-h-screen bg-[#0c0c0c] text-white">
     <div dir="ltr" className="grid lg:grid-cols-[56%_44%]">
-      <section dir="rtl" className="px-4 py-12 sm:px-8 lg:px-10 lg:py-16 xl:px-14">
+      <section dir="rtl" className="min-w-0 px-4 py-9 sm:px-8 sm:py-12 lg:px-10 lg:py-16 xl:px-14">
         <p dir="ltr" className="text-start text-[9px] tracking-[.32em] text-white/45">EYEBREED / VISION COLLECTION</p>
-        <h1 dir="ltr" className="mt-4 font-display text-[clamp(2.8rem,5vw,6rem)] leading-none">{guide.title} <span className="text-espresso-400">— SIZE GUIDE</span></h1>
-        <nav dir="ltr" className="mt-8 flex overflow-x-auto border-b border-espresso-500/50" aria-label="Product size guides">{(Object.keys(sizeGuides) as GuideKey[]).map((key) => <button dir="ltr" key={key} onClick={()=>setActive(key)} className={`shrink-0 border border-b-0 border-e-0 border-espresso-500/50 px-5 py-3 text-[10px] tracking-[.12em] transition ${active === key ? "bg-espresso-600 text-white" : "text-white/60 hover:text-white"}`}>{sizeGuides[key].label}</button>)}</nav>
-        <div className="mt-6 flex items-center justify-between gap-4"><p dir="rtl" className="text-xs text-white/45">טבלת מידות המוצר <span dir="ltr">/ PRODUCT MEASUREMENTS</span></p><p dir="ltr" className="text-xs">FIT: <span className="text-espresso-400">{guide.fit}</span></p></div>
+        <h1 dir="ltr" className="mt-3 font-display text-[clamp(2.15rem,11vw,6rem)] leading-[.95] sm:mt-4">{guide.title} <span className="block text-espresso-400 sm:inline">— SIZE GUIDE</span></h1>
+        <nav dir="ltr" className="mt-7 grid grid-cols-2 border-s border-t border-espresso-500/50 sm:mt-8 sm:flex sm:overflow-x-auto sm:border-b sm:border-s-0 sm:border-t-0" aria-label="Product size guides">{(Object.keys(sizeGuides) as GuideKey[]).map((key) => <button dir="ltr" key={key} onClick={()=>setActive(key)} className={`min-h-12 border-b border-e border-espresso-500/50 px-3 py-3 text-[9px] tracking-[.1em] transition sm:shrink-0 sm:border sm:border-b-0 sm:border-e-0 sm:px-5 sm:text-[10px] sm:tracking-[.12em] ${active === key ? "bg-espresso-600 text-white" : "text-white/60 hover:text-white"}`}>{sizeGuides[key].label}</button>)}</nav>
+        <div className="mt-6 flex flex-col gap-2 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:border-0 sm:pb-0"><p dir="rtl" className="text-[10px] text-white/45 sm:text-xs">טבלת מידות המוצר <span dir="ltr">/ PRODUCT MEASUREMENTS</span></p><p dir="ltr" className="text-[10px] sm:text-xs">FIT: <span className="text-espresso-400">{guide.fit}</span></p></div>
         <div className="mt-4"><SizeTable headers={guide.headers} rows={guide.rows} footnote={guide.footnote} /></div>
         <div className="mt-8"><RecommendationFinder /></div>
         <section className="mt-8 grid gap-px border border-white/20 bg-white/20 sm:grid-cols-3">

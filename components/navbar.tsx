@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useStore } from "@/components/store-provider";
 import React from "react";
 import { Currency } from "@/lib/i18n";
+import SaleTicker from "./saleTicker";
 export function Navbar() {
   const { locale, setLocale, currency, setCurrency, cart, setCartOpen, t } =
     useStore();
@@ -13,6 +14,7 @@ export function Navbar() {
 
   return (
     <header className="relative z-30 bg-ink text-white">
+      <SaleTicker />
       <div className="bg-espresso-700 px-4 py-2 text-center text-[9px] tracking-luxury md:text-[10px]">
         {t.shipping}
       </div>
@@ -23,6 +25,9 @@ export function Navbar() {
               {item}
             </a>
           ))}
+          <Link href="/our-story" className="link-line">
+            {locale === "he" ? "הסיפור שלנו" : "OUR STORY"}
+          </Link>
         </div>
         <button
           aria-label="Open menu"
@@ -38,6 +43,9 @@ export function Navbar() {
                 {item}
               </a>
             ))}
+            <Link href="/our-story" className="link-line">
+              {locale === "he" ? "הסיפור שלנו" : "OUR STORY"}
+            </Link>
           </div>
         </button>
         <Link
@@ -48,7 +56,7 @@ export function Navbar() {
             height={108}
             width={290}
             alt="EYEBREED"
-            src="/app_icons/logo.jpg"
+            src="/app_icons/appIcon.png"
             priority
             className="h-14 w-40 object-contain sm:h-16 sm:w-48 md:h-20 md:w-56"
           />

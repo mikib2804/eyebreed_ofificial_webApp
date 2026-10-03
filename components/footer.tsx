@@ -20,7 +20,7 @@ export function Footer() {
               height={96}
               width={240}
               alt="EYEBREED"
-              src="/app_icons/logo.jpg"
+              src="/app_icons/appIcon.png"
               className="h-24 w-60 object-contain"
             />
           </p>
@@ -55,6 +55,7 @@ export function Footer() {
             "Knitwear",
             "Shoes",
             "Accessories",
+            { label: "Our story", href: "/our-story" },
           ]}
         />
         <FooterLinks
@@ -72,14 +73,14 @@ export function Footer() {
           <div className="mt-6 space-y-5 text-xs text-white/75">
             <a className="flex items-center gap-3" href="tel:+97235550148">
               <Phone size={17} strokeWidth={1.2} />
-              +972 3 555 0148
+              +972 5 09 045 444
             </a>
             <a
               className="flex items-center gap-3"
-              href="mailto:hello@EYEBREED-studio.com"
+              href="mailto:eyebreedofficial@gmail.com"
             >
               <Mail size={17} strokeWidth={1.2} />
-              hello@EYEBREED-studio.com
+              eyebreedofficial@gmail.com
             </a>
             <p className="flex items-center gap-3">
               <Clock3 size={17} strokeWidth={1.2} />

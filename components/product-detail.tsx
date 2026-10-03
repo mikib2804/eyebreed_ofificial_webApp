@@ -97,7 +97,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
           <p className="mt-7 text-lg">
             {money(product.prices[currency], currency, locale)}
           </p>
-          <p className="mt-8 max-w-xl text-sm leading-7 text-black/65">
+          <p className="mt-8 max-w-xl whitespace-pre-line text-sm leading-7 text-black/65">
             {locale === "he" ? product.descriptionHe : product.description}
           </p>
 
@@ -148,7 +148,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
               <h2 className="text-[10px] uppercase tracking-luxury">
                 {text.details}
               </h2>
-              <p className="mt-4 text-xs leading-6 text-black/60">
+              <p className="mt-4 whitespace-pre-line text-xs leading-6 text-black/60">
                 {product.material}
                 <br />
                 Designed for a refined everyday silhouette.
@@ -158,7 +158,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
               <h2 className="text-[10px] uppercase tracking-luxury">
                 {text.story}
               </h2>
-              <p className="mt-4 text-xs leading-6 text-black/60">
+              <p className="mt-4 whitespace-pre-line text-xs leading-6 text-black/60">
                 {locale === "he" ? product.storyHe : product.story}
               </p>
             </section>
