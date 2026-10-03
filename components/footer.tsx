@@ -88,9 +88,22 @@ export function Footer() {
             </p>
           </div>
           <div className="mt-8 flex gap-5 border-t border-white/30 pt-6">
-            <FaInstagram className="cursor-pointer size-6 hover:-translate-y-1 transition-all duration-300" />
-            <FaFacebook className="cursor-pointer size-6 hover:-translate-y-1 transition-all duration-300" />
-            <FaWhatsapp className="cursor-pointer size-6 hover:-translate-y-1 transition-all duration-300" />
+            <a href="https://www.instagram.com/eyebreed_official?stkn=aWZlNWU0dGtrcmd0">
+              <FaInstagram className="cursor-pointer size-6 hover:-translate-y-1 transition-all duration-300" />
+            </a>
+            <a href="https://www.facebook.com/share/1FVCLsYsD1/">
+              <FaFacebook className="cursor-pointer size-6 hover:-translate-y-1 transition-all duration-300" />
+            </a>
+            <a
+              href={`https://wa.me/972509045444?text=${encodeURIComponent(
+                "היי, אני מעוניין ליצור קשר עם EYEBREED-STUDIO. אנא צור איתי קשר בהקדם האפשרי.",
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Contact us on WhatsApp"
+            >
+              <FaWhatsapp className="size-6 cursor-pointer transition-all duration-300 hover:-translate-y-1" />
+            </a>
           </div>
         </div>
       </div>

@@ -32,7 +32,10 @@ export default async function Home() {
       <Navbar />
       <main>
         <Hero />
-        <ProductGrid products={products} />
+        <ProductGrid
+          products={products}
+          displayImages={Object.fromEntries(campaignProducts.map((item) => [item.slug, item.visionImage]))}
+        />
         <MediaSection />
       </main>
       <Footer />

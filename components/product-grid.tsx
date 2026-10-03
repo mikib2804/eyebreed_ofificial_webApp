@@ -9,7 +9,10 @@ import { useStore } from "@/components/store-provider";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-export function ProductGrid({ products }: { products: StoreProduct[] }) {
+export function ProductGrid({ products, displayImages = {} }: {
+  products: StoreProduct[];
+  displayImages?: Record<string, string>;
+}) {
   const { locale, currency, addToCart, t } = useStore();
   const [liked, setLiked] = useState<boolean[]>([]);
   return (
@@ -32,18 +35,19 @@ export function ProductGrid({ products }: { products: StoreProduct[] }) {
           <div className="grid grid-cols-2 gap-x-4 gap-y-12 lg:grid-cols-4 lg:gap-x-6">
             {products.map((product, index) => (
               <article key={product.id} className="group">
-                <Link
-                  href={`/products/${product.slug}`}
-                  className="relative block aspect-[4/5] overflow-hidden bg-[#ebe8e2]"
-                >
+                <div className="relative aspect-square overflow-hidden bg-white">
+                  <Link href={`/products/${product.slug}`} className="absolute inset-0" draggable={false}>
                   <Image
-                    src={product.image}
+                    src={displayImages[product.slug] ?? product.image}
                     alt={product.name}
                     fill
-                    className="object-cover object-center grayscale-[15%] transition duration-700 ease-luxury group-hover:scale-[1.025]"
-                    sizes="(max-width: 768px) 50vw, 25vw"
+                    draggable={false}
+                    className="select-none object-contain object-center"
+                    sizes="(max-width: 1023px) 50vw, 25vw"
                   />
-                  <span
+                  </Link>
+
+                  <button type="button"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -55,6 +59,7 @@ export function ProductGrid({ products }: { products: StoreProduct[] }) {
                       });
                     }}
                     aria-label="Add to favorites"
+                    aria-pressed={liked[index] ?? false}
                     className="absolute end-4 top-4 cursor-pointer"
                   >
                     <Heart
@@ -67,7 +72,7 @@ export function ProductGrid({ products }: { products: StoreProduct[] }) {
                           : "fill-transparent stroke-current",
                       )}
                     />
-                  </span>
+                  </button>
                   <button
                     onClick={(event) => {
                       event.preventDefault();
@@ -78,7 +83,7 @@ export function ProductGrid({ products }: { products: StoreProduct[] }) {
                   >
                     {product.inventory > 0 ? t.add : "SOLD OUT"}
                   </button>
-                </Link>
+                </div>
                 <div className="mt-5 flex items-start justify-between gap-3">
                   <div>
                     <Link href={`/products/${product.slug}`}>

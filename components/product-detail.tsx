@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Check } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { StoreProduct } from "@/lib/catalog";
 import { money } from "@/lib/i18n";
 import { useStore } from "@/components/store-provider";
@@ -16,14 +16,35 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
   );
   const [selectedSize, setSelectedSize] = useState(firstAvailable);
   const [selectedImage, setSelectedImage] = useState(0);
+  const selectedImageRef = useRef(0);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const images = product.images.length ? product.images : [product.image];
+  const showImage = useCallback((index: number) => {
+    const gallery = galleryRef.current;
+    if (!gallery) return;
+    const nextIndex = (index + images.length) % images.length;
+    gallery.scrollTo({
+      left: nextIndex * gallery.clientWidth,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+    });
+  }, [images.length]);
   useEffect(() => {
-    if (product.images.length < 2) return;
-    const timer = window.setInterval(
-      () => setSelectedImage((current) => (current + 1) % product.images.length),
-      5000,
-    );
-    return () => window.clearInterval(timer);
-  }, [product.images.length]);
+    if (images.length < 2) return;
+    const timer = window.setTimeout(() => showImage(selectedImage + 1), 5000);
+    return () => window.clearTimeout(timer);
+  }, [images.length, selectedImage, showImage]);
+  useEffect(() => {
+    const gallery = galleryRef.current;
+    if (!gallery) return;
+    let previousWidth = gallery.clientWidth;
+    const resizeObserver = new ResizeObserver(() => {
+      if (gallery.clientWidth === previousWidth) return;
+      previousWidth = gallery.clientWidth;
+      gallery.scrollTo({ left: selectedImageRef.current * gallery.clientWidth, behavior: "instant" });
+    });
+    resizeObserver.observe(gallery);
+    return () => resizeObserver.disconnect();
+  }, []);
   const selectedVariant = product.sizes.find(
     (variant) => variant.size === selectedSize,
   );
@@ -54,40 +75,91 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
 
   return (
     <main className="bg-cream text-ink">
-      <div className="mx-auto grid min-h-[calc(100vh-8rem)] max-w-[1600px] lg:grid-cols-[58%_42%]">
-        <div className="relative min-h-[58vh] bg-[#e8e4dc] lg:min-h-[850px]">
-          <Image
-            src={product.images[selectedImage] ?? product.image}
-            alt={product.name}
-            fill
-            priority
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 58vw"
-          />
-          {product.images.length > 1 && (
-            <div className="absolute inset-x-5 bottom-5 z-10 flex gap-2 overflow-x-auto pb-1 md:inset-x-8">
-              {product.images.map((src, index) => (
-                <button
-                  key={src}
-                  onClick={() => setSelectedImage(index)}
-                  aria-label={`View product image ${index + 1}`}
-                  className={`relative h-20 w-16 shrink-0 overflow-hidden border bg-black/10 transition ${selectedImage === index ? "border-white ring-1 ring-black/30" : "border-white/40 opacity-70 hover:opacity-100"}`}
-                >
-                  <Image src={src} alt="" fill className="object-cover" sizes="64px" />
-                </button>
-              ))}
-            </div>
-          )}
+      <div className="mx-auto grid min-h-[calc(100vh-8rem)] max-w-[1280px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-10 lg:px-10 lg:py-12">
+        <div className="mx-auto w-full min-w-0 max-w-[480px] self-start lg:max-w-[440px]">
           <Link
             href="/#products"
-            className="absolute start-5 top-5 flex items-center gap-3 bg-cream/90 px-4 py-3 text-[10px] uppercase tracking-[.15em] backdrop-blur md:start-8 md:top-8"
+            className="mx-5 my-4 flex w-fit items-center gap-3 text-[10px] uppercase tracking-[.15em] lg:mx-0 lg:mt-0"
           >
             <ArrowLeft size={14} className="rtl:rotate-180" />
             {text.back}
           </Link>
+          <div className="relative aspect-[2/3] w-full">
+          <div
+            ref={galleryRef}
+            dir="ltr"
+            role="region"
+            aria-label={locale === "he" ? "תמונות המוצר" : "Product images"}
+            tabIndex={0}
+            className="absolute inset-0 flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain lg:overflow-x-hidden"
+            onScroll={(event) => {
+              const gallery = event.currentTarget;
+              if (gallery.clientWidth) {
+                const index = Math.max(0, Math.min(images.length - 1, Math.round(gallery.scrollLeft / gallery.clientWidth)));
+                selectedImageRef.current = index;
+                setSelectedImage(index);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                event.preventDefault();
+                showImage(selectedImage + (event.key === "ArrowLeft" ? -1 : 1));
+              }
+            }}
+          >
+            {images.map((src, index) => (
+              <div key={src} className="relative h-full w-full shrink-0 snap-center snap-always">
+                <Image
+                  src={src}
+                  alt={`${product.name} — ${index + 1}`}
+                  fill
+                  priority={index === 0}
+                  draggable={false}
+                  className="select-none object-contain object-center"
+                  sizes="(max-width: 479px) 100vw, (max-width: 1023px) 480px, (max-width: 1279px) 42vw, 440px"
+                />
+              </div>
+            ))}
+          </div>
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => showImage(selectedImage - 1)}
+                aria-label={locale === "he" ? "התמונה הקודמת" : "Previous image"}
+                className="absolute left-5 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-cream/90 shadow-sm backdrop-blur transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink lg:grid"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <button
+                type="button"
+                onClick={() => showImage(selectedImage + 1)}
+                aria-label={locale === "he" ? "התמונה הבאה" : "Next image"}
+                className="absolute right-5 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-cream/90 shadow-sm backdrop-blur transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink lg:grid"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </>
+          )}
+          </div>
+          {images.length > 1 && (
+              <div className="mt-3 flex gap-2 overflow-x-auto px-5 py-1 lg:px-0">
+                {images.map((src, index) => (
+                  <button
+                    key={src}
+                    onClick={() => showImage(index)}
+                    aria-label={`View product image ${index + 1}`}
+                    aria-pressed={selectedImage === index}
+                    className={`relative h-20 w-14 shrink-0 overflow-hidden border transition ${selectedImage === index ? "border-ink ring-1 ring-black/30" : "border-black/20 opacity-70 hover:opacity-100"}`}
+                  >
+                    <Image src={src} alt="" fill className="object-contain" sizes="56px" />
+                  </button>
+                ))}
+              </div>
+          )}
         </div>
 
-        <div className="flex flex-col justify-center px-6 py-14 sm:px-12 lg:px-[5vw] lg:py-20">
+        <div className="flex min-w-0 flex-col justify-center px-6 py-14 sm:px-12 lg:justify-start lg:px-0 lg:py-0">
           <p className="text-[10px] uppercase tracking-luxury text-black/50">
             {product.material}
           </p>
