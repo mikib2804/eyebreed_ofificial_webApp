@@ -86,7 +86,7 @@ export function LoginExperience() {
           <ArrowLeft size={19} className="rtl:rotate-180" />
         </Link>
         <div className="absolute inset-x-6 bottom-8 z-10 md:inset-x-12 md:bottom-12 lg:inset-x-16 lg:bottom-16">
-          <p className="text-[9px] tracking-[.3em] text-white/65">
+          <p className="text-[9px] tracking-[.3em] text-white/75">
             EYEBREED JOURNAL&nbsp;&nbsp;/&nbsp;&nbsp;0{slide + 1}
           </p>
           <h2 className="mt-5 max-w-3xl font-display text-4xl leading-none sm:text-6xl lg:text-[clamp(4rem,6vw,7rem)]">
@@ -123,7 +123,7 @@ export function LoginExperience() {
                 setMode("login");
                 setError("");
               }}
-              className={`flex-1 pb-4 ${mode === "login" ? "border-b border-black text-black" : "text-black/40"}`}
+              className={`flex-1 pb-4 ${mode === "login" ? "border-b border-black text-black" : "text-black/75"}`}
             >
               Sign in
             </button>
@@ -132,7 +132,7 @@ export function LoginExperience() {
                 setMode("register");
                 setError("");
               }}
-              className={`flex-1 pb-4 ${mode === "register" ? "border-b border-black text-black" : "text-black/40"}`}
+              className={`flex-1 pb-4 ${mode === "register" ? "border-b border-black text-black" : "text-black/75"}`}
             >
               Create account
             </button>
@@ -140,7 +140,7 @@ export function LoginExperience() {
           <h1 className="mt-12 font-display text-5xl leading-none">
             {mode === "login" ? "Welcome back" : "Join EYEBREED"}
           </h1>
-          <p className="mt-4 text-xs leading-6 text-black/55">
+          <p className="mt-4 text-xs leading-6 text-black/75">
             {mode === "login"
               ? "Sign in to continue your EYEBREED experience."
               : "Create an account for a more considered experience."}
@@ -183,7 +183,7 @@ export function LoginExperience() {
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="mb-3 ms-4 text-black/45"
+                  className="mb-3 ms-4 text-black/75"
                 >
                   {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
@@ -200,7 +200,7 @@ export function LoginExperience() {
             {error && (
               <p
                 role="alert"
-                className="border-s-2 border-espresso-700 ps-3 text-xs text-espresso-700"
+                className="border-s-2 border-espresso-700 ps-3 text-xs text-accent-readable"
               >
                 {error}
               </p>
@@ -217,7 +217,7 @@ export function LoginExperience() {
             </button>
           </form>
 
-          <div className="my-7 flex items-center gap-4 text-[9px] tracking-wider text-black/45">
+          <div className="my-7 flex items-center gap-4 text-[9px] tracking-wider text-black/75">
             <span className="h-px flex-1 bg-black/20" />
             OR
             <span className="h-px flex-1 bg-black/20" />
@@ -228,10 +228,10 @@ export function LoginExperience() {
           >
             <span className="font-bold text-base">G</span>CONTINUE WITH GOOGLE
           </button>
-          <p className="mt-9 text-center text-[10px] text-black/50">
+          <p className="mt-9 text-center text-[10px] text-black/75">
             By continuing, you agree to our Terms and Privacy Policy.
           </p>
-          <p className="absolute bottom-4 w-full text-center text-[10px] text-black/50">
+          <p className="absolute bottom-4 w-full text-center text-[10px] text-black/75">
             © 2026 EYEBREED-STUDIO™. All Rights Reserved.
           </p>
         </div>

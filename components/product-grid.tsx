@@ -91,7 +91,7 @@ export function ProductGrid({ products, displayImages = {} }: {
                         {locale === "he" ? product.nameHe : product.name}
                       </h3>
                     </Link>
-                    <p className="mt-1 text-[10px] uppercase tracking-wider text-black/55">
+                    <p className="mt-1 text-[10px] uppercase tracking-wider text-black/75">
                       {product.material}
                     </p>
                   </div>

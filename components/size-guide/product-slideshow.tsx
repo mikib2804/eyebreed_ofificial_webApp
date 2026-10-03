@@ -25,7 +25,7 @@ export function ProductSlideshow({
   return (
     <section
       dir="ltr"
-      className="order-first relative min-h-[46vh] overflow-hidden bg-[#171717] sm:min-h-[56vh] lg:order-none lg:sticky lg:top-0 lg:h-screen"
+      className="order-first relative min-h-[46vh] overflow-hidden bg-charcoal sm:min-h-[56vh] lg:order-none lg:sticky lg:top-0 lg:h-screen"
     >
       {images.map((src, i) => (
         <Image

@@ -64,7 +64,7 @@ export function CookieConsent() {
         type="button"
         aria-label={text.close}
         onClick={() => saveChoice("necessary")}
-        className="absolute end-4 top-4 p-2 text-white/55 hover:text-white"
+        className="absolute end-4 top-4 p-2 text-white/75 hover:text-white"
       >
         <X size={17} strokeWidth={1.4} />
       </button>
@@ -74,7 +74,7 @@ export function CookieConsent() {
           {text.eyebrow}
         </p>
         <h2 className="mt-3 font-display text-3xl sm:text-4xl">{text.title}</h2>
-        <p className="mt-4 max-w-xl text-xs leading-6 text-white/62">
+        <p className="mt-4 max-w-xl text-xs leading-6 text-white/75">
           {text.body}
         </p>
         <Image
@@ -93,8 +93,8 @@ export function CookieConsent() {
             onClick={() => saveChoice("all")}
             size="md"
             radius={12}
-            baseColor="#4a2f24"
-            lineColor="#ffffff"
+            baseColor="var(--espresso)"
+            lineColor="rgb(var(--color-paper))"
             className="min-w-44 text-[9px] tracking-luxury"
           >
             {text.accept}

@@ -9,16 +9,21 @@ const config: Config = {
     extend: {
       colors: {
         espresso: {
-          50: "#f4efeb",
-          200: "#c8b2a4",
-          500: "#76513f",
-          700: "#4a2f24",
-          900: "#241611"
+          50: "rgb(var(--color-cream) / <alpha-value>)",
+          200: "rgb(var(--color-soft) / <alpha-value>)",
+          400: "rgb(var(--color-soft) / <alpha-value>)",
+          500: "rgb(var(--color-accent) / <alpha-value>)",
+          600: "rgb(var(--color-accent) / <alpha-value>)",
+          700: "rgb(var(--color-strong) / <alpha-value>)",
+          900: "rgb(var(--color-ink) / <alpha-value>)"
         },
-        ink: "#050505",
-        charcoal: "#1b1b1b",
-        cream: "#f4f0e8",
-        paper: "#fbfaf7"
+        ink: "rgb(var(--color-ink) / <alpha-value>)",
+        black: "rgb(var(--color-ink) / <alpha-value>)",
+        white: "rgb(var(--color-paper) / <alpha-value>)",
+        charcoal: "rgb(var(--color-charcoal) / <alpha-value>)",
+        cream: "rgb(var(--color-cream) / <alpha-value>)",
+        paper: "rgb(var(--color-paper) / <alpha-value>)",
+        "accent-readable": "rgb(var(--color-accent-text) / <alpha-value>)"
       },
       fontFamily: {
         display: ["var(--font-cormorant)", "Georgia", "serif"],

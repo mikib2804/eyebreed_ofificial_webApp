@@ -18,15 +18,15 @@ export function CartDrawer() {
           <button onClick={() => setCartOpen(false)} aria-label="Close"><X strokeWidth={1.3} /></button>
         </div>
         <div className="flex-1 overflow-y-auto px-6">
-          {cart.length === 0 ? <p className="py-16 text-center text-sm text-black/60">{t.empty}</p> : cart.map((item) => {
+          {cart.length === 0 ? <p className="py-16 text-center text-sm text-black/75">{t.empty}</p> : cart.map((item) => {
             const lineId = `${item.id}:${item.selectedSize}`;
             return (
               <div key={lineId} className="grid grid-cols-[90px_1fr_auto] gap-4 border-b border-black/15 py-6">
                 <div className="relative aspect-[4/5] bg-white"><Image src={item.image} alt={item.name} fill className="object-cover" sizes="90px" /></div>
                 <div>
                   <h3 className="text-xs uppercase tracking-wider">{locale === "he" ? item.nameHe : item.name}</h3>
-                  <p className="mt-2 text-xs text-black/55">{money(item.prices[currency], currency, locale)}</p>
-                  <p className="mt-2 text-[10px] tracking-wider text-black/55">SIZE {item.selectedSize}</p>
+                  <p className="mt-2 text-xs text-black/75">{money(item.prices[currency], currency, locale)}</p>
+                  <p className="mt-2 text-[10px] tracking-wider text-black/75">SIZE {item.selectedSize}</p>
                   <div className="mt-5 flex w-fit items-center border border-black/30">
                     <button onClick={() => updateQuantity(lineId, item.quantity - 1)} className="p-2"><Minus size={12} /></button>
                     <span className="min-w-7 text-center text-xs">{item.quantity}</span>

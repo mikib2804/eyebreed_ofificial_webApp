@@ -24,7 +24,7 @@ export function Footer() {
               className="h-24 w-60 object-contain"
             />
           </p>
-          <p className="mt-6 max-w-xs text-[11px] leading-6 tracking-[.14em] text-white/65">
+          <p className="mt-6 max-w-xs text-[11px] leading-6 tracking-[.14em] text-white/75">
             SUBSCRIBE TO RECEIVE UPDATES
             <br />
             ON NEW ARRIVALS AND EDITORIALS.
@@ -107,7 +107,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <div className="mx-auto mt-16 flex max-w-[1600px] flex-col gap-3 border-t border-white/15 pt-6 text-[9px] tracking-wider text-white/45 sm:flex-row sm:justify-between">
+      <div className="mx-auto mt-16 flex max-w-[1600px] flex-col gap-3 border-t border-white/15 pt-6 text-[9px] tracking-wider text-white/75 sm:flex-row sm:justify-between">
         <span>© 2026 EYEBREED-STUDIO™. All Rights Reserved.</span>
         <span className="flex gap-2 justify-center text-center items-center sm:justify-end">
           DESIGNED AND POWERED BY EASYPASSPROJECTS ©
@@ -133,7 +133,7 @@ function FooterLinks({
   return (
     <div>
       <h3 className="text-xs tracking-[.16em]">{title}</h3>
-      <ul className="mt-6 space-y-4 text-[11px] uppercase tracking-wider text-white/65">
+      <ul className="mt-6 space-y-4 text-[11px] uppercase tracking-wider text-white/75">
         {links.map((link) => {
           const item =
             typeof link === "string" ? { label: link, href: "#" } : link;

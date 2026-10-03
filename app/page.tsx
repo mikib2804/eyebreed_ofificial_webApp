@@ -2,6 +2,7 @@ import { Navbar } from "@/components/navbar";
 import { Hero } from "@/components/hero";
 import { ProductGrid } from "@/components/product-grid";
 import { MediaSection } from "@/components/media-section";
+import { ReelsSection } from "@/components/ReelsSection";
 import { Footer } from "@/components/footer";
 import { CartDrawer } from "@/components/cart-drawer";
 import { prisma } from "@/lib/prisma";
@@ -37,6 +38,7 @@ export default async function Home() {
           displayImages={Object.fromEntries(campaignProducts.map((item) => [item.slug, item.visionImage]))}
         />
         <MediaSection />
+        <ReelsSection />
       </main>
       <Footer />
       <CartDrawer />

@@ -160,7 +160,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
         </div>
 
         <div className="flex min-w-0 flex-col justify-center px-6 py-14 sm:px-12 lg:justify-start lg:px-0 lg:py-0">
-          <p className="text-[10px] uppercase tracking-luxury text-black/50">
+          <p className="text-[10px] uppercase tracking-luxury text-black/75">
             {product.material}
           </p>
           <h1 className="mt-5 font-display text-5xl leading-none sm:text-7xl">
@@ -169,7 +169,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
           <p className="mt-7 text-lg">
             {money(product.prices[currency], currency, locale)}
           </p>
-          <p className="mt-8 max-w-xl whitespace-pre-line text-sm leading-7 text-black/65">
+          <p className="mt-8 max-w-xl whitespace-pre-line text-sm leading-7 text-black/75">
             {locale === "he" ? product.descriptionHe : product.description}
           </p>
 
@@ -179,10 +179,10 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
                 {text.size}
               </h2>
               <div className="flex items-center gap-4">
-                <Link href="/size-guide" className="border-b border-black/50 pb-1 text-[10px] uppercase tracking-[.14em] transition hover:border-espresso-700 hover:text-espresso-700">
+                <Link href="/size-guide" className="border-b border-black/50 pb-1 text-[10px] uppercase tracking-[.14em] transition hover:border-espresso-700 hover:text-accent-readable">
                   {locale === "he" ? "מדריך מידות" : "Size Guide"}
                 </Link>
-                {selectedVariant && <span className="text-[10px] text-black/50">{selectedVariant.inventory} {text.left}</span>}
+                {selectedVariant && <span className="text-[10px] text-black/75">{selectedVariant.inventory} {text.left}</span>}
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
@@ -208,7 +208,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
               {soldOut ? text.soldOut : text.add}
             </button>
             {!soldOut && (
-              <p className="mt-4 flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider text-black/50">
+              <p className="mt-4 flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider text-black/75">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-700" />
                 {text.available}
               </p>
@@ -220,7 +220,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
               <h2 className="text-[10px] uppercase tracking-luxury">
                 {text.details}
               </h2>
-              <p className="mt-4 whitespace-pre-line text-xs leading-6 text-black/60">
+              <p className="mt-4 whitespace-pre-line text-xs leading-6 text-black/75">
                 {product.material}
                 <br />
                 Designed for a refined everyday silhouette.
@@ -230,7 +230,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
               <h2 className="text-[10px] uppercase tracking-luxury">
                 {text.story}
               </h2>
-              <p className="mt-4 whitespace-pre-line text-xs leading-6 text-black/60">
+              <p className="mt-4 whitespace-pre-line text-xs leading-6 text-black/75">
                 {locale === "he" ? product.storyHe : product.story}
               </p>
             </section>

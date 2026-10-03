@@ -5,6 +5,7 @@ import { ArrowDownRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/store-provider";
 import { modernAllImages } from "@/lib/campaign-catalog";
+import { PaletteSwatch } from "@/components/palette-provider";
 
 export function Hero() {
   const { t } = useStore();
@@ -20,6 +21,7 @@ export function Hero() {
 
   return (
     <section className="hero-section relative min-h-[620px] overflow-hidden bg-ink text-white sm:min-h-[650px]">
+      <PaletteSwatch hero />
       <div className="hero-image absolute inset-0 w-full overflow-hidden lg:inset-y-0 lg:start-auto lg:end-0 lg:w-[70%]" role="img" aria-label="EYEBREED campaign collection">
         {modernAllImages.map((src, index) => (
           <Image
@@ -43,7 +45,7 @@ export function Hero() {
         <h1 className="font-display text-[clamp(3rem,13vw,5.25rem)] font-light leading-[.82] tracking-[-.035em] lg:text-[clamp(4rem,7vw,8.5rem)] lg:leading-[.75]">
           <span className="block">{t.headlineA}</span>
           <span className="mt-5 block">{t.headlineB}</span>
-          <span className="mt-5 block text-espresso-500">{t.headlineC}</span>
+          <span className="mt-5 block text-espresso-200">{t.headlineC}</span>
         </h1>
         <p className="mt-8 max-w-sm text-xs leading-6 text-white/70 sm:mt-10 sm:text-sm sm:leading-7">
           {t.intro}

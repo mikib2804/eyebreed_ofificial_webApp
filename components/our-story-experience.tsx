@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Eye, Fingerprint, Gem, Users } from "lucide-react";
+import { ArrowDown, Eye, Fingerprint, Gem, Users } from "lucide-react";
 import { useStore } from "@/components/store-provider";
 
 const story = {
@@ -70,13 +70,13 @@ export function OurStoryExperience() {
           className="object-cover object-[65%_center] opacity-80"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,#050505_0%,rgba(5,5,5,.96)_30%,rgba(5,5,5,.55)_55%,transparent_82%)] rtl:bg-[linear-gradient(270deg,#050505_0%,rgba(5,5,5,.96)_30%,rgba(5,5,5,.55)_55%,transparent_82%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--ink)_0%,rgb(var(--color-ink)/.96)_30%,rgb(var(--color-ink)/.55)_55%,transparent_82%)] rtl:bg-[linear-gradient(270deg,var(--ink)_0%,rgb(var(--color-ink)/.96)_30%,rgb(var(--color-ink)/.55)_55%,transparent_82%)]" />
         <div
           dir={rtl ? "rtl" : "ltr"}
           className="relative z-10 flex min-h-[650px] max-w-[1600px] items-center px-6 py-20 sm:px-10 lg:min-h-[720px] lg:px-16"
         >
           <div className="max-w-[650px]">
-            <p className="text-[10px] uppercase tracking-[.3em] text-white/65">
+            <p className="text-[10px] uppercase tracking-[.3em] text-white/75">
               {c.eyebrow}
             </p>
             <h1 className="mt-6 font-display text-[clamp(3.5rem,7vw,7.5rem)] leading-[.78]">
@@ -87,11 +87,12 @@ export function OurStoryExperience() {
             <p className="mt-7 max-w-lg text-sm leading-7 text-white/75">
               {c.intro}
             </p>
+            <StoryArrow href="#story-beginning" label={c.chapter} chapter="01" rtl={rtl} />
           </div>
         </div>
       </section>
 
-      <section className="grid bg-cream lg:grid-cols-2 lg:items-stretch">
+      <section id="story-beginning" tabIndex={-1} className="grid scroll-mt-6 bg-cream lg:grid-cols-2 lg:items-stretch">
         <div className="relative min-h-[430px] w-full overflow-hidden sm:min-h-[560px] lg:min-h-[680px]">
           <Image
             src="/campaign/modernAll/DSCF0479.JPG"
@@ -106,27 +107,28 @@ export function OurStoryExperience() {
           className="flex items-center px-6 py-16 sm:px-10 lg:px-[7vw] lg:py-24"
         >
           <div>
-            <p className="text-[9px] uppercase tracking-[.28em] text-espresso-700">
+            <p className="text-[9px] uppercase tracking-[.28em] text-accent-readable">
               {c.chapter}
             </p>
             <h2 className="mt-5 font-display text-[clamp(3rem,5vw,5.5rem)] leading-[.86]">
               <span className="block">{c.originA}</span>
-              <span className="block text-espresso-600">{c.originB}</span>
+              <span className="block text-accent-readable">{c.originB}</span>
             </h2>
-            <p className="mt-8 max-w-xl text-sm leading-8 text-black/65">
+            <p className="mt-8 max-w-xl text-sm leading-8 text-black/75">
               {c.origin}
             </p>
             <Link
               href="/#products"
-              className="mt-9 inline-flex border  border-espresso-600 bg-[#856951] px-7 py-4 text-[10px] tracking-[.18em] text-white transition hover:bg-ink"
+              className="mt-9 inline-flex border  border-espresso-600 bg-espresso-700 px-7 py-4 text-[10px] tracking-[.18em] text-white transition hover:bg-ink"
             >
               {c.cta}
             </Link>
+            <StoryArrow href="#story-philosophy" label={c.philosophy} chapter="02" rtl={rtl} light />
           </div>
         </div>
       </section>
 
-      <section className="relative min-h-[560px] overflow-hidden bg-ink text-white">
+      <section id="story-philosophy" tabIndex={-1} className="relative min-h-[560px] scroll-mt-6 overflow-hidden bg-ink text-white">
         <Image
           src="/campaign/modernAll/DSCF0280.JPG"
           alt="EYEBREED community campaign"
@@ -153,6 +155,7 @@ export function OurStoryExperience() {
             <p className="mt-8 max-w-xl text-sm leading-8 text-white/72">
               {c.vision}
             </p>
+            <StoryArrow href="#story-future" label={c.future} chapter="03" rtl={rtl} />
           </div>
         </div>
       </section>
@@ -164,7 +167,7 @@ export function OurStoryExperience() {
         <Value icon={<Fingerprint />} title="IDENTITY" he="מה שמייחד אותך" />
       </section>
 
-      <section className="grid bg-ink text-white lg:grid-cols-2">
+      <section id="story-future" tabIndex={-1} className="grid scroll-mt-6 bg-ink text-white lg:grid-cols-2">
         <div className="relative min-h-[430px] lg:min-h-[600px]">
           <Image
             src="/campaign/modernAll/DSCF0181.JPG"
@@ -185,7 +188,7 @@ export function OurStoryExperience() {
             <h2 className="mt-5 font-display text-[clamp(3rem,5vw,5.5rem)] leading-[.88]">
               {c.futureTitle}
             </h2>
-            <p className="mt-7 max-w-xl text-sm leading-8 text-white/68">
+            <p className="mt-7 max-w-xl text-sm leading-8 text-white/75">
               {c.community}
             </p>
             <p className="mt-5 font-display text-xl text-espresso-400">
@@ -204,6 +207,31 @@ export function OurStoryExperience() {
   );
 }
 
+function StoryArrow({ href, label, chapter, rtl, light = false }: {
+  href: string;
+  label: string;
+  chapter: string;
+  rtl: boolean;
+  light?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      aria-label={`${rtl ? "להמשך הסיפור" : "Continue the story"}: ${label}`}
+      className={`group mt-10 flex w-fit items-center gap-4 rounded-full py-2 pe-3 ${light ? "text-accent-readable" : "text-espresso-400"}`}
+    >
+      <span className="relative grid h-14 w-14 shrink-0 place-items-center rounded-full border border-current">
+        <span aria-hidden="true" className="absolute -inset-1.5 rounded-full border border-dashed border-current opacity-25 transition duration-500 group-hover:rotate-90 group-hover:opacity-60 motion-reduce:transform-none" />
+        <ArrowDown aria-hidden="true" size={24} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-y-1 motion-reduce:transform-none" />
+      </span>
+      <span className="flex flex-col gap-1.5">
+        <span className="text-[9px] uppercase tracking-[.22em]">{rtl ? "הפרק הבא" : "Next chapter"} <span dir="ltr">/ {chapter}</span></span>
+        <span className="text-[11px] uppercase tracking-[.12em]">{label}</span>
+      </span>
+    </a>
+  );
+}
+
 function Value({
   icon,
   title,
@@ -219,7 +247,7 @@ function Value({
         {icon}
       </span>
       <h3 className="mt-5 text-[11px] tracking-[.2em]">{title}</h3>
-      <p dir="rtl" className="mt-3 text-xs text-black/55">
+      <p dir="rtl" className="mt-3 text-xs text-black/75">
         {he}
       </p>
     </div>

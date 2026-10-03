@@ -24,8 +24,8 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 const sizeClasses = { sm: "min-h-9 px-3 py-2", md: "min-h-11 px-5 py-3", lg: "min-h-14 px-7 py-4" };
 
 const SpecularButton = forwardRef<HTMLButtonElement, Props>(function SpecularButton({
-  size = "md", radius = 0, tint = "#ffffff", tintOpacity = 0, blur = 0,
-  textColor = "#f5f5f5", lineColor = "#ffffff", baseColor = "#525252",
+  size = "md", radius = 0, tint = "rgb(var(--color-paper))", tintOpacity = 0, blur = 0,
+  textColor = "rgb(var(--color-paper))", lineColor = "rgb(var(--color-paper))", baseColor = "var(--charcoal)",
   intensity = 1, shineSize = 10, shineFade = 40, thickness = 1, speed = 0.35,
   followMouse = true, proximity = 250, autoAnimate = false, className = "",
   children, onPointerMove, onPointerLeave, style, ...props
