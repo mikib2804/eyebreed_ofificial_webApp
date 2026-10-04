@@ -14,6 +14,8 @@ export function InstagramReel({ link }: { link: string }) {
   const content = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [unavailable, setUnavailable] = useState(false);
+  const [available, setAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     const element = host.current;
@@ -26,21 +28,51 @@ export function InstagramReel({ link }: { link: string }) {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
+    setAvailable(null);
+    fetch(`/api/instagram/reel-status?url=${encodeURIComponent(link)}`, {
+      signal: controller.signal,
+    })
+      .then((response) => response.json())
+      .then((result: { available?: boolean }) =>
+        setAvailable(result.available === true),
+      )
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setAvailable(false);
+        }
+      });
+    return () => controller.abort();
+  }, [link]);
+
+  useEffect(() => {
     const element = content.current;
     if (!element || !instagramReelEmbedUrl(link)) return;
     setLoading(true);
+    setUnavailable(false);
     let frame: HTMLIFrameElement | null = null;
     const finishLoading = () => setLoading(false);
+    const hideUnavailableReel = () => {
+      setLoading(false);
+      setUnavailable(true);
+    };
     const observer = new MutationObserver(() => {
       const nextFrame = element.querySelector("iframe");
       if (!nextFrame || nextFrame === frame) return;
       frame?.removeEventListener("load", finishLoading);
+      frame?.removeEventListener("error", hideUnavailableReel);
       frame = nextFrame;
+      // The server-side status check validates playability. Reveal as soon as
+      // Instagram creates the iframe so a cached iframe load cannot be missed.
+      finishLoading();
       frame.addEventListener("load", finishLoading, { once: true });
+      frame.addEventListener("error", hideUnavailableReel, { once: true });
     });
     observer.observe(element, { childList: true, subtree: true });
-    // Reveal the Instagram link if the external script is blocked or unavailable.
-    const timeout = window.setTimeout(finishLoading, 15000);
+    // Hide the card when Instagram cannot create a playable embed.
+    const timeout = window.setTimeout(() => {
+      if (!frame) hideUnavailableReel();
+    }, 15000);
     // Instagram transforms this dedicated DOM container; React owns only its wrapper.
     const blockquote = document.createElement("blockquote");
     blockquote.className = "instagram-media";
@@ -76,10 +108,13 @@ export function InstagramReel({ link }: { link: string }) {
     return () => {
       observer.disconnect();
       frame?.removeEventListener("load", finishLoading);
+      frame?.removeEventListener("error", hideUnavailableReel);
       window.clearTimeout(timeout);
       element.replaceChildren();
     };
   }, [link]);
+
+  if (available === false || unavailable) return null;
 
   return (
     <article

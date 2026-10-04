@@ -4,6 +4,7 @@ import { Mail, Phone, Clock3, MessageCircleCheck } from "lucide-react";
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import Image from "next/image";
 import { useStore } from "@/components/store-provider";
+import PaymentSupport from "./PaymentSupport";
 
 export function Footer() {
   const { t } = useStore();
@@ -118,6 +119,7 @@ export function Footer() {
             height={20}
           />
         </span>
+        <PaymentSupport />
       </div>
     </footer>
   );

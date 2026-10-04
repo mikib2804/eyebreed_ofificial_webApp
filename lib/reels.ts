@@ -28,6 +28,7 @@ export function instagramReelEmbedUrl(link: string): string | null {
 
 // Add individual reel URLs here; Instagram supplies the video and its preview.
 export const INSTAGRAM_REEL_LINKS: string[] = [
+  "https://www.instagram.com/reel/DeEEISdMpvN/",
   "https://www.instagram.com/reel/DeCrxOesnXz/",
   "https://www.instagram.com/reel/DdzC3TlMv_Z/",
   "https://www.instagram.com/reel/DYuFiGAMqbI/",
