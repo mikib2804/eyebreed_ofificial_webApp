@@ -3,6 +3,7 @@ import { Hero } from "@/components/hero";
 import { ProductGrid } from "@/components/product-grid";
 import { MediaSection } from "@/components/media-section";
 import { ReelsSection } from "@/components/ReelsSection";
+import { CartoonCollection } from "@/components/cartoon-collection";
 import { Footer } from "@/components/footer";
 import { CartDrawer } from "@/components/cart-drawer";
 import { prisma } from "@/lib/prisma";
@@ -39,6 +40,7 @@ export default async function Home() {
         />
         <MediaSection />
         <ReelsSection />
+        <CartoonCollection />
       </main>
       <Footer />
       <CartDrawer />

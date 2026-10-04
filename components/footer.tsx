@@ -97,7 +97,7 @@ export function Footer() {
             </a>
             <a
               href={`https://wa.me/972509045444?text=${encodeURIComponent(
-                "היי, אני מעוניין ליצור קשר עם EYEBREED-STUDIO. אנא צור איתי קשר בהקדם האפשרי.",
+                "היי, אני מעוניין ליצור קשר עם EYEBREED. אנא צור איתי קשר בהקדם האפשרי.",
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -108,8 +108,9 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <div className="mx-auto mt-16 flex max-w-[1600px] flex-col gap-3 border-t border-white/15 pt-6 text-[9px] tracking-wider text-white/75 sm:flex-row sm:justify-between">
+      <div className="mx-auto mt-16 justify-center items-center flex max-w-[1600px] flex-col gap-3 border-t border-white/15 pt-6 text-[9px] tracking-wider text-white/75 sm:flex-row sm:justify-between">
         <span>© 2026 EYEBREED-STUDIO™. All Rights Reserved.</span>
+        <PaymentSupport />
         <span className="flex gap-2 justify-center text-center items-center sm:justify-end">
           DESIGNED AND POWERED BY EASYPASSPROJECTS ©
           <Image
@@ -119,7 +120,6 @@ export function Footer() {
             height={20}
           />
         </span>
-        <PaymentSupport />
       </div>
     </footer>
   );

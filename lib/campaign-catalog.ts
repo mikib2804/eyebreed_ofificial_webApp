@@ -76,7 +76,6 @@ ${careHe}`,
     displayImage: "/campaign/hat/1.jpeg",
     visionImage: "/campaign/hat/model_view.jpeg",
     images: [
-      "/campaign/hat/1.jpeg",
       "/campaign/hat/2.jpeg",
       "/campaign/hat/3.jpeg",
       "/campaign/hat/4.jpeg",
@@ -123,7 +122,6 @@ ${careHe}`,
     displayImage: "/campaign/hoodie/1.jpeg",
     visionImage: "/campaign/hoodie/model_view.jpeg",
     images: [
-      "/campaign/hoodie/1.jpeg",
       "/campaign/hoodie/2.jpeg",
       "/campaign/hoodie/3.jpeg",
       "/campaign/hoodie/4.jpeg",
@@ -171,7 +169,6 @@ ${careHe}`,
     displayImage: "/campaign/pants/1.jpeg",
     visionImage: "/campaign/pants/model_view.jpeg",
     images: [
-      "/campaign/pants/1.jpeg",
       "/campaign/pants/2.jpeg",
       "/campaign/pants/3.jpeg",
       "/campaign/pants/4.jpeg",
@@ -220,7 +217,6 @@ ${careHe}`,
     displayImage: "/campaign/shirt/1.jpeg",
     visionImage: "/campaign/shirt/model_view.jpeg",
     images: [
-      "/campaign/shirt/1.jpeg",
       "/campaign/shirt/2.jpeg",
       "/campaign/shirt/3.jpeg",
       "/campaign/shirt/4.jpeg",
@@ -251,7 +247,9 @@ export function campaignProductToStoreProduct(
     story: item.story,
     storyHe: item.storyHe,
     inventory: databaseProduct?.inventory ?? perSize * item.sizes.length,
-    sizes: databaseProduct?.sizes ?? item.sizes.map((size) => ({ size, inventory: perSize })),
+    sizes:
+      databaseProduct?.sizes ??
+      item.sizes.map((size) => ({ size, inventory: perSize })),
     prices: { ...item.prices },
   };
 }

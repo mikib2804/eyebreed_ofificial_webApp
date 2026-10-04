@@ -8,8 +8,15 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { modernAllImages } from "@/lib/campaign-catalog";
 
-const slideLabels = ["THE ART OF ARRIVAL.", "FORM FOLLOWS FEELING.", "QUIETLY DISTINCT."];
-const slides = modernAllImages.map((image, index) => ({ image, label: slideLabels[index % slideLabels.length] }));
+const slideLabels = [
+  "THE ART OF ARRIVAL.",
+  "FORM FOLLOWS FEELING.",
+  "QUIETLY DISTINCT.",
+];
+const slides = modernAllImages.map((image, index) => ({
+  image,
+  label: slideLabels[index % slideLabels.length],
+}));
 
 export function LoginExperience() {
   const router = useRouter();
@@ -232,7 +239,7 @@ export function LoginExperience() {
             By continuing, you agree to our Terms and Privacy Policy.
           </p>
           <p className="absolute bottom-4 w-full text-center text-[10px] text-black/75">
-            © 2026 EYEBREED-STUDIO™. All Rights Reserved.
+            © 2026 EYEBREED. All Rights Reserved.
           </p>
         </div>
       </section>

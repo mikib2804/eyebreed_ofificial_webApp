@@ -152,14 +152,14 @@ export function ReelsSection({
         onReady={processInstagramEmbeds}
       />
       <div className="mx-auto max-w-[1600px]">
-        <div className="mb-6 px-4 sm:px-5 md:px-12">
-          <div className="min-w-0">
-            <div className="mb-3 flex items-center gap-2" dir="ltr">
+        <div className="mx-4 mb-5 flex flex-wrap items-end justify-between gap-6 border-b border-ink/15 pb-7 sm:mx-5 md:mx-12 md:pb-9">
+          <div className="min-w-0 max-w-[1050px]">
+            <div className="mb-6 flex items-center gap-3" dir="ltr">
               <a
                 href="https://www.instagram.com/eyebreed_official/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs tracking-[0.18em] transition-opacity hover:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+                className="text-[10px] font-medium tracking-[0.2em] transition-opacity hover:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 sm:text-xs"
               >
                 @EYEBREED_OFFICIAL
               </a>
@@ -168,36 +168,35 @@ export function ReelsSection({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Visit EYEBREED Official on Instagram"
-                className="shrink-0 rounded-md transition-transform duration-300  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                className="order-first flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-ink/10 bg-paper shadow-sm transition-transform duration-300 hover:-rotate-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:h-14 sm:w-14"
               >
                 <Image
                   src="/instaLogo.png"
                   alt=""
                   width={220}
                   height={183}
-                  className="h-auto w-10 object-contain sm:w-12"
+                  className="h-auto w-9 object-contain sm:w-10"
                 />
               </a>
             </div>
             <h2
               id="reels-heading"
-              className="font-display text-[clamp(1.8rem,7vw,3.75rem)] leading-[0.95]"
+              className="font-display text-[clamp(2.25rem,5.5vw,5rem)] leading-[1.02] tracking-[-0.035em]"
             >
               {hebrew ? "החזון בתנועה" : "THE VISION IN MOTION"}
             </h2>
-            <p className="mt-3 text-sm text-ink/75">
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-ink/65 sm:text-base">
               {hebrew
                 ? "הקמפיין שלנו. עוד באינסטגרם."
                 : "From our campaign. More on Instagram."}
             </p>
           </div>
-        </div>
-        <div className="mb-4 flex gap-2 px-4 md:px-12" dir="ltr">
+        <div className="flex shrink-0 gap-3" dir="ltr">
           <button
             type="button"
             onClick={() => move(-1)}
             aria-label={hebrew ? "הריל הקודם" : "Previous reels"}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+            className="flex h-12 w-12 items-center justify-center rounded-full reels-arrow transition-colors sm:h-14 sm:w-14"
           >
             <ChevronLeft size={20} />
           </button>
@@ -205,10 +204,11 @@ export function ReelsSection({
             type="button"
             onClick={() => move(1)}
             aria-label={hebrew ? "הריל הבא" : "Next reels"}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+            className="flex h-12 w-12 items-center justify-center rounded-full reels-arrow reels-arrow-filled transition-colors sm:h-14 sm:w-14"
           >
             <ChevronRight size={20} />
           </button>
+        </div>
         </div>
         <div
           ref={row}
