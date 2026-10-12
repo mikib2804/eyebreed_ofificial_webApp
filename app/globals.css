@@ -30,6 +30,111 @@ a {
 button {
   cursor: pointer;
 }
+
+.vision-demo-cursor {
+  animation: vision-cursor-click 3.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  transform-origin: 70% 72%;
+}
+
+.vision-click-ray {
+  position: absolute;
+  right: 2.75rem;
+  bottom: 2.8rem;
+  width: 3px;
+  height: 13px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0;
+  transform-origin: 50% 24px;
+  animation: vision-click-rays 3.6s ease-in-out infinite;
+}
+
+.vision-click-ray--one {
+  transform: rotate(-42deg) translateY(-4px);
+}
+
+.vision-click-ray--two {
+  transform: rotate(-8deg) translateY(-7px);
+}
+
+.vision-click-ray--three {
+  transform: rotate(28deg) translateY(-4px);
+}
+
+.vision-join-button {
+  animation: vision-button-invite 3.6s ease-in-out infinite;
+}
+
+.vision-join-button:active {
+  transform: scale(0.985);
+}
+
+@keyframes vision-cursor-click {
+  0%, 5% {
+    opacity: 0;
+    transform: translate(24px, 20px) scale(1.05) rotate(-7deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  32%, 36% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(-7deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.86) rotate(-7deg);
+  }
+  45%, 55% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(-7deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.86) rotate(-7deg);
+  }
+  65%, 78% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(-7deg);
+  }
+  88%, 100% {
+    opacity: 0;
+    transform: translate(10px, 8px) scale(1) rotate(-7deg);
+  }
+}
+
+@keyframes vision-click-rays {
+  0%, 36%, 45%, 55%, 65%, 100% {
+    opacity: 0;
+  }
+  39%, 42%, 59%, 62% {
+    opacity: 1;
+  }
+}
+
+@keyframes vision-button-invite {
+  0%, 36%, 45%, 55%, 65%, 100% {
+    box-shadow: 0 12px 45px rgb(0 0 0 / 0.24);
+    transform: scale(1);
+  }
+  40%, 60% {
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.28), 0 0 0 5px rgb(255 255 255 / 0.22);
+    transform: scale(0.992);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vision-demo-cursor,
+  .vision-click-ray,
+  .vision-join-button {
+    animation: none;
+  }
+
+  .vision-demo-cursor {
+    opacity: 1;
+    transform: rotate(-7deg);
+  }
+}
 :focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 4px;
@@ -319,19 +424,24 @@ button {
 
 .avatar-callouts {
   pointer-events: none;
+  visibility: hidden;
   color: rgb(var(--color-accent-text));
   opacity: 0;
   transform: translateY(6px);
-  transition: opacity .3s ease, transform .3s ease;
+  transition: visibility 0s linear .3s, opacity .3s ease, transform .3s ease;
 }
 .avatar-look:hover .avatar-callouts,
-.avatar-look:focus-visible .avatar-callouts,
+.avatar-look:focus-within .avatar-callouts,
 .avatar-look[data-open="true"] .avatar-callouts {
+  visibility: visible;
   opacity: 1;
   transform: translateY(0);
+  transition-delay: 0s;
 }
 .avatar-callout {
   position: absolute;
+  pointer-events: auto;
+  display: block;
   padding: 5px 7px;
   border: 1px solid rgb(var(--color-accent-text) / .25);
   border-radius: 3px;
@@ -340,6 +450,14 @@ button {
   font-weight: 600;
   letter-spacing: .08em;
   box-shadow: 0 2px 8px rgb(var(--color-ink) / .08);
+  transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.avatar-callout:hover,
+.avatar-callout:focus-visible {
+  z-index: 2;
+  border-color: rgb(var(--color-accent-text) / .7);
+  box-shadow: 0 8px 24px rgb(var(--color-ink) / .16);
+  transform: translateY(-2px);
 }
 
 @keyframes reel-logo-colors {

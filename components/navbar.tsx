@@ -18,17 +18,26 @@ export function Navbar() {
   useEffect(() => setMenuOpen(false), [pathname]);
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 1280px)");
-    const handleResize = () => { if (desktop.matches) setMenuOpen(false); };
+    const handleResize = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
     desktop.addEventListener("change", handleResize);
     return () => desktop.removeEventListener("change", handleResize);
   }, []);
   useEffect(() => {
     if (!menuOpen) return;
     const outside = (event: PointerEvent) => {
-      if (event.target instanceof Node && !navigationRef.current?.contains(event.target)) setMenuOpen(false);
+      if (
+        event.target instanceof Node &&
+        !navigationRef.current?.contains(event.target)
+      )
+        setMenuOpen(false);
     };
     const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { setMenuOpen(false); menuToggleRef.current?.focus(); }
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        menuToggleRef.current?.focus();
+      }
     };
     document.addEventListener("pointerdown", outside);
     document.addEventListener("keydown", escape);
@@ -47,7 +56,11 @@ export function Navbar() {
       <div className="bg-espresso-700 px-4 py-2 text-center text-[9px] tracking-luxury md:text-[10px]">
         {t.shipping}
       </div>
-      <nav ref={navigationRef} aria-label="Main navigation" className="relative mx-auto grid h-22 max-w-[1600px] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 md:h-24 md:px-10">
+      <nav
+        ref={navigationRef}
+        aria-label="Main navigation"
+        className="relative mx-auto grid h-22 max-w-[1600px] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 md:h-24 md:px-10"
+      >
         <div className="hidden items-center gap-7 text-[10px] tracking-[.17em] xl:flex">
           {t.nav.map((item) => (
             <a key={item} href="#products" className="link-line">
@@ -56,6 +69,9 @@ export function Navbar() {
           ))}
           <Link href="/our-story" className="link-line">
             {locale === "he" ? "הסיפור שלנו" : "OUR STORY"}
+          </Link>
+          <Link href="/vision" className="link-line">
+            VISION PREORDER
           </Link>
         </div>
         <button
@@ -69,20 +85,30 @@ export function Navbar() {
         >
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
-          <div
-            id="mobile-navigation"
-            hidden={!menuOpen}
-            className="absolute inset-x-0 top-full z-50 border-b border-white/20 bg-ink px-5 py-4 text-[10px] tracking-[.17em] shadow-xl md:px-10 xl:hidden"
+        <div
+          id="mobile-navigation"
+          hidden={!menuOpen}
+          className="absolute inset-x-0 top-full z-50 border-b border-white/20 bg-ink px-5 py-4 text-[10px] tracking-[.17em] shadow-xl md:px-10 xl:hidden"
+        >
+          {t.nav.map((item) => (
+            <a
+              key={item}
+              href="/#products"
+              className="flex min-h-11 items-center border-b border-white/10"
+            >
+              {item}
+            </a>
+          ))}
+          <Link
+            href="/our-story"
+            className="flex min-h-11 items-center border-b border-white/10"
           >
-            {t.nav.map((item) => (
-              <a key={item} href="/#products" className="flex min-h-11 items-center border-b border-white/10">
-                {item}
-              </a>
-            ))}
-            <Link href="/our-story" className="flex min-h-11 items-center">
-              {locale === "he" ? "הסיפור שלנו" : "OUR STORY"}
-            </Link>
-          </div>
+            {locale === "he" ? "הסיפור שלנו" : "OUR STORY"}
+          </Link>
+          <Link href="/vision" className="flex min-h-11 items-center">
+            VISION PREORDER
+          </Link>
+        </div>
         <Link
           href="/"
           className="flex h-full items-center justify-center overflow-hidden"

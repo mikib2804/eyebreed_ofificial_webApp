@@ -140,3 +140,9 @@ model CartItem {
   @@index([userId])
   @@index([productId])
 }
+
+model VisionWaitlistEntry {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

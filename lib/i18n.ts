@@ -1,7 +1,8 @@
 export const copy = {
   en: {
     shipping: "COMPLIMENTARY SHIPPING & RETURNS ON ALL ORDERS",
-    nav: ["NEW IN", "CLOTHING", "SHOES", "ACCESSORIES", "EDITORIAL"],
+    nav: ["NEW IN", "CLOTHING", "ACCESSORIES", "EDITORIAL"],
+    // nav: ["NEW IN", "CLOTHING", "SHOES", "ACCESSORIES", "EDITORIAL"],
     collection: "NEW COLLECTION",
     headlineA: "DESIGN.",
     headlineB: "QUALITY.",

@@ -54,7 +54,6 @@ export function Footer() {
             "New arrivals",
             "Clothing",
             "Knitwear",
-            "Shoes",
             "Accessories",
             { label: "Our story", href: "/our-story" },
           ]}
