@@ -16,10 +16,15 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
   );
   const [selectedSize, setSelectedSize] = useState(firstAvailable);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [failedImages, setFailedImages] = useState<Set<string>>(() => new Set());
   const selectedImageRef = useRef(0);
   const galleryRef = useRef<HTMLDivElement>(null);
-  const images = product.images.length ? product.images : [product.image];
+  const images = useMemo(
+    () => (product.images.length ? product.images : [product.image]).filter((src) => !failedImages.has(src)),
+    [product.images, product.image, failedImages],
+  );
   const showImage = useCallback((index: number) => {
+    if (!images.length) return;
     const gallery = galleryRef.current;
     if (!gallery) return;
     const nextIndex = (index + images.length) % images.length;
@@ -28,6 +33,11 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
     });
   }, [images.length]);
+  useEffect(() => {
+    if (selectedImage < images.length) return;
+    selectedImageRef.current = 0;
+    setSelectedImage(0);
+  }, [images.length, selectedImage]);
   useEffect(() => {
     if (images.length < 2) return;
     const timer = window.setTimeout(() => showImage(selectedImage + 1), 5000);
@@ -75,8 +85,8 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
 
   return (
     <main className="bg-cream text-ink">
-      <div className="mx-auto grid min-h-[calc(100vh-8rem)] max-w-[1280px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-10 lg:px-10 lg:py-12">
-        <div className="mx-auto w-full min-w-0 max-w-[480px] self-start lg:max-w-[440px]">
+      <div className={`mx-auto grid min-h-[calc(100vh-8rem)] max-w-[1280px] lg:gap-10 lg:px-10 lg:py-12 ${images.length ? "lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]" : "lg:grid-cols-1"}`}>
+        <div className={`${images.length ? "block" : "hidden"} mx-auto w-full min-w-0 max-w-[480px] self-start lg:max-w-[440px]`}>
           <Link
             href="/#products"
             className="mx-5 my-4 flex w-fit items-center gap-3 text-[10px] uppercase tracking-[.15em] lg:mx-0 lg:mt-0"
@@ -115,6 +125,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
                   fill
                   priority={index === 0}
                   draggable={false}
+                  onError={() => setFailedImages((current) => new Set(current).add(src))}
                   className="select-none object-contain object-center"
                   sizes="(max-width: 479px) 100vw, (max-width: 1023px) 480px, (max-width: 1279px) 42vw, 440px"
                 />
@@ -152,7 +163,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
                     aria-pressed={selectedImage === index}
                     className={`relative h-20 w-14 shrink-0 overflow-hidden border transition ${selectedImage === index ? "border-ink ring-1 ring-black/30" : "border-black/20 opacity-70 hover:opacity-100"}`}
                   >
-                    <Image src={src} alt="" fill className="object-contain" sizes="56px" />
+                    <Image src={src} alt="" fill className="object-contain" sizes="56px" onError={() => setFailedImages((current) => new Set(current).add(src))} />
                   </button>
                 ))}
               </div>

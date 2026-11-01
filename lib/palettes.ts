@@ -2,6 +2,42 @@ export const PALETTE_STORAGE_KEY = "eyebreed-palette-v1";
 export const PALETTE_TIMEOUT_MS = 57_000;
 const paletteDefinitions = [
   {
+    id: "blush",
+    name: "The Original Eyebreed",
+    roles: [
+      {
+        role: "Primary Dark",
+        name: "Velvet Jet Black",
+        hex: "#161618",
+        use: "Deep header and hero background",
+      },
+      {
+        role: "Accent Tone",
+        name: "Rose Taupe",
+        hex: "#8A6B70",
+        use: "Accent buttons and active highlights",
+      },
+      {
+        role: "Soft Highlight",
+        name: "Soft Rose Dust",
+        hex: "#D2B4B8",
+        use: "Supporting text, badge borders, notification dots",
+      },
+      {
+        role: "Soft Background",
+        name: "Soft Porcelain",
+        hex: "#F8F6F6",
+        use: "Light section canvas",
+      },
+      {
+        role: "Logo Color",
+        name: "Pure White",
+        hex: "#FFFFFF",
+        use: "Primary logo variant",
+      },
+    ],
+  },
+  {
     id: "original",
     name: "Refined Luxury Warmth",
     roles: [
@@ -37,117 +73,82 @@ const paletteDefinitions = [
       },
     ],
   },
-  {
-    id: "blush",
-    name: "Blush & Noir",
-    roles: [
-      {
-        role: "Primary Dark",
-        name: "Velvet Jet Black",
-        hex: "#161618",
-        use: "Deep header and hero background",
-      },
-      {
-        role: "Accent Tone",
-        name: "Rose Taupe",
-        hex: "#8A6B70",
-        use: "Accent buttons and active highlights",
-      },
-      {
-        role: "Soft Highlight",
-        name: "Soft Rose Dust",
-        hex: "#D2B4B8",
-        use: "Supporting text, badge borders, notification dots",
-      },
-      {
-        role: "Soft Background",
-        name: "Soft Porcelain",
-        hex: "#F8F6F6",
-        use: "Light section canvas",
-      },
-      {
-        role: "Logo Color",
-        name: "Pure White",
-        hex: "#FFFFFF",
-        use: "Primary logo variant",
-      },
-    ],
-  },
-  {
-    id: "ocean",
-    name: "High-Fashion Midnight & Cool Steel",
-    roles: [
-      {
-        role: "Primary Dark",
-        name: "Charcoal Obsidian",
-        hex: "#121315",
-        use: "Hero banner and footer background",
-      },
-      {
-        role: "Accent Tone",
-        name: "Slate Blue",
-        hex: "#3B4856",
-        use: "Primary CTAs, hover states, active menu items",
-      },
-      {
-        role: "Highlight",
-        name: "Cool Silver",
-        hex: "#8C9A9E",
-        use: "Secondary badges and supporting copy",
-      },
-      {
-        role: "Soft Background",
-        name: "Off-White Pearl",
-        hex: "#F2F4F5",
-        use: "Light sections and switch backgrounds",
-      },
-      {
-        role: "Logo Color",
-        name: "Pure White",
-        hex: "#FFFFFF",
-        use: "Primary logo variant",
-      },
-    ],
-  },
-  {
-    id: "navy",
-    name: "Deep Regal Navy & Champagne",
-    roles: [
-      {
-        role: "Primary Dark",
-        name: "Midnight Navy",
-        hex: "#0B1320",
-        use: "Full-site dark backdrop",
-      },
-      {
-        role: "Accent Tone",
-        name: "Deep Indigo",
-        hex: "#1C2A3A",
-        use: "Card containers and navigation headers",
-      },
-      {
-        role: "Warm Highlight",
-        name: "Champagne Gold",
-        hex: "#D4AF37",
-        use: "Badges, discount banners, price highlights",
-      },
-      {
-        role: "Soft Background",
-        name: "Sand Linen",
-        hex: "#F7F5F0",
-        use: "Content section backgrounds",
-      },
-      {
-        role: "Logo Color",
-        name: "Pure White",
-        hex: "#FFFFFF",
-        use: "Primary logo variant",
-      },
-    ],
-  },
+
+  // {
+  //   id: "ocean",
+  //   name: "High-Fashion Midnight & Cool Steel",
+  //   roles: [
+  //     {
+  //       role: "Primary Dark",
+  //       name: "Charcoal Obsidian",
+  //       hex: "#121315",
+  //       use: "Hero banner and footer background",
+  //     },
+  //     {
+  //       role: "Accent Tone",
+  //       name: "Slate Blue",
+  //       hex: "#3B4856",
+  //       use: "Primary CTAs, hover states, active menu items",
+  //     },
+  //     {
+  //       role: "Highlight",
+  //       name: "Cool Silver",
+  //       hex: "#8C9A9E",
+  //       use: "Secondary badges and supporting copy",
+  //     },
+  //     {
+  //       role: "Soft Background",
+  //       name: "Off-White Pearl",
+  //       hex: "#F2F4F5",
+  //       use: "Light sections and switch backgrounds",
+  //     },
+  //     {
+  //       role: "Logo Color",
+  //       name: "Pure White",
+  //       hex: "#FFFFFF",
+  //       use: "Primary logo variant",
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "navy",
+  //   name: "Deep Regal Navy & Champagne",
+  //   roles: [
+  //     {
+  //       role: "Primary Dark",
+  //       name: "Midnight Navy",
+  //       hex: "#0B1320",
+  //       use: "Full-site dark backdrop",
+  //     },
+  //     {
+  //       role: "Accent Tone",
+  //       name: "Deep Indigo",
+  //       hex: "#1C2A3A",
+  //       use: "Card containers and navigation headers",
+  //     },
+  //     {
+  //       role: "Warm Highlight",
+  //       name: "Champagne Gold",
+  //       hex: "#D4AF37",
+  //       use: "Badges, discount banners, price highlights",
+  //     },
+  //     {
+  //       role: "Soft Background",
+  //       name: "Sand Linen",
+  //       hex: "#F7F5F0",
+  //       use: "Content section backgrounds",
+  //     },
+  //     {
+  //       role: "Logo Color",
+  //       name: "Pure White",
+  //       hex: "#FFFFFF",
+  //       use: "Primary logo variant",
+  //     },
+  //   ],
+  // },
   {
     id: "sage",
-    name: "The Banker's Sage & Slate",
+    name: "The Banker's Color Palette",
     roles: [
       {
         role: "Primary Dark",

@@ -73,10 +73,9 @@ ${careHe}`,
     material: "Knitted knit",
     prices: { USD: 45, ILS: 169, EUR: 42 },
     sizes: ["M", "L"],
-    displayImage: "/campaign/hat/1.jpeg",
+    displayImage: "/campaign/hat/model_view.jpeg",
     visionImage: "/campaign/hat/model_view.jpeg",
     images: [
-      "/campaign/hat/2.jpeg",
       "/campaign/hat/3.jpeg",
       "/campaign/hat/4.jpeg",
       "/campaign/hat/5.jpeg",
@@ -119,10 +118,9 @@ ${careHe}`,
     material: "100% cotton · 400 GSM",
     prices: { USD: 129, ILS: 479, EUR: 119 },
     sizes: ["XS", "S", "M", "L", "XL"],
-    displayImage: "/campaign/hoodie/1.jpeg",
+    displayImage: "/campaign/hoodie/model_view.jpeg",
     visionImage: "/campaign/hoodie/model_view.jpeg",
     images: [
-      "/campaign/hoodie/2.jpeg",
       "/campaign/hoodie/3.jpeg",
       "/campaign/hoodie/4.jpeg",
       "/campaign/hoodie/5.jpeg",
@@ -166,10 +164,9 @@ ${careHe}`,
     material: "85% cotton · 15% polyester · 365 GSM",
     prices: { USD: 99, ILS: 369, EUR: 92 },
     sizes: ["XS", "S", "M", "L", "XL"],
-    displayImage: "/campaign/pants/1.jpeg",
+    displayImage: "/campaign/pants/model_view.jpeg",
     visionImage: "/campaign/pants/model_view.jpeg",
     images: [
-      "/campaign/pants/2.jpeg",
       "/campaign/pants/3.jpeg",
       "/campaign/pants/4.jpeg",
       "/campaign/pants/5.jpeg",
@@ -214,10 +211,9 @@ ${careHe}`,
     material: "100% cotton · 220–260 GSM",
     prices: { USD: 89, ILS: 329, EUR: 82 },
     sizes: ["XS", "S", "M", "L", "XL"],
-    displayImage: "/campaign/shirt/1.jpeg",
+    displayImage: "/campaign/shirt/model_view.jpeg",
     visionImage: "/campaign/shirt/model_view.jpeg",
     images: [
-      "/campaign/shirt/2.jpeg",
       "/campaign/shirt/3.jpeg",
       "/campaign/shirt/4.jpeg",
       "/campaign/shirt/5.jpeg",
@@ -225,6 +221,86 @@ ${careHe}`,
       "/campaign/shirt/7.jpeg",
       "/campaign/shirt/8.jpeg",
       "/campaign/shirt/9.jpeg",
+    ],
+  },
+  {
+    folder: "pants-first",
+    name: "Uneven Pants",
+    nameHe: "מכנסי Uneven",
+    slug: "uneven-pants",
+    description: `Uneven Pants bring an asymmetric approach to the Vision silhouette, with an oversized wide-leg fit, sculpted seam lines and contrasting pink EYEBREED embroidery.
+
+Details:
+• Fit: Oversized / Wide leg
+• Finish: Washed charcoal
+• Design: Asymmetric panel construction
+• Details: Pink EYEBREED embroidery
+• Adjustable drawcord hems
+
+${careEn}`,
+    descriptionHe: `מכנסי Uneven מביאים גישה א־סימטרית לצללית של קולקציית Vision, עם גזרה רחבה ואוברסייז, קווי תפר מודגשים ורקמת EYEBREED ורודה.
+
+פרטים:
+• גזרה: Oversized / Wide leg
+• גימור: פחם Washed
+• עיצוב: חיתוכים א־סימטריים
+• פרטים: רקמת EYEBREED ורודה
+• שרוכי כיווץ מתכווננים במכפלת
+
+${careHe}`,
+    story: brandStoryEn,
+    storyHe: brandStoryHe,
+    material: "Heavyweight washed cotton",
+    prices: { USD: 99, ILS: 369, EUR: 92 },
+    sizes: ["XS", "S", "M", "L", "XL"],
+    displayImage: "/campaign/pants-first/model_view.jpg",
+    visionImage: "/campaign/pants-first/model_view.jpg",
+    images: [
+      "/campaign/pants-first/1.jpeg",
+      "/campaign/pants-first/2.jpg",
+      "/campaign/pants-first/3.jpeg",
+      "/campaign/pants-first/4.jpeg",
+    ],
+  },
+  {
+    folder: "hoodie-first",
+    name: "Uneven Hoodie",
+    nameHe: "קפוצ׳ון Uneven",
+    slug: "uneven-hoodie",
+    description: `Uneven Hoodie is a heavyweight oversized pullover defined by an asymmetric front panel, a washed charcoal finish and contrasting pink EYEBREED embroidery.
+
+Details:
+• Fit: Oversized
+• Finish: Washed charcoal
+• Design: Asymmetric front construction
+• Details: Pink chest logo and embroidered hood message
+• Kangaroo pockets integrated into the panel lines
+
+${careEn}`,
+    descriptionHe: `קפוצ׳ון Uneven הוא פריט אוברסייז כבד עם מבנה קדמי א־סימטרי, גימור פחם Washed ורקמת EYEBREED ורודה בניגודיות גבוהה.
+
+פרטים:
+• גזרה: Oversized
+• גימור: פחם Washed
+• עיצוב: מבנה קדמי א־סימטרי
+• פרטים: לוגו ורוד בחזה ורקמה על הכובע
+• כיסים המשולבים בקווי החיתוך
+
+${careHe}`,
+    story: brandStoryEn,
+    storyHe: brandStoryHe,
+    material: "Heavyweight washed cotton fleece",
+    prices: { USD: 129, ILS: 479, EUR: 119 },
+    sizes: ["XS", "S", "M", "L", "XL"],
+    displayImage: "/campaign/hoodie-first/model_view.jpg",
+    visionImage: "/campaign/hoodie-first/model_view.jpg",
+    images: [
+      "/campaign/hoodie-first/1.jpg",
+      "/campaign/hoodie-first/2.jpeg",
+      "/campaign/hoodie-first/3.jpg",
+      "/campaign/hoodie-first/4.jpeg",
+      "/campaign/hoodie-first/5.jpeg",
+      "/campaign/hoodie-first/6.jpg",
     ],
   },
 ] as const;

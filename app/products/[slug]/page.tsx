@@ -5,7 +5,10 @@ import { CartDrawer } from "@/components/cart-drawer";
 import { ProductDetail } from "@/components/product-detail";
 import { prisma } from "@/lib/prisma";
 import { productWithVariants, toStoreProduct } from "@/lib/products";
-import { campaignProducts, campaignProductToStoreProduct } from "@/lib/campaign-catalog";
+import {
+  campaignProducts,
+  campaignProductToStoreProduct,
+} from "@/lib/campaign-catalog";
 
 export default async function ProductPage({
   params,
@@ -15,7 +18,10 @@ export default async function ProductPage({
   const { slug } = await params;
   const campaignProduct = campaignProducts.find((item) => item.slug === slug);
   const dbProduct = await prisma.product
-    .findFirst({ where: { slug, status: "ACTIVE" }, include: productWithVariants })
+    .findFirst({
+      where: { slug, status: "ACTIVE" },
+      include: productWithVariants,
+    })
     .catch(() => null);
   if (!dbProduct && !campaignProduct) notFound();
   const databaseProduct = dbProduct ? toStoreProduct(dbProduct) : undefined;

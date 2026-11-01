@@ -65,6 +65,7 @@ export function Footer() {
             { label: "Shipping", href: "#" },
             { label: "Returns", href: "#" },
             { label: "FAQ", href: "#" },
+            { label: "Terms", href: "/terms" },
             { label: "Privacy", href: "#" },
           ]}
         />
