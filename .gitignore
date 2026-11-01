@@ -5,3 +5,4 @@ node_modules
 *.log
 .codex-dev.*.log
 *.tsbuildinfo
+public\media
