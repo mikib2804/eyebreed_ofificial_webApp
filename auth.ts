@@ -15,7 +15,8 @@ const credentialsSchema = z.object({
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60, updateAge: 24 * 60 * 60 },
+  cookies: { sessionToken: { name: process.env.NODE_ENV === "production" ? "__Secure-eyebreed.session" : "eyebreed.session", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } } },
   providers: [
     Google,
     Credentials({

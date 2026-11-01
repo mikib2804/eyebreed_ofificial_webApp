@@ -7,11 +7,11 @@ export default function SaleTicker({
 }: SaleTickerProps) {
   // Keep each duplicated marquee track wider than large desktop displays so
   // the loop never exposes an empty area in the middle of the ticker.
-  const items = Array.from({ length: 16 }, () => text);
+  const items = Array.from({ length: 40 }, () => text);
 
   return (
-    <div className="w-full overflow-hidden bg-espresso-400 text-ink">
-      <div className="flex w-max animate-marquee">
+    <div dir="ltr" className="w-full overflow-hidden bg-espresso-400 text-ink">
+      <div className="flex w-max animate-marquee will-change-transform">
         <div className="flex shrink-0">
           {items.map((text, index) => (
             <span

@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { auth } from "@/auth"; import { prisma } from "@/lib/prisma";
+export async function DELETE(_:Request,{params}:{params:Promise<{id:string}>}){const s=await auth();if(!s?.user.id)return NextResponse.json({error:"Unauthorized"},{status:401});const {id}=await params;const result=await prisma.preOrder.updateMany({where:{id,userId:s.user.id,status:"WAITING"},data:{status:"CANCELLED"}});return NextResponse.json({ok:result.count===1},{status:result.count?200:409})}

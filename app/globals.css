@@ -393,8 +393,55 @@ button {
 }
 
 .animate-marquee {
-  animation: marquee 26s linear infinite;
+  animation: marquee 220s linear infinite;
 }
+
+@keyframes heart-liked-pop {
+  0% { transform: scale(.65); }
+  45% { transform: scale(1.45) rotate(-10deg); }
+  70% { transform: scale(.9) rotate(5deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+@keyframes like-particle-pop {
+  0% { opacity: 1; transform: rotate(var(--particle-angle)) translateY(0) scale(1); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--particle-angle)) translateY(-30px) scale(.2); }
+}
+
+.heart-liked {
+  animation: heart-liked-pop .55s cubic-bezier(.2, .9, .3, 1.35);
+}
+
+.like-burst {
+  pointer-events: none;
+  position: absolute;
+  inset: -10px;
+}
+
+.like-particle {
+  --particle-angle: 0deg;
+  position: absolute;
+  left: calc(50% - 3px);
+  top: calc(50% - 3px);
+  height: 6px;
+  width: 6px;
+  border-radius: 9999px;
+  background: #ef4444;
+  transform-origin: 3px 3px;
+  animation: like-particle-pop .72s cubic-bezier(.16, .8, .3, 1) forwards;
+}
+
+.like-particle:nth-child(2n) { background: #fb7185; }
+.like-particle:nth-child(3n) { background: #fff; box-shadow: 0 0 0 1px rgb(239 68 68 / .25); }
+.like-particle:nth-child(1) { --particle-angle: 0deg; }
+.like-particle:nth-child(2) { --particle-angle: 45deg; }
+.like-particle:nth-child(3) { --particle-angle: 90deg; }
+.like-particle:nth-child(4) { --particle-angle: 135deg; }
+.like-particle:nth-child(5) { --particle-angle: 180deg; }
+.like-particle:nth-child(6) { --particle-angle: 225deg; }
+.like-particle:nth-child(7) { --particle-angle: 270deg; }
+.like-particle:nth-child(8) { --particle-angle: 315deg; }
 
 @keyframes reel-logo-spin {
   to {

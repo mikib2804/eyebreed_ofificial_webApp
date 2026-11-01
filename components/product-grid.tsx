@@ -8,6 +8,7 @@ import { money } from "@/lib/i18n";
 import { useStore } from "@/components/store-provider";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 export function ProductGrid({
   products,
@@ -17,7 +18,9 @@ export function ProductGrid({
   displayImages?: Record<string, string>;
 }) {
   const { locale, currency, addToCart, t } = useStore();
+  const { status } = useSession();
   const [liked, setLiked] = useState<boolean[]>([]);
+  const [likeBurst, setLikeBurst] = useState<{ index: number; key: number } | null>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(
     () => new Set(),
   );
@@ -49,6 +52,11 @@ export function ProductGrid({
                 >
                   {!imageFailed && (
                     <div className="relative aspect-square overflow-hidden bg-white">
+                      {product.compareAtPrices && (
+                        <div className="absolute start-0 top-5 z-20 border-y-2 border-white bg-red-600 px-4 py-2 text-[10px] font-bold tracking-[.2em] text-white shadow-[4px_5px_0_#fff]">
+                          UNEVEN · 15% SALE
+                        </div>
+                      )}
                       <Link
                         href={`/products/${product.slug}`}
                         className="absolute inset-0"
@@ -71,27 +79,48 @@ export function ProductGrid({
 
                       <button
                         type="button"
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.preventDefault();
                           e.stopPropagation();
 
+                          const next = !(liked[index] ?? false);
                           setLiked((prev) => {
                             const newLiked = [...prev];
-                            newLiked[index] = !newLiked[index];
+                            newLiked[index] = next;
                             return newLiked;
                           });
+                          if (next) setLikeBurst({ index, key: Date.now() });
+
+                          // Guests keep the reaction locally without being redirected or persisted.
+                          if (status !== "authenticated") return;
+
+                          const response = await fetch(`/api/account/wishlist/${product.id}`, { method: next ? "PUT" : "DELETE" });
+                          if (!response.ok) {
+                            setLiked((prev) => {
+                              const rolledBack = [...prev];
+                              rolledBack[index] = !next;
+                              return rolledBack;
+                            });
+                          }
                         }}
                         aria-label="Add to favorites"
                         aria-pressed={liked[index] ?? false}
-                        className="absolute end-4 top-4 cursor-pointer"
+                        className="absolute end-4 top-4 z-30 grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-105"
                       >
+                        {likeBurst?.index === index && (
+                          <span key={likeBurst.key} aria-hidden="true" className="like-burst">
+                            {Array.from({ length: 8 }, (_, particle) => (
+                              <span key={particle} className="like-particle" />
+                            ))}
+                          </span>
+                        )}
                         <Heart
-                          size={18}
+                          size={20}
                           strokeWidth={1.2}
                           className={cn(
                             "transition-all duration-200",
                             liked[index]
-                              ? "fill-red-600 stroke-red-600"
+                              ? "heart-liked fill-red-600 stroke-red-600"
                               : "fill-transparent stroke-current",
                           )}
                         />
@@ -121,9 +150,16 @@ export function ProductGrid({
                         {product.material}
                       </p>
                     </div>
-                    <p className="text-xs">
-                      {money(product.prices[currency], currency, locale)}
-                    </p>
+                    <div className="shrink-0 text-end text-xs">
+                      {product.compareAtPrices && (
+                        <p className="mb-1 text-[10px] text-black/45 line-through">
+                          {money(product.compareAtPrices[currency], currency, locale)}
+                        </p>
+                      )}
+                      <p className={product.compareAtPrices ? "font-semibold text-red-700" : ""}>
+                        {money(product.prices[currency], currency, locale)}
+                      </p>
+                    </div>
                   </div>
                 </article>
               );

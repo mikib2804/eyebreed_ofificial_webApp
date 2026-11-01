@@ -6,7 +6,9 @@ import { prisma } from "@/lib/prisma";
 const registerSchema = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.string().email().transform((email) => email.toLowerCase()),
-  password: z.string().min(8).max(72)
+  password: z.string().min(8).max(72),
+  phone: z.string().trim().max(30).optional(),
+  acceptedTerms: z.literal(true)
 });
 
 export async function POST(request: Request) {
@@ -17,6 +19,6 @@ export async function POST(request: Request) {
   if (existing) return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
 
   const passwordHash = await hash(parsed.data.password, 12);
-  await prisma.user.create({ data: { name: parsed.data.name, email: parsed.data.email, passwordHash } });
+  await prisma.user.create({ data: { name: parsed.data.name, email: parsed.data.email, phone: parsed.data.phone || null, passwordHash } });
   return NextResponse.json({ ok: true }, { status: 201 });
 }

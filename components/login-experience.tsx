@@ -18,10 +18,10 @@ const slides = modernAllImages.map((image, index) => ({
   label: slideLabels[index % slideLabels.length],
 }));
 
-export function LoginExperience() {
+export function LoginExperience({ initialMode = "login" }: { initialMode?: "login" | "register" }) {
   const router = useRouter();
   const [slide, setSlide] = useState(0);
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -43,10 +43,11 @@ export function LoginExperience() {
     const password = String(formData.get("password") ?? "");
 
     if (mode === "register") {
+      if (password !== String(formData.get("confirmPassword") ?? "")) { setError("Passwords do not match."); setLoading(false); return; }
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formData.get("name"), email, password }),
+        body: JSON.stringify({ name: formData.get("name"), email, phone: formData.get("phone"), password, acceptedTerms: formData.get("terms") === "on" }),
       });
       if (!response.ok) {
         const body = await response.json();
@@ -66,7 +67,8 @@ export function LoginExperience() {
       setLoading(false);
       return;
     }
-    router.push("/");
+    const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+    router.push(callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/account");
     router.refresh();
   }
 
@@ -155,13 +157,13 @@ export function LoginExperience() {
 
           <form onSubmit={handleSubmit} className="mt-10 space-y-7">
             {mode === "register" && (
-              <AuthField
+              <><AuthField
                 label="FULL NAME"
                 name="name"
                 type="text"
                 autoComplete="name"
                 required
-              />
+              /><AuthField label="PHONE (OPTIONAL)" name="phone" type="tel" autoComplete="tel" /><label className="mt-5 flex gap-3 text-[10px]"><input type="checkbox" name="terms" required/><span>I accept the <Link href="/terms" className="underline">Terms and Conditions</Link>.</span></label></>
             )}
             <AuthField
               label="EMAIL ADDRESS"
@@ -186,14 +188,14 @@ export function LoginExperience() {
                     className="mt-2 block w-full bg-transparent py-2 text-sm tracking-normal outline-none"
                   />
                 </label>
-                <button
-                  type="button"
+                <Link
+                  href="/forgot-password"
                   onClick={() => setShowPassword((value) => !value)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   className="mb-3 ms-4 text-black/75"
                 >
                   {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                </button>
+                </Link>
               </div>
               {mode === "login" && (
                 <button
@@ -204,6 +206,7 @@ export function LoginExperience() {
                 </button>
               )}
             </div>
+            {mode === "register" && <AuthField label="CONFIRM PASSWORD" name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required />}
             {error && (
               <p
                 role="alert"

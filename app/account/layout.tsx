@@ -1,0 +1,2 @@
+import { Navbar } from "@/components/navbar"; import { Footer } from "@/components/footer"; import { CartDrawer } from "@/components/cart-drawer"; import { AccountShell } from "@/components/account-shell"; import { requireCustomer } from "@/lib/account";
+export default async function Layout({ children }: { children: React.ReactNode }) { await requireCustomer(); return <><Navbar/><AccountShell>{children}</AccountShell><Footer/><CartDrawer/></>; }

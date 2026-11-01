@@ -87,12 +87,21 @@ export function OurStoryExperience() {
             <p className="mt-7 max-w-lg text-sm leading-7 text-white/75">
               {c.intro}
             </p>
-            <StoryArrow href="#story-beginning" label={c.chapter} chapter="01" rtl={rtl} />
+            <StoryArrow
+              href="#story-beginning"
+              label={c.chapter}
+              chapter="01"
+              rtl={rtl}
+            />
           </div>
         </div>
       </section>
 
-      <section id="story-beginning" tabIndex={-1} className="grid scroll-mt-6 bg-cream lg:grid-cols-2 lg:items-stretch">
+      <section
+        id="story-beginning"
+        tabIndex={-1}
+        className="grid scroll-mt-6 bg-cream lg:grid-cols-2 lg:items-stretch"
+      >
         <div className="relative min-h-[430px] w-full overflow-hidden sm:min-h-[560px] lg:min-h-[680px]">
           <Image
             src="/campaign/modernAll/DSCF0479.JPG"
@@ -123,12 +132,22 @@ export function OurStoryExperience() {
             >
               {c.cta}
             </Link>
-            <StoryArrow href="#story-philosophy" label={c.philosophy} chapter="02" rtl={rtl} light />
+            <StoryArrow
+              href="#story-philosophy"
+              label={c.philosophy}
+              chapter="02"
+              rtl={rtl}
+              light
+            />
           </div>
         </div>
       </section>
 
-      <section id="story-philosophy" tabIndex={-1} className="relative min-h-[560px] scroll-mt-6 overflow-hidden bg-ink text-white">
+      <section
+        id="story-philosophy"
+        tabIndex={-1}
+        className="relative min-h-[560px] scroll-mt-6 overflow-hidden bg-ink text-white"
+      >
         <Image
           src="/campaign/modernAll/DSCF0280.JPG"
           alt="EYEBREED community campaign"
@@ -155,7 +174,12 @@ export function OurStoryExperience() {
             <p className="mt-8 max-w-xl text-sm leading-8 text-white/72">
               {c.vision}
             </p>
-            <StoryArrow href="#story-future" label={c.future} chapter="03" rtl={rtl} />
+            <StoryArrow
+              href="#story-future"
+              label={c.future}
+              chapter="03"
+              rtl={rtl}
+            />
           </div>
         </div>
       </section>
@@ -167,7 +191,11 @@ export function OurStoryExperience() {
         <Value icon={<Fingerprint />} title="IDENTITY" he="מה שמייחד אותך" />
       </section>
 
-      <section id="story-future" tabIndex={-1} className="grid scroll-mt-6 bg-ink text-white lg:grid-cols-2">
+      <section
+        id="story-future"
+        tabIndex={-1}
+        className="grid scroll-mt-6 bg-ink text-white lg:grid-cols-2"
+      >
         <div className="relative min-h-[430px] lg:min-h-[600px]">
           <Image
             src="/campaign/modernAll/DSCF0181.JPG"
@@ -207,7 +235,13 @@ export function OurStoryExperience() {
   );
 }
 
-function StoryArrow({ href, label, chapter, rtl, light = false }: {
+function StoryArrow({
+  href,
+  label,
+  chapter,
+  rtl,
+  light = false,
+}: {
   href: string;
   label: string;
   chapter: string;
@@ -221,11 +255,21 @@ function StoryArrow({ href, label, chapter, rtl, light = false }: {
       className={`group mt-10 flex w-fit items-center gap-4 rounded-full py-2 pe-3 ${light ? "text-accent-readable" : "text-espresso-400"}`}
     >
       <span className="relative grid h-14 w-14 shrink-0 place-items-center rounded-full border border-current">
-        <span aria-hidden="true" className="absolute -inset-1.5 rounded-full border border-dashed border-current opacity-25 transition duration-500 group-hover:rotate-90 group-hover:opacity-60 motion-reduce:transform-none" />
-        <ArrowDown aria-hidden="true" size={24} strokeWidth={1.25} className="transition-transform duration-300 group-hover:translate-y-1 motion-reduce:transform-none" />
+        <span
+          aria-hidden="true"
+          className="absolute -inset-1.5 rounded-full border border-dashed border-current opacity-25 transition duration-500 group-hover:rotate-90 group-hover:opacity-60 motion-reduce:transform-none"
+        />
+        <ArrowDown
+          aria-hidden="true"
+          size={24}
+          strokeWidth={1.25}
+          className="transition-transform duration-300 group-hover:translate-y-1 motion-reduce:transform-none"
+        />
       </span>
       <span className="flex flex-col gap-1.5">
-        <span className="text-[9px] uppercase tracking-[.22em]">{rtl ? "הפרק הבא" : "Next chapter"} <span dir="ltr">/ {chapter}</span></span>
+        <span className="text-[9px] uppercase tracking-[.22em]">
+          {rtl ? "הפרק הבא" : "Next chapter"}
+        </span>
         <span className="text-[11px] uppercase tracking-[.12em]">{label}</span>
       </span>
     </a>

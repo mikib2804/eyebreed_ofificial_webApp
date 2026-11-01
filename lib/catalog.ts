@@ -13,4 +13,5 @@ export type StoreProduct = {
   inventory: number;
   sizes: { size: string; inventory: number }[];
   prices: { USD: number; ILS: number; EUR: number };
+  compareAtPrices?: { USD: number; ILS: number; EUR: number };
 };

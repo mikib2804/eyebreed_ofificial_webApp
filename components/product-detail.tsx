@@ -177,9 +177,12 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
           <h1 className="mt-5 font-display text-5xl leading-none sm:text-7xl">
             {locale === "he" ? product.nameHe : product.name}
           </h1>
-          <p className="mt-7 text-lg">
-            {money(product.prices[currency], currency, locale)}
-          </p>
+          <div className="mt-7 flex items-center gap-4 text-lg">
+            <span className={product.compareAtPrices ? "font-semibold text-red-700" : ""}>{money(product.prices[currency], currency, locale)}</span>
+            {product.compareAtPrices && (
+              <><span className="text-sm text-black/45 line-through">{money(product.compareAtPrices[currency], currency, locale)}</span><span className="border-y-2 border-white bg-red-600 px-3 py-1 text-[9px] font-bold tracking-[.16em] text-white shadow-[3px_3px_0_#111]">15% SALE</span></>
+            )}
+          </div>
           <p className="mt-8 max-w-xl whitespace-pre-line text-sm leading-7 text-black/75">
             {locale === "he" ? product.descriptionHe : product.description}
           </p>

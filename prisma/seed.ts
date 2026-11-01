@@ -59,7 +59,7 @@ async function main() {
     await prisma.productVariant.deleteMany({ where: { productId: product.id, size: { notIn: [...item.sizes] } } });
     for (const size of item.sizes) {
       await prisma.productVariant.upsert({
-        where: { productId_size: { productId: product.id, size } },
+        where: { productId_size_color: { productId: product.id, size, color: "" } },
         update: { inventory: item.folder === "hat" ? 30 : 6 },
         create: { productId: product.id, size, inventory: item.folder === "hat" ? 30 : 6 },
       });

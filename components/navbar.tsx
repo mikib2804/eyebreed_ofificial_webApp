@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Search, ShoppingBag, UserRound, X } from "lucide-react";
+import { Menu, ShoppingBag, X, UserRound } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useStore } from "@/components/store-provider";
 import { useEffect, useRef, useState } from "react";
 import { Currency } from "@/lib/i18n";
-import SaleTicker from "./saleTicker";
-import { PaletteSwatch } from "@/components/palette-provider";
+import SaleTicker from "@/components/saleTicker";
 import { usePathname } from "next/navigation";
 export function Navbar() {
+  const { data: session } = useSession();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const navigationRef = useRef<HTMLElement>(null);
@@ -62,13 +63,14 @@ export function Navbar() {
         className="relative mx-auto grid h-22 max-w-[1600px] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 md:h-24 md:px-10"
       >
         <div className="hidden items-center gap-7 text-[10px] tracking-[.17em] xl:flex">
-          {t.nav.map((item) => (
-            <a key={item} href="#products" className="link-line">
-              {item}
-            </a>
-          ))}
+          <Link href="/#products" className="link-line">
+            {locale === "he" ? "הקולקציה" : "COLLECTION"}
+          </Link>
           <Link href="/our-story" className="link-line">
             {locale === "he" ? "הסיפור שלנו" : "OUR STORY"}
+          </Link>
+          <Link href="/faq" className="link-line">
+            {locale === "he" ? "שאלות ותשובות" : "FAQ"}
           </Link>
           <Link href="/vision" className="link-line">
             VISION PREORDER
@@ -90,24 +92,22 @@ export function Navbar() {
           hidden={!menuOpen}
           className="absolute inset-x-0 top-full z-50 border-b border-white/20 bg-ink px-5 py-4 text-[10px] tracking-[.17em] shadow-xl md:px-10 xl:hidden"
         >
-          {t.nav.map((item) => (
-            <a
-              key={item}
-              href="/#products"
-              className="flex min-h-11 items-center border-b border-white/10"
-            >
-              {item}
-            </a>
-          ))}
+          <Link href="/#products" className="flex min-h-11 items-center border-b border-white/10">
+            {locale === "he" ? "הקולקציה" : "COLLECTION"}
+          </Link>
           <Link
             href="/our-story"
             className="flex min-h-11 items-center border-b border-white/10"
           >
             {locale === "he" ? "הסיפור שלנו" : "OUR STORY"}
           </Link>
+          <Link href="/faq" className="flex min-h-11 items-center border-b border-white/10">
+            {locale === "he" ? "שאלות ותשובות" : "FAQ"}
+          </Link>
           <Link href="/vision" className="flex min-h-11 items-center">
             VISION PREORDER
           </Link>
+          <Link href={session ? "/account" : "/login"} className="flex min-h-11 items-center border-t border-white/10">{session ? "MY ACCOUNT" : "LOGIN / REGISTER"}</Link>
         </div>
         <Link
           href="/"
@@ -123,13 +123,7 @@ export function Navbar() {
           />
         </Link>
         <div className="flex items-center justify-self-end gap-3 md:gap-5">
-          {pathname !== "/" && <PaletteSwatch />}
-          <button aria-label="Search" className="hidden sm:block">
-            <Search size={19} strokeWidth={1.3} />
-          </button>
-          <Link href="/login" aria-label="Account" className="hidden sm:block">
-            <UserRound size={19} strokeWidth={1.3} />
-          </Link>
+          <Link href={session ? "/account" : "/login"} aria-label={session ? "My account" : "Login or register"} className="flex items-center gap-2 text-[9px] tracking-wider"><UserRound size={19} strokeWidth={1.3}/><span className="hidden lg:inline">{session ? (session.user.name?.split(" ")[0] ?? "MY ACCOUNT") : "LOGIN / REGISTER"}</span></Link>
           <button
             onClick={() => setCartOpen(true)}
             aria-label="Open cart"

@@ -6,6 +6,7 @@ import "./globals.css";
 import { PaletteProvider } from "@/components/palette-provider";
 import { paletteBootstrap, palettes, paletteVariables } from "@/lib/palettes";
 import type { CSSProperties } from "react";
+import { AuthProvider } from "@/components/auth-provider";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -31,17 +32,18 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="en"
+      lang="he"
+      dir="rtl"
       style={paletteVariables(palettes[0]) as CSSProperties}
       suppressHydrationWarning
     >
       <body className={`${cormorant.variable} ${montserrat.variable}`}>
         <script dangerouslySetInnerHTML={{ __html: paletteBootstrap }} />
         <PaletteProvider>
-          <StoreProvider>
+          <AuthProvider><StoreProvider>
             {children}
             <CookieConsent />
-          </StoreProvider>
+          </StoreProvider></AuthProvider>
         </PaletteProvider>
       </body>
     </html>

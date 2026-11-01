@@ -1,10 +1,10 @@
 "use client";
 
 import { Mail, Phone, Clock3, MessageCircleCheck } from "lucide-react";
-import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import Image from "next/image";
 import { useStore } from "@/components/store-provider";
 import PaymentSupport from "./PaymentSupport";
+import ContactOptions from "./Contact-options";
 
 export function Footer() {
   const { t } = useStore();
@@ -65,7 +65,6 @@ export function Footer() {
             { label: "Shipping", href: "#" },
             { label: "Returns", href: "#" },
             { label: "FAQ", href: "#" },
-            { label: "Terms", href: "/terms" },
             { label: "Privacy", href: "#" },
           ]}
         />
@@ -88,24 +87,7 @@ export function Footer() {
               SUN–THU 09:00–18:00
             </p>
           </div>
-          <div className="mt-8 flex gap-5 border-t border-white/30 pt-6">
-            <a href="https://www.instagram.com/eyebreed_official?stkn=aWZlNWU0dGtrcmd0">
-              <FaInstagram className="cursor-pointer size-6 hover:-translate-y-1 transition-all duration-300" />
-            </a>
-            <a href="https://www.facebook.com/share/1FVCLsYsD1/">
-              <FaFacebook className="cursor-pointer size-6 hover:-translate-y-1 transition-all duration-300" />
-            </a>
-            <a
-              href={`https://wa.me/972509045444?text=${encodeURIComponent(
-                "היי, אני מעוניין ליצור קשר עם EYEBREED. אנא צור איתי קשר בהקדם האפשרי.",
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Contact us on WhatsApp"
-            >
-              <FaWhatsapp className="size-6 cursor-pointer transition-all duration-300 hover:-translate-y-1" />
-            </a>
-          </div>
+          <ContactOptions />
         </div>
       </div>
       <div className="mx-auto mt-16 justify-center items-center flex max-w-[1600px] flex-col gap-3 border-t border-white/15 pt-6 text-[9px] tracking-wider text-white/75 sm:flex-row sm:justify-between">

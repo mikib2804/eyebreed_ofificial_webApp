@@ -8,7 +8,7 @@ import { modernAllImages } from "@/lib/campaign-catalog";
 import { PaletteSwatch } from "@/components/palette-provider";
 
 export function Hero() {
-  const { t } = useStore();
+  const { t, locale } = useStore();
   const [slide, setSlide] = useState(0);
 
   useEffect(() => {
@@ -44,8 +44,20 @@ export function Hero() {
         <p className="mb-7 text-[9px] tracking-[.32em] sm:mb-9 sm:text-[10px] sm:tracking-[.38em]">{t.collection}</p>
         <h1 className="font-display text-[clamp(3rem,13vw,5.25rem)] font-light leading-[.82] tracking-[-.035em] lg:text-[clamp(4rem,7vw,8.5rem)] lg:leading-[.75]">
           <span className="block">{t.headlineA}</span>
-          <span className="mt-5 block">{t.headlineB}</span>
-          <span className="mt-5 block text-espresso-200">{t.headlineC}</span>
+          <span className="mt-5 block">
+            {locale === "he" ? (
+              <>
+                חיים <span className="text-espresso-200">שלי</span>
+              </>
+            ) : (
+              <>
+                OF <span className="text-espresso-200">LIFE</span>
+              </>
+            )}
+          </span>
+          {t.headlineC && (
+            <span className="mt-5 block text-espresso-200">{t.headlineC}</span>
+          )}
         </h1>
         <p className="mt-8 max-w-sm text-xs leading-6 text-white/70 sm:mt-10 sm:text-sm sm:leading-7">
           {t.intro}
