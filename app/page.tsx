@@ -8,25 +8,20 @@ import { Footer } from "@/components/footer";
 import { CartDrawer } from "@/components/cart-drawer";
 import { prisma } from "@/lib/prisma";
 import { productWithVariants, toStoreProduct } from "@/lib/products";
-import { campaignProducts, campaignProductToStoreProduct } from "@/lib/campaign-catalog";
+import { campaignProducts } from "@/lib/campaign-catalog";
+import { getInstagramVideos } from "@/lib/instagram";
 
 export default async function Home() {
   const visionSlugs = campaignProducts.map((item) => item.slug);
-  const products = await prisma.product
-    .findMany({
+  const [databaseProducts, reels] = await Promise.all([prisma.product.findMany({
       where: { status: "ACTIVE", slug: { in: visionSlugs } },
       include: productWithVariants,
-    })
-    .then((items) => {
-      const databaseBySlug = new Map(items.map((item) => {
-        const product = toStoreProduct(item);
-        return [product.slug, product] as const;
-      }));
-      return campaignProducts.map((item) =>
-        campaignProductToStoreProduct(item, databaseBySlug.get(item.slug)),
-      );
-    })
-    .catch(() => campaignProducts.map((item) => campaignProductToStoreProduct(item)));
+    }), getInstagramVideos()]);
+  const productsBySlug = new Map(databaseProducts.map((item) => [item.slug, toStoreProduct(item)] as const));
+  const products = visionSlugs.flatMap((slug) => {
+    const product = productsBySlug.get(slug);
+    return product ? [product] : [];
+  });
 
   return (
     <>
@@ -39,7 +34,7 @@ export default async function Home() {
           displayImages={Object.fromEntries(campaignProducts.map((item) => [item.slug, item.visionImage]))}
         />
         <MediaSection />
-        <ReelsSection />
+        <ReelsSection items={reels} />
         <CartoonCollection />
       </main>
       <Footer />

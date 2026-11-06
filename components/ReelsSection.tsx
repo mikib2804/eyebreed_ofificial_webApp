@@ -1,20 +1,15 @@
 "use client";
 
 import { useStore } from "@/components/store-provider";
-import { INSTAGRAM_REELS, type ReelItem } from "@/lib/reels";
-import Script from "next/script";
+import type { ReelItem } from "@/lib/reels";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import {
-  InstagramReel,
-  processInstagramEmbeds,
-} from "@/components/instagram-reel";
 
 export function ReelsSection({
-  items = INSTAGRAM_REELS,
+  items,
 }: {
-  items?: ReelItem[];
+  items: ReelItem[];
 }) {
   const { locale } = useStore();
   const hebrew = locale === "he";
@@ -145,12 +140,6 @@ export function ReelsSection({
       aria-labelledby="reels-heading"
       className="overflow-hidden bg-cream py-12 text-ink sm:py-16 md:py-24"
     >
-      <Script
-        id="instagram-embed"
-        src="https://www.instagram.com/embed.js"
-        strategy="afterInteractive"
-        onReady={processInstagramEmbeds}
-      />
       <div className="mx-auto max-w-[1600px]">
         <div className="mx-4 mb-5 flex flex-wrap items-end justify-between gap-6 border-b border-ink/15 pb-7 sm:mx-5 md:mx-12 md:pb-9">
           <div className="min-w-0 max-w-[1050px]">
@@ -229,9 +218,7 @@ export function ReelsSection({
           }}
           className="scrollbar-none flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 py-4 [scroll-padding-inline:16px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] md:px-12 md:[scroll-padding-inline:48px]"
         >
-          {items.map((item) => (
-            <InstagramReel key={item.id} link={item.link} />
-          ))}
+          {items.map((item) => <InstagramVideo key={item.id} item={item} />)}
         </div>
         {visibleReels > 1 && (
           <div
@@ -259,5 +246,14 @@ export function ReelsSection({
         )}
       </div>
     </section>
+  );
+}
+
+function InstagramVideo({ item }: { item: ReelItem }) {
+  return (
+    <article className="group relative aspect-[9/16] w-[calc(100vw-32px)] max-w-[360px] shrink-0 snap-center overflow-hidden rounded-2xl border border-ink/10 bg-black shadow-lg">
+      <video src={item.src} poster={item.poster} controls playsInline preload="metadata" className="h-full w-full object-cover" aria-label={item.title ?? "EYEBREED Instagram video"} />
+      <a href={item.link} target="_blank" rel="noopener noreferrer" className="absolute start-3 top-3 rounded-full bg-black/65 px-3 py-2 text-[9px] tracking-wider text-white opacity-90 backdrop-blur-sm transition hover:bg-black" aria-label={`View ${item.title ?? "video"} on Instagram`}>VIEW ON INSTAGRAM</a>
+    </article>
   );
 }

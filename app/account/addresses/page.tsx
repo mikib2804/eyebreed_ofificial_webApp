@@ -1,2 +1,24 @@
-import { prisma } from "@/lib/prisma"; import { requireCustomer } from "@/lib/account"; import { EmptyState,PageTitle } from "@/components/account-shell"; import { AddressForm,DeleteButton } from "@/components/account-forms";
-export default async function Addresses(){const user=await requireCustomer();const items=await prisma.address.findMany({where:{userId:user.id},orderBy:[{isDefault:"desc"},{createdAt:"desc"}]});return <><PageTitle title="My Addresses"/><div className="mb-10 grid gap-4 sm:grid-cols-2">{items.map(a=><article key={a.id} className="border border-black/15 p-6 text-sm leading-6">{a.isDefault&&<p className="mb-3 text-[8px] tracking-luxury">DEFAULT</p>}<b>{a.label}</b><p>{a.fullName}<br/>{a.line1}{a.line2&&<><br/>{a.line2}</>}<br/>{a.city} {a.postalCode}<br/>{a.country}</p><div className="mt-4"><DeleteButton endpoint={`/api/account/addresses/${a.id}`}/></div></article>)}{!items.length&&<EmptyState title="No saved addresses" text="Add an address for a faster checkout."/>}</div><h2 className="mb-5 font-display text-3xl">Add an address</h2><AddressForm/></>}
+import { AddressBook } from "@/components/address-book";
+import { requireCustomer } from "@/lib/account";
+import { prisma } from "@/lib/prisma";
+
+export default async function AddressesPage() {
+  const user = await requireCustomer();
+  const addresses = await prisma.address.findMany({
+    where: { userId: user.id },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+  });
+
+  return <AddressBook addresses={addresses.map((address) => ({
+    id: address.id,
+    label: address.label,
+    fullName: address.fullName,
+    phone: address.phone,
+    line1: address.line1,
+    line2: address.line2,
+    city: address.city,
+    postalCode: address.postalCode,
+    country: address.country,
+    isDefault: address.isDefault,
+  }))} />;
+}

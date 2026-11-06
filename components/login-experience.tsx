@@ -73,8 +73,8 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
   }
 
   return (
-    <main className="grid min-h-screen bg-cream text-ink lg:grid-cols-[58%_42%]">
-      <section className="relative min-h-[42vh] overflow-hidden bg-ink text-white lg:min-h-screen">
+    <main className="grid min-h-screen w-full max-w-full overflow-x-hidden bg-cream text-ink lg:grid-cols-[minmax(0,58%)_minmax(0,42%)]">
+      <section className="relative min-w-0 min-h-[42vh] overflow-hidden bg-ink text-white lg:min-h-screen">
         {slides.map((item, index) => (
           <Image
             key={item.image}
@@ -118,8 +118,8 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
         </div>
       </section>
 
-      <section className="flex min-h-[650px] items-center justify-center px-6 py-14 sm:px-12 lg:px-[5vw]">
-        <div className="w-full max-w-md">
+      <section className="relative flex min-w-0 min-h-[650px] items-center justify-center overflow-hidden px-6 py-14 sm:px-12 lg:px-[5vw]">
+        <div className="min-w-0 w-full max-w-md">
           <Link
             href="/"
             className="block text-center font-display text-4xl tracking-[.22em]"
@@ -173,8 +173,8 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
               required
             />
             <div>
-              <div className="flex items-end border-b border-black/45 focus-within:border-black">
-                <label className="flex-1 text-[9px] tracking-[.2em]">
+              <div className="flex min-w-0 items-end border-b border-black/45 focus-within:border-black">
+                <label className="min-w-0 flex-1 text-[9px] tracking-[.2em]">
                   PASSWORD
                   <input
                     name="password"
@@ -188,22 +188,22 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
                     className="mt-2 block w-full bg-transparent py-2 text-sm tracking-normal outline-none"
                   />
                 </label>
-                <Link
-                  href="/forgot-password"
+                <button
+                  type="button"
                   onClick={() => setShowPassword((value) => !value)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   className="mb-3 ms-4 text-black/75"
                 >
                   {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                </Link>
+                </button>
               </div>
               {mode === "login" && (
-                <button
-                  type="button"
+                <Link
+                  href="/forgot-password"
                   className="mt-3 float-end text-[10px] underline underline-offset-4"
                 >
                   Forgot password?
-                </button>
+                </Link>
               )}
             </div>
             {mode === "register" && <AuthField label="CONFIRM PASSWORD" name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required />}
@@ -241,7 +241,7 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
           <p className="mt-9 text-center text-[10px] text-black/75">
             By continuing, you agree to our Terms and Privacy Policy.
           </p>
-          <p className="absolute bottom-4 w-full text-center text-[10px] text-black/75">
+          <p className="mt-8 w-full text-center text-[10px] text-black/75">
             © 2026 EYEBREED. All Rights Reserved.
           </p>
         </div>

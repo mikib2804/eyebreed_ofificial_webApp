@@ -1,16 +1,33 @@
 "use client";
 
-import { Mail, Phone, Clock3, MessageCircleCheck } from "lucide-react";
+import { Mail, Phone, Clock3 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useStore } from "@/components/store-provider";
 import PaymentSupport from "./PaymentSupport";
 import ContactOptions from "./Contact-options";
+import { footerHelpRoutes, footerShopRoutes } from "@/lib/site-routes";
+import { FormEvent, useState } from "react";
 
 export function Footer() {
-  const { t } = useStore();
+  const { data: session } = useSession();
+  const { t, locale } = useStore();
+  const [newsletterStartedAt] = useState(() => Date.now());
+  const [newsletterMessage, setNewsletterMessage] = useState("");
+  const [newsletterError, setNewsletterError] = useState(false);
+  const [newsletterBusy, setNewsletterBusy] = useState(false);
+
+  async function subscribe(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setNewsletterBusy(true); setNewsletterMessage(""); setNewsletterError(false);
+    const form = new FormData(event.currentTarget);
+    const response = await fetch("/api/newsletter", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: form.get("email"), locale, consent: form.get("consent") === "on", company: form.get("company"), startedAt: newsletterStartedAt }) });
+    const result = await response.json().catch(() => ({})); setNewsletterBusy(false); setNewsletterError(!response.ok); setNewsletterMessage(result.message ?? (response.ok ? "Subscribed." : "Could not subscribe."));
+    if (response.ok) event.currentTarget.reset();
+  }
   return (
     <footer
-      dir="ltr"
+      dir={locale === "he" ? "rtl" : "ltr"}
       className="bg-ink px-6 pt-16 pb-3 text-white md:px-10 lg:pt-20 lg:pb-5"
     >
       <div className="mx-auto grid max-w-[1600px] gap-12 lg:grid-cols-[1.4fr_.7fr_.7fr_1fr]">
@@ -30,48 +47,51 @@ export function Footer() {
             <br />
             ON NEW ARRIVALS AND EDITORIALS.
           </p>
-          <form
-            className="mt-8 flex max-w-sm border border-white/50"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <input
-              type="email"
-              placeholder="YOUR EMAIL"
-              aria-label="Email"
-              className="min-w-0 flex-1 bg-transparent px-5 py-4 text-[10px] tracking-luxury outline-none"
-            />
-            <button
-              className="px-5 hover:translate-x-0.5 transition-all duration-300"
-              aria-label="Subscribe"
-            >
-              →
-            </button>
+          <form className="mt-8 max-w-sm" onSubmit={subscribe}>
+            <div className="flex border border-white/50"><input name="email" type="email" required autoComplete="email" placeholder={locale === "he" ? "האימייל שלך" : "YOUR EMAIL"} aria-label={locale === "he" ? "אימייל להרשמה" : "Subscription email"} className="min-w-0 flex-1 bg-transparent px-5 py-4 text-[10px] tracking-luxury outline-none" /><button disabled={newsletterBusy} className="min-h-12 px-5 transition-all duration-300 hover:translate-x-0.5 disabled:opacity-50" aria-label={locale === "he" ? "הרשמה לעדכונים" : "Subscribe"}>{newsletterBusy ? "…" : "→"}</button></div>
+            <label className="mt-3 flex items-start gap-2 text-[10px] leading-5 text-white/75"><input name="consent" type="checkbox" required className="mt-1" /><span>{locale === "he" ? "אני מסכים/ה לקבל עדכונים שיווקיים ויכול/ה לבטל בכל עת." : "I agree to receive marketing updates and can unsubscribe at any time."}</span></label>
+            <input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" />
+            {newsletterMessage && <p role={newsletterError ? "alert" : "status"} aria-live="polite" className={`mt-3 text-xs ${newsletterError ? "text-red-300" : "text-green-300"}`}>{newsletterMessage}</p>}
           </form>
         </div>
         <FooterLinks
-          title="SHOP"
-          links={[
-            "New arrivals",
-            "Clothing",
-            "Knitwear",
-            "Accessories",
-            { label: "Our story", href: "/our-story" },
-          ]}
+          title={locale === "he" ? "חנות" : "SHOP"}
+          links={footerShopRoutes.map((route) => ({
+            label: route.label[locale],
+            href: route.href,
+          }))}
         />
         <FooterLinks
-          title="HELP"
+          title={locale === "he" ? "עזרה" : "HELP"}
           links={[
-            { label: "Sizing", href: "/size-guide" },
-            { label: "Shipping", href: "#" },
-            { label: "Returns", href: "#" },
-            { label: "FAQ", href: "#" },
-            { label: "Privacy", href: "#" },
+            ...footerHelpRoutes.map((route) => ({
+              label: route.label[locale],
+              href: route.href,
+            })),
+            {
+              label: session
+                ? locale === "he"
+                  ? "החשבון שלי"
+                  : "My Account"
+                : locale === "he"
+                  ? "התחברות / הרשמה"
+                  : "Login / Register",
+              href: session ? "/account" : "/login",
+            },
+            ...(session?.user.role === "ADMIN"
+              ? [
+                  {
+                    label: locale === "he" ? "ניהול" : "Admin",
+                    href: "/admin",
+                  },
+                ]
+              : []),
           ]}
         />
         <div>
           <h3 className="text-xs tracking-[.16em]">{t.contact}</h3>
           <div className="mt-6 space-y-5 text-xs text-white/75">
-            <a className="flex items-center gap-3" href="tel:+97235550148">
+            <a className="flex items-center gap-3" href="tel:+972509045444">
               <Phone size={17} strokeWidth={1.2} />
               +972 5 09 045 444
             </a>
@@ -112,23 +132,19 @@ function FooterLinks({
   links,
 }: {
   title: string;
-  links: Array<string | { label: string; href: string }>;
+  links: Array<{ label: string; href: string }>;
 }) {
   return (
     <div>
       <h3 className="text-xs tracking-[.16em]">{title}</h3>
       <ul className="mt-6 space-y-4 text-[11px] uppercase tracking-wider text-white/75">
-        {links.map((link) => {
-          const item =
-            typeof link === "string" ? { label: link, href: "#" } : link;
-          return (
-            <li key={item.label}>
-              <a className="transition hover:text-white" href={item.href}>
-                {item.label}
-              </a>
-            </li>
-          );
-        })}
+        {links.map((item) => (
+          <li key={`${item.href}-${item.label}`}>
+            <Link className="transition hover:text-white" href={item.href}>
+              {item.label}
+            </Link>
+          </li>
+        ))}
       </ul>
     </div>
   );

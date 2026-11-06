@@ -1,2 +1,25 @@
-import Image from "next/image"; import Link from "next/link"; import { prisma } from "@/lib/prisma"; import { requireCustomer,money } from "@/lib/account"; import { EmptyState,PageTitle } from "@/components/account-shell"; import { DeleteButton } from "@/components/account-forms";
-export default async function Wishlist(){const user=await requireCustomer();const items=await prisma.wishlistItem.findMany({where:{userId:user.id},include:{product:true},orderBy:{createdAt:"desc"}});return <><PageTitle title="Wishlist"/>{items.length?<div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{items.map(({id,product})=><article key={id}><Link href={`/products/${product.slug}`}><div className="relative aspect-[3/4] bg-black/5">{product.images[0]&&<Image src={product.images[0]} alt={product.name} fill className="object-cover"/>}</div><h2 className="mt-4 font-display text-2xl">{product.name}</h2><p className="text-xs">{money(product.priceIls)}</p></Link><div className="mt-3"><DeleteButton endpoint={`/api/account/wishlist/${product.id}`}/></div></article>)}</div>:<EmptyState title="Your wishlist is empty" text="Save pieces you love and return to them at any time."/>}</>}
+import { prisma } from "@/lib/prisma";
+import { requireCustomer } from "@/lib/account";
+import { WishlistView } from "@/components/wishlist-view";
+
+export default async function WishlistPage() {
+  const user = await requireCustomer();
+  const items = await prisma.wishlistItem.findMany({
+    where: { userId: user.id },
+    include: { product: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return (
+    <WishlistView
+      initialItems={items.map(({ product }) => ({
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        nameHe: product.nameHe ?? product.name,
+        image: product.images[0] ?? null,
+        prices: { USD: Number(product.priceUsd), ILS: Number(product.priceIls), EUR: Number(product.priceEur) },
+      }))}
+    />
+  );
+}

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { ArrowRight, Mail, MousePointer2 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import PaymentSupport from "./PaymentSupport";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
@@ -10,6 +10,7 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 export function VisionWaitlist() {
   const [status, setStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
+  const startedAt = useRef(Date.now());
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,7 +25,7 @@ export function VisionWaitlist() {
       const response = await fetch("/api/vision-waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, locale: "he", consent: data.get("consent") === "on", company: data.get("company"), startedAt: startedAt.current }),
       });
       const result = (await response.json()) as { message?: string };
 
@@ -33,6 +34,7 @@ export function VisionWaitlist() {
       setStatus("success");
       setMessage(result.message || "You’re on the list.");
       form.reset();
+      startedAt.current = Date.now();
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Please try again.");
@@ -110,6 +112,7 @@ export function VisionWaitlist() {
             dir="rtl"
             className="mt-5 text-xl tracking-[.15em] sm:mt-7 sm:text-2xl"
           >
+            <input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" />
             הזמנה מוקדמת
           </p>
 
@@ -136,6 +139,10 @@ export function VisionWaitlist() {
                 strokeWidth={1.4}
               />
             </div>
+            <label className="flex items-start gap-3 text-start text-[11px] leading-5 text-white/85">
+              <input name="consent" type="checkbox" required className="mt-1 size-4 shrink-0 accent-white" />
+              <span>I agree to receive availability updates for the Vision of Life collection. I can unsubscribe at any time.</span>
+            </label>
             <div className="relative">
               <button
                 type="submit"

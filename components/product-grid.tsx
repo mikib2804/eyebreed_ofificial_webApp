@@ -6,9 +6,10 @@ import { Heart } from "lucide-react";
 import type { StoreProduct } from "@/lib/catalog";
 import { money } from "@/lib/i18n";
 import { useStore } from "@/components/store-provider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export function ProductGrid({
   products,
@@ -18,12 +19,28 @@ export function ProductGrid({
   displayImages?: Record<string, string>;
 }) {
   const { locale, currency, addToCart, t } = useStore();
+  const router = useRouter();
   const { status } = useSession();
   const [liked, setLiked] = useState<boolean[]>([]);
   const [likeBurst, setLikeBurst] = useState<{ index: number; key: number } | null>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(
     () => new Set(),
   );
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    let cancelled = false;
+
+    void fetch("/api/account/wishlist", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : { productIds: [] })
+      .then((data: { productIds?: string[] }) => {
+        if (cancelled) return;
+        const saved = new Set(data.productIds ?? []);
+        setLiked(products.map((product) => saved.has(product.id)));
+      });
+
+    return () => { cancelled = true; };
+  }, [products, status]);
   return (
     <section
       id="products"
@@ -83,6 +100,11 @@ export function ProductGrid({
                           e.preventDefault();
                           e.stopPropagation();
 
+                          if (status !== "authenticated") {
+                            router.push("/login?callbackUrl=%2F%23products");
+                            return;
+                          }
+
                           const next = !(liked[index] ?? false);
                           setLiked((prev) => {
                             const newLiked = [...prev];
@@ -90,9 +112,6 @@ export function ProductGrid({
                             return newLiked;
                           });
                           if (next) setLikeBurst({ index, key: Date.now() });
-
-                          // Guests keep the reaction locally without being redirected or persisted.
-                          if (status !== "authenticated") return;
 
                           const response = await fetch(`/api/account/wishlist/${product.id}`, { method: next ? "PUT" : "DELETE" });
                           if (!response.ok) {
@@ -103,7 +122,7 @@ export function ProductGrid({
                             });
                           }
                         }}
-                        aria-label="Add to favorites"
+                        aria-label={liked[index] ? (locale === "he" ? "הסרה מהמועדפים" : "Remove from wishlist") : (locale === "he" ? "הוספה למועדפים" : "Add to wishlist")}
                         aria-pressed={liked[index] ?? false}
                         className="absolute end-4 top-4 z-30 grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-105"
                       >

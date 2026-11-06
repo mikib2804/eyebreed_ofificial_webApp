@@ -1,2 +1,53 @@
-import Image from "next/image"; import Link from "next/link"; import { prisma } from "@/lib/prisma"; import { requireCustomer, money } from "@/lib/account"; import { EmptyState, PageTitle } from "@/components/account-shell";
-export default async function Orders({ searchParams }: { searchParams: Promise<{ status?: string }> }) { const user=await requireCustomer(); const {status}=await searchParams; const allowed=["PROCESSING","SHIPPED","DELIVERED","CANCELLED"]; const orders=await prisma.order.findMany({where:{userId:user.id,...(status&&allowed.includes(status)?{status:status as never}:{})},include:{items:{include:{product:{select:{images:true}}}}},orderBy:{createdAt:"desc"}}); return <><PageTitle title="My Orders"/><div className="mb-8 flex flex-wrap gap-2">{["All","Processing","Shipped","Delivered","Cancelled"].map(s=><Link key={s} href={s==="All"?"/account/orders":`/account/orders?status=${s.toUpperCase()}`} className={`border px-4 py-2 text-[9px] tracking-wider ${(!status&&s==="All")||status===s.toUpperCase()?"border-ink bg-ink text-white":"border-black/20"}`}>{s}</Link>)}</div>{orders.length?<div className="space-y-5">{orders.map(o=><Link href={`/account/orders/${o.id}`} key={o.id} className="block border border-black/15 p-5 transition hover:bg-white"><div className="flex flex-wrap justify-between gap-4"><div><b>#{o.orderNumber}</b><p className="mt-1 text-xs text-black/55">{o.createdAt.toLocaleDateString()}</p></div><div className="text-end"><b>{money(o.total,o.currency)}</b><p className="mt-1 text-[9px] tracking-wider">{o.shippingStatus.replaceAll("_"," ")}</p></div></div><div className="mt-5 flex gap-3 overflow-hidden">{o.items.map(i=><div key={i.id} className="flex items-center gap-3"><div className="relative h-16 w-12 bg-black/5">{i.product?.images[0]&&<Image src={i.product.images[0]} alt="" fill className="object-cover"/>}</div><p className="max-w-36 text-xs">{i.productName}<small className="block text-black/50">{i.size} {i.color} × {i.quantity}</small></p></div>)}</div></Link>)}</div>:<EmptyState title="No matching orders" text="Orders matching this filter will appear here."/>}</>; }
+import type { OrderStatus } from "@prisma/client";
+import { AccountOrdersView } from "@/components/account-orders-view";
+import { requireCustomer } from "@/lib/account";
+import { prisma } from "@/lib/prisma";
+
+const PAGE_SIZE = 10;
+const orderStatuses: readonly OrderStatus[] = [
+  "PENDING_PAYMENT", "PAID", "PROCESSING", "READY_FOR_SHIPMENT",
+  "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED",
+];
+
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string; page?: string }> }) {
+  const user = await requireCustomer();
+  const query = await searchParams;
+  const status = orderStatuses.includes(query.status as OrderStatus) ? query.status as OrderStatus : undefined;
+  const requestedPage = Math.max(1, Number.parseInt(query.page ?? "1", 10) || 1);
+  const where = { userId: user.id, ...(status ? { status } : {}) };
+  const totalItems = await prisma.order.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const orders = await prisma.order.findMany({
+    where,
+    include: { items: { include: { product: { select: { images: true } } } } },
+    orderBy: { createdAt: "desc" },
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
+
+  return <AccountOrdersView
+    activeStatus={status ?? null}
+    page={page}
+    totalPages={totalPages}
+    totalItems={totalItems}
+    orders={orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      createdAt: order.createdAt.toISOString(),
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      shippingStatus: order.shippingStatus,
+      total: Number(order.total),
+      currency: order.currency,
+      items: order.items.map((item) => ({
+        id: item.id,
+        productName: item.productName,
+        size: item.size,
+        color: item.color,
+        quantity: item.quantity,
+        image: item.product?.images[0] ?? null,
+      })),
+    }))}
+  />;
+}

@@ -11,35 +11,50 @@
       "static/chunks/main-app.js",
       "static/chunks/app/not-found.js"
     ],
+    "/account/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/account/layout.js"
+    ],
+    "/account/orders/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/account/orders/page.js"
+    ],
+    "/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login/page.js"
+    ],
     "/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/_not-found/page.js"
     ],
     "/api/auth/[...nextauth]/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/auth/[...nextauth]/route.js"
     ],
-    "/api/instagram/reel-status/route": [
+    "/api/account/wishlist/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/instagram/reel-status/route.js"
+      "static/chunks/app/api/account/wishlist/route.js"
     ],
-    "/our-story/page": [
+    "/account/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/our-story/page.js"
+      "static/chunks/app/account/page.js"
     ],
-    "/products/[slug]/not-found": [
+    "/admin/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/products/[slug]/not-found.js"
-    ],
-    "/products/[slug]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/products/[slug]/page.js"
+      "static/chunks/app/admin/page.js"
     ]
   }
 }

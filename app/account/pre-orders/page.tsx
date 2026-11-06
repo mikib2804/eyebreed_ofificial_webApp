@@ -1,2 +1,17 @@
-import Image from "next/image"; import { prisma } from "@/lib/prisma"; import { requireCustomer } from "@/lib/account"; import { EmptyState,PageTitle } from "@/components/account-shell"; import { DeleteButton } from "@/components/account-forms";
-export default async function PreOrders(){const user=await requireCustomer();const items=await prisma.preOrder.findMany({where:{userId:user.id},include:{product:true},orderBy:{createdAt:"desc"}});return <><PageTitle title="My Pre-orders"/>{items.length?<div className="space-y-4">{items.map(p=><article key={p.id} className="grid grid-cols-[80px_1fr_auto] gap-5 border border-black/15 p-4"><div className="relative h-24 bg-black/5">{p.product.images[0]&&<Image src={p.product.images[0]} alt="" fill className="object-cover"/>}</div><div><h2 className="font-display text-2xl">{p.product.name}</h2><p className="text-xs text-black/55">{p.size} {p.color} · {p.createdAt.toLocaleDateString()}</p><p className="mt-3 text-[9px] tracking-wider">{p.status.replaceAll("_"," ")}</p></div>{p.status==="WAITING"&&<DeleteButton endpoint={`/api/account/pre-orders/${p.id}`} label="CANCEL"/>}</article>)}</div>:<EmptyState title="No pre-orders" text="Your pre-order registrations and availability updates will appear here."/>}</>}
+import { prisma } from "@/lib/prisma";
+import { requireCustomer } from "@/lib/account";
+import { PreOrdersView } from "@/components/pre-orders-view";
+
+export default async function PreOrdersPage() {
+  const sessionUser = await requireCustomer();
+  const dbUser = await prisma.user.findUnique({ where: { id: sessionUser.id }, select: { id: true, email: true, emailVerified: true } });
+  if (dbUser?.email && dbUser.emailVerified) {
+    await prisma.preOrder.updateMany({ where: { userId: null, email: dbUser.email.toLowerCase() }, data: { userId: dbUser.id } });
+  }
+  const items = await prisma.preOrder.findMany({
+    where: { userId: sessionUser.id },
+    include: { product: { select: { name: true, nameHe: true, slug: true, images: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return <PreOrdersView items={items.map((item) => ({ id: item.id, productName: item.product.name, productNameHe: item.product.nameHe, productSlug: item.product.slug, image: item.product.images[0] ?? null, size: item.size, color: item.color, quantity: item.quantity, status: item.status, contactedAt: item.contactedAt?.toISOString() ?? null, notifiedAt: item.notifiedAt?.toISOString() ?? null, createdAt: item.createdAt.toISOString() }))} />;
+}

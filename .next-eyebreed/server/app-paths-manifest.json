@@ -1,6 +1,6 @@
 {
-  "/api/instagram/reel-status/route": "app/api/instagram/reel-status/route.js",
+  "/icon.ico/route": "app/icon.ico/route.js",
   "/page": "app/page.js",
-  "/our-story/page": "app/our-story/page.js",
-  "/products/[slug]/page": "app/products/[slug]/page.js"
+  "/admin/page": "app/admin/page.js",
+  "/login/page": "app/login/page.js"
 }

@@ -20,7 +20,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "EYEBREED — Elevated essentials",
+  title: { default: "EYEBREED — Elevated essentials", template: "%s · EYEBREED" },
   icons: {
     icon: "/icon.ico",
   },
@@ -38,10 +38,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className={`${cormorant.variable} ${montserrat.variable}`}>
+        <a href="#main-content" className="sr-only z-[100] rounded bg-white px-4 py-3 text-sm text-black focus:not-sr-only focus:fixed focus:start-4 focus:top-4">Skip to main content</a>
         <script dangerouslySetInnerHTML={{ __html: paletteBootstrap }} />
         <PaletteProvider>
           <AuthProvider><StoreProvider>
-            {children}
+            <div id="main-content" tabIndex={-1}>{children}</div>
             <CookieConsent />
           </StoreProvider></AuthProvider>
         </PaletteProvider>

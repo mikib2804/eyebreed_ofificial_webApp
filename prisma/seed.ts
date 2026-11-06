@@ -10,6 +10,16 @@ async function main() {
     create: { name: "Vision Collection", nameHe: "קולקציית Vision", slug: "vision-collection" },
   });
 
+  const websitePromotion = await prisma.discount.findFirst({
+    where: { name: "15% website promotion", code: null },
+    select: { id: true },
+  });
+  if (websitePromotion) {
+    await prisma.discount.update({ where: { id: websitePromotion.id }, data: { type: "PERCENTAGE", scope: "STORE", value: 15, active: true } });
+  } else {
+    await prisma.discount.create({ data: { name: "15% website promotion", code: null, type: "PERCENTAGE", scope: "STORE", value: 15, active: true } });
+  }
+
   await prisma.product.updateMany({
     where: { slug: { in: ["espresso-overshirt", "relaxed-hoodie", "tailored-trousers", "knit-polo"] } },
     data: { status: ProductStatus.ARCHIVED, featured: false },
@@ -17,6 +27,9 @@ async function main() {
 
   for (const item of campaignProducts) {
     const inventory = item.folder === "hat" ? 30 : item.sizes.length * 6;
+    // Store list prices. The trusted quote applies the single 15% website
+    // promotion so products with compare-at pricing are not discounted twice.
+    const listPrices = "compareAtPrices" in item ? item.compareAtPrices : item.prices;
     const product = await prisma.product.upsert({
       where: { slug: item.slug },
       update: {
@@ -28,9 +41,9 @@ async function main() {
         images: [...item.images],
         story: item.story,
         storyHe: item.storyHe,
-        priceUsd: item.prices.USD,
-        priceIls: item.prices.ILS,
-        priceEur: item.prices.EUR,
+        priceUsd: listPrices.USD,
+        priceIls: listPrices.ILS,
+        priceEur: listPrices.EUR,
         inventory,
         categoryId: category.id,
         featured: true,
@@ -46,9 +59,9 @@ async function main() {
         descriptionHe: item.descriptionHe,
         story: item.story,
         storyHe: item.storyHe,
-        priceUsd: item.prices.USD,
-        priceIls: item.prices.ILS,
-        priceEur: item.prices.EUR,
+        priceUsd: listPrices.USD,
+        priceIls: listPrices.ILS,
+        priceEur: listPrices.EUR,
         inventory,
         featured: true,
         status: ProductStatus.ACTIVE,

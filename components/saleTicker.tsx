@@ -1,17 +1,25 @@
 "use client";
+
+import { useStore } from "@/components/store-provider";
+
 type SaleTickerProps = {
   text?: string;
 };
-export default function SaleTicker({
-  text = "SECOND ITEM 50% OFF",
-}: SaleTickerProps) {
+export default function SaleTicker({ text }: SaleTickerProps) {
+  const { locale } = useStore();
+  const message =
+    text ??
+    (locale === "he"
+      ? "15% הנחה על הזמנות באתר"
+      : "15% OFF WEBSITE ORDERS");
   // Keep each duplicated marquee track wider than large desktop displays so
   // the loop never exposes an empty area in the middle of the ticker.
-  const items = Array.from({ length: 40 }, () => text);
+  const items = Array.from({ length: 40 }, () => message);
 
   return (
     <div dir="ltr" className="w-full overflow-hidden bg-espresso-400 text-ink">
-      <div className="flex w-max animate-marquee will-change-transform">
+      <span className="sr-only">{message}</span>
+      <div aria-hidden="true" className="flex w-max animate-marquee will-change-transform motion-reduce:animate-none">
         <div className="flex shrink-0">
           {items.map((text, index) => (
             <span

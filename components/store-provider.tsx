@@ -27,6 +27,7 @@ const StoreContext = createContext<StoreState | null>(null);
 const HAT_SLUG = "vision-logo-beanie";
 const ZIP_SLUG = "vision-washed-zip-hoodie";
 const POLO_SLUG = "vision-25-layered-jersey";
+const PROMOTION_REMINDER_MS = 7_000;
 const hatCatalogItem = campaignProducts.find((product) => product.slug === HAT_SLUG)!;
 const freeHatProduct: StoreProduct = {
   ...campaignProductToStoreProduct(hatCatalogItem),
@@ -36,8 +37,8 @@ const freeHatProduct: StoreProduct = {
 };
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
-  const syncedUserCart = useRef(false);
+  const { data: session, status } = useSession();
+  const syncedCartUserId = useRef<string | null>(null);
   const [locale, setLocale] = useState<Locale>("he");
   const [currency, setCurrency] = useState<Currency>("ILS");
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -47,8 +48,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { try { const saved = localStorage.getItem("eyebreed.cart.v1"); if (saved) setCart(JSON.parse(saved)); } catch {} finally { setHydrated(true); } }, []);
   useEffect(() => { if (hydrated) localStorage.setItem("eyebreed.cart.v1", JSON.stringify(cart.filter(i => !i.isGift))); }, [cart, hydrated]);
   useEffect(() => {
-    if (!hydrated || status !== "authenticated" || syncedUserCart.current) return;
-    syncedUserCart.current = true;
+    const userId = session?.user?.id;
+    if (!hydrated || status !== "authenticated" || !userId || syncedCartUserId.current === userId) return;
+    syncedCartUserId.current = userId;
     void (async () => {
       const response = await fetch("/api/account/cart"); if (!response.ok) return;
       const remote = await response.json() as Array<{productId:string;quantity:number;size:string|null;product:{id:string;slug:string;name:string;nameHe:string|null;material:string|null;images:string[];description:string;descriptionHe:string|null;story:string|null;storyHe:string|null;inventory:number;priceUsd:string;priceIls:string;priceEur:string;variants:Array<{size:string;inventory:number}>}}>; 
@@ -57,12 +59,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setCart(merged);
       await fetch("/api/account/cart",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:merged.filter(i=>!i.isGift).map(i=>({productId:i.id,quantity:i.quantity,size:i.selectedSize,color:null}))})});
     })();
-  }, [hydrated, status]);
+  }, [hydrated, session?.user?.id, status]);
   useEffect(() => {
-    if (!syncedUserCart.current || status !== "authenticated") return;
+    if (status === "unauthenticated") syncedCartUserId.current = null;
+  }, [status]);
+  useEffect(() => {
+    if (!session?.user?.id || syncedCartUserId.current !== session.user.id || status !== "authenticated") return;
     const timer = window.setTimeout(() => { void fetch("/api/account/cart", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: cart.filter(i => !i.isGift).map(i => ({ productId: i.id, quantity: i.quantity, size: i.selectedSize, color: null })) }) }); }, 400);
     return () => window.clearTimeout(timer);
-  }, [cart, status]);
+  }, [cart, session?.user?.id, status]);
 
   useEffect(() => {
     document.documentElement.dir = locale === "he" ? "rtl" : "ltr";
@@ -135,10 +140,19 @@ function PromotionReminder() {
     message = locale === "he" ? "הוסיפו זיפ אפ לפולו וקבלו משלוח חינם" : "Add the Zip Up to your Polo for free shipping";
   }
 
+  useEffect(() => {
+    if (!message || dismissedFor === signature) return;
+    const timer = window.setTimeout(
+      () => setDismissedFor(signature),
+      PROMOTION_REMINDER_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [dismissedFor, message, signature]);
+
   if (!message || dismissedFor === signature) return null;
 
   return (
-    <aside className="fixed bottom-5 start-1/2 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rtl:translate-x-1/2" aria-live="polite">
+    <aside className="fixed bottom-5 start-1/2 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rtl:translate-x-1/2" role="status" aria-live="polite" aria-atomic="true">
       <div className="flex items-center gap-4 rounded-2xl border border-white/20 bg-ink px-5 py-4 text-white shadow-[0_18px_60px_rgba(0,0,0,.35)]">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-red-600"><Gift size={18} /></span>
         <p className="flex-1 text-xs leading-6 sm:text-sm">{message}</p>
