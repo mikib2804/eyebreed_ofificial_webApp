@@ -1,0 +1,30 @@
+[Unit]
+Description=EYEBREED Next.js storefront
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=eyebreed
+Group=eyebreed
+WorkingDirectory=/var/www/eyebreed/app
+
+Environment=NODE_ENV=production
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/env npm run start -- --hostname 127.0.0.1 --port 3000
+
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=20s
+KillSignal=SIGINT
+UMask=0027
+
+# Basic service hardening. The app remains able to write Next.js runtime cache
+# files below its working directory in /var/www.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

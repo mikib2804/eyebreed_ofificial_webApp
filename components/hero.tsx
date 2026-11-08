@@ -37,18 +37,31 @@ export function Hero() {
         ))}
         <div className="absolute bottom-5 end-5 z-[3] hidden gap-2 sm:flex lg:bottom-8 lg:end-8">
           {modernAllImages.map((_, index) => (
-            <button key={index} type="button" onClick={() => setSlide(index)} aria-label={`Show campaign image ${index + 1}`} aria-pressed={slide === index} className={`min-h-11 px-1 transition-all ${slide === index ? "w-10" : "w-5"}`}><span className={`block h-1 ${slide === index ? "bg-white" : "bg-white/40"}`} /></button>
+            <button
+              key={index}
+              type="button"
+              onClick={() => setSlide(index)}
+              aria-label={`Show campaign image ${index + 1}`}
+              aria-pressed={slide === index}
+              className={`min-h-11 px-1 transition-all ${slide === index ? "w-10" : "w-5"}`}
+            >
+              <span
+                className={`block h-1 ${slide === index ? "bg-white" : "bg-white/40"}`}
+              />
+            </button>
           ))}
         </div>
       </div>
       <div className="hero-text-fade relative z-10 flex min-h-[620px] w-full flex-col justify-center px-5 py-16 sm:min-h-[650px] sm:px-10 lg:w-[48%] lg:px-8 lg:py-20 xl:px-6">
-        <p className="mb-7 text-[9px] tracking-[.32em] sm:mb-9 sm:text-[10px] sm:tracking-[.38em]">{t.collection}</p>
+        <p className="mb-7 text-[9px] tracking-[.32em] sm:mb-9 sm:text-[10px] sm:tracking-[.38em]">
+          {t.collection}
+        </p>
         <h1 className="font-display text-[clamp(3rem,13vw,5.25rem)] font-light leading-[.82] tracking-[-.035em] lg:text-[clamp(4rem,7vw,8.5rem)] lg:leading-[.75]">
           <span className="block">{t.headlineA}</span>
           <span className="mt-5 block">
             {locale === "he" ? (
               <>
-                חיים <span className="text-espresso-200">שלי</span>
+                החיים <span className="text-espresso-200">שלי</span>
               </>
             ) : (
               <>

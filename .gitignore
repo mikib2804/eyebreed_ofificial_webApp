@@ -2,8 +2,9 @@ node_modules
 .next
 .next-eyebreed
 .next-dev
-.env
-.env.local
+.env*
+!.env.example
+!.env.production.example
 *.log
 .codex-dev.*.log
 *.tsbuildinfo

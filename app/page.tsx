@@ -11,10 +11,6 @@ import { applyPercentageDiscount, productWithVariants, toStoreProduct } from "@/
 import { campaignProducts } from "@/lib/campaign-catalog";
 import { getInstagramVideos } from "@/lib/instagram";
 
-// The catalog comes from PostgreSQL at request time. Keeping this route dynamic
-// also lets the Docker image build without baking database credentials into it.
-export const dynamic = "force-dynamic";
-
 export default async function Home() {
   const visionSlugs = campaignProducts.map((item) => item.slug);
   const now = new Date();

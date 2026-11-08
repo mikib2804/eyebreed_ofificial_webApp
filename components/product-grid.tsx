@@ -85,7 +85,7 @@ export function ProductGrid({
                   {!imageFailed && (
                     <div className="relative aspect-square overflow-hidden bg-white">
                       {product.compareAtPrices && (
-                        <div className="absolute start-0 border-b-2 border-black top-5 z-20   bg-red-600 px-4 py-2 text-[10px] font-bold tracking-[.2em] text-white shadow-[4px_5px_0_#fff]">
+                        <div className="absolute -right-12 top-7 z-20 w-44 rotate-45 whitespace-nowrap border-y-2 border-white bg-red-600 px-2 py-1.5 text-center text-[7px] font-bold uppercase tracking-[.08em] text-white shadow-[3px_4px_0_#fff] lg:left-0 lg:right-auto lg:top-5 lg:w-auto lg:rotate-0 lg:border-b-2 lg:border-t-0 lg:border-black lg:px-4 lg:py-2 lg:text-[10px] lg:tracking-[.2em] lg:shadow-[4px_5px_0_#fff]">
                           {product.saleLabel ?? `${salePercentage}% SALE`}
                         </div>
                       )}
@@ -150,7 +150,7 @@ export function ProductGrid({
                               : "Add to wishlist"
                         }
                         aria-pressed={liked[index] ?? false}
-                        className="absolute end-4 top-4 z-30 grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-105"
+                        className="absolute left-2 top-2 z-30 grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-105 lg:end-4 lg:left-auto lg:top-4 lg:h-10 lg:w-10"
                       >
                         {likeBurst?.index === index && (
                           <span

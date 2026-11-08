@@ -44,44 +44,6 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Run with Docker
-
-Docker Compose reads the existing `.env` file for the app configuration. Build
-and start the container with:
-
-```bash
-docker compose up -d --build
-```
-
-Open `http://localhost:3000`. To stop it, run:
-
-```bash
-docker compose down
-```
-
-For production, clone the project and create `.env` from
-`.env.production.example`. The production Docker stack is configured for
-`https://shop.eyebreedofficial.com`; fill in the remaining secret values. Keep
-`https://eyebreedofficial.com` on Netlify and point only the `shop` subdomain's
-DNS A record to the VPS. Allow inbound TCP ports 80 and 443 plus UDP port 443,
-then start the production stack:
-
-```bash
-docker compose -f compose.prod.yaml up -d --build
-```
-
-Check its status and logs with:
-
-```bash
-docker compose -f compose.prod.yaml ps
-docker compose -f compose.prod.yaml logs -f web caddy
-```
-
-Caddy is the only service exposed to the internet. It proxies requests to the
-private `web` container and automatically obtains and renews the site's HTTPS
-certificate. Keep the `caddy_data` volume when updating the deployment because
-it stores Caddy's certificate state.
-
 ## 4. Grant an administrator role
 
 After signing in once with Google, open Prisma Studio:
@@ -109,3 +71,8 @@ The homepage catalog uses a typed local fallback so the visual storefront works 
 - Configure an object store (Supabase Storage or Cloudinary) for uploads instead of accepting arbitrary media URLs.
 - Add Stripe Checkout and create orders from verified webhook events before taking payments.
 - Add rate limiting, audit logging, product update/delete API routes, and input sanitization before opening admin access broadly.
+
+## VPS deployment
+
+For the production Nginx, systemd, HTTPS, database migration, and update
+procedure, see [`docs/VPS_NGINX_DEPLOYMENT.md`](docs/VPS_NGINX_DEPLOYMENT.md).
