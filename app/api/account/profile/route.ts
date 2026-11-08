@@ -8,6 +8,8 @@ import { isSameOriginMutation } from "@/lib/request-security";
 import { normalizedEmailSchema } from "@/lib/validation";
 import { getAppOrigin } from "@/lib/app-origin";
 import { sendCustomerEmail } from "@/lib/email";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { readJsonBody } from "@/lib/request-body";
 
 const profileSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -21,9 +23,12 @@ export async function PATCH(request: Request) {
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   const session = await auth();
   if (!session?.user.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const rate = await consumeRateLimit("account-profile", session.user.id, 20, 15 * 60);
+  if (!rate.allowed) return NextResponse.json({ error: "Too many profile updates. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
 
-  const body = await request.json().catch(() => null);
-  const parsed = profileSchema.safeParse(body);
+  const raw = await readJsonBody(request, 8_192);
+  if (!raw.ok) return NextResponse.json({ error: raw.error }, { status: raw.status });
+  const parsed = profileSchema.safeParse(raw.data);
   if (!parsed.success) return NextResponse.json({ error: "Please check your details." }, { status: 400 });
 
   const current = await prisma.user.findUnique({ where: { id: session.user.id } });

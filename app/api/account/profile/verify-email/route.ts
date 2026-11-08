@@ -4,12 +4,16 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isSameOriginMutation } from "@/lib/request-security";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { readJsonBody } from "@/lib/request-body";
 
 const schema = z.object({ token: z.string().length(64).regex(/^[a-f0-9]+$/) }).strict();
 export async function POST(request: Request) {
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   const session = await auth(); if (!session?.user.id) return NextResponse.json({ error: "Sign in to confirm this change." }, { status: 401 });
-  const body = schema.safeParse(await request.json().catch(() => null)); if (!body.success) return NextResponse.json({ error: "Invalid verification link." }, { status: 400 });
+  const rate = await consumeRateLimit("verify-email-change", session.user.id, 10, 60 * 60); if (!rate.allowed) return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
+  const raw = await readJsonBody(request, 4_096); if (!raw.ok) return NextResponse.json({ error: raw.error }, { status: raw.status });
+  const body = schema.safeParse(raw.data); if (!body.success) return NextResponse.json({ error: "Invalid verification link." }, { status: 400 });
   const tokenHash = createHash("sha256").update(body.data.token).digest("hex");
   const changed = await prisma.$transaction(async (tx) => {
     const token = await tx.emailChangeToken.findFirst({ where: { tokenHash, userId: session.user.id, usedAt: null, expiresAt: { gt: new Date() } } }); if (!token) return false;

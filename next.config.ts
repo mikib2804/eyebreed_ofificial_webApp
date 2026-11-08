@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const isDevelopment = process.env.NODE_ENV === "development";
+const additionalMediaHosts = (process.env.MEDIA_ALLOWED_HOSTS ?? "").split(",").map((host) => host.trim()).filter((host) => host && host !== "images.unsplash.com");
+const allowedImageSources = ["'self'", "data:", "blob:", "https://images.unsplash.com", "https://*.cdninstagram.com", "https://*.fbcdn.net", ...additionalMediaHosts.map((host) => `https://${host}`)].join(" ");
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -9,7 +11,8 @@ const contentSecurityPolicy = [
   "form-action 'self' https://checkout.stripe.com",
   `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
+  `img-src ${allowedImageSources}`,
+  "media-src 'self' blob: https://*.cdninstagram.com https://*.fbcdn.net",
   "font-src 'self' data:",
   "connect-src 'self'",
   ...(!isDevelopment ? ["upgrade-insecure-requests"] : []),
@@ -19,10 +22,12 @@ const nextConfig: NextConfig = {
   // Keep the long-running development server away from the production build
   // output. Netlify and `next start` continue to use Next.js' standard `.next`.
   distDir: isDevelopment ? ".next-eyebreed" : ".next",
+  output: "standalone",
   poweredByHeader: false,
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "images.unsplash.com" }
+      { protocol: "https", hostname: "images.unsplash.com" },
+      ...additionalMediaHosts.map((hostname) => ({ protocol: "https" as const, hostname })),
     ]
   },
   async headers() {

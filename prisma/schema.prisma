@@ -277,12 +277,16 @@ model VisionWaitlistEntry {
   email     String   @unique
   locale    String   @default("he")
   consentAt DateTime
+  consentScope String  @default("PREORDER_UPDATES")
+  source      String   @default("vision-page")
+  lastEmailedAt DateTime?
   ipHash    String
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([ipHash, createdAt])
+  @@index([source, createdAt])
 }
 
 model NewsletterSubscriber {
@@ -346,6 +350,7 @@ model Order {
   stripeCheckoutSessionId String? @unique
   stripePaymentIntentId String? @unique
   paidAt            DateTime?
+  sourcePreOrder    PreOrder?      @relation("ConvertedPreOrder")
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
@@ -446,6 +451,8 @@ model PreOrder {
   status       PreOrderStatus @default(WAITING)
   contactedAt  DateTime?
   notifiedAt   DateTime?
+  convertedOrderId String?      @unique
+  convertedOrder   Order?       @relation("ConvertedPreOrder", fields: [convertedOrderId], references: [id], onDelete: SetNull)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -509,4 +516,24 @@ model RateLimitBucket {
   updatedAt DateTime @updatedAt
 
   @@index([expiresAt])
+}
+
+/// Immutable raw preservation layer for the legacy source. Domain-table
+/// normalization happens only after the legacy field mapping is reviewed.
+model LegacyParameterOrdinalPosition {
+  id              String   @id @default(cuid())
+  sourceName      String
+  sourceSchema    String
+  sourceTable     String
+  sourceKey       String
+  sourceHash      String
+  normalizedEmail String?
+  rawData         Json
+  importedAt      DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([sourceName, sourceSchema, sourceTable, sourceKey])
+  @@index([sourceHash])
+  @@index([normalizedEmail])
+  @@map("legacy_parameter_ordinal_position_raw")
 }

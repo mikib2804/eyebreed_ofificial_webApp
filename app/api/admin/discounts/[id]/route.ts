@@ -1,18 +1,17 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { getAdminAccess } from "@/lib/admin-auth";
+import { authorizeAdminMutation } from "@/lib/admin-mutation";
 import { discountInputSchema } from "@/lib/discount-validation";
 import { prisma } from "@/lib/prisma";
-import { isSameOriginMutation } from "@/lib/request-security";
+import { readJsonBody } from "@/lib/request-body";
+import { z } from "zod";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
-  const access = await getAdminAccess();
-  if (access.status === "unauthenticated") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (access.status === "forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  const parsed = discountInputSchema.safeParse(await request.json().catch(() => null));
+  const authorization = await authorizeAdminMutation(request, "discounts"); if ("response" in authorization) return authorization.response;
+  const raw = await readJsonBody(request, 16_384); if (!raw.ok) return NextResponse.json({ error: raw.error }, { status: raw.status });
+  const parsed = discountInputSchema.safeParse(raw.data);
   if (!parsed.success) return NextResponse.json({ error: "Please check the discount settings.", fields: parsed.error.flatten().fieldErrors }, { status: 400 });
-  const { id } = await params;
+  const parsedId = z.string().cuid().safeParse((await params).id); if (!parsedId.success) return NextResponse.json({ error: "Invalid discount" }, { status: 400 }); const id = parsedId.data;
   const { productIds, categoryIds, ...data } = parsed.data;
   try {
     const updated = await prisma.$transaction(async (transaction) => {
@@ -26,7 +25,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           categories: { set: data.scope === "CATEGORY" ? categoryIds.map((categoryId) => ({ id: categoryId })) : [] },
         },
       });
-      await transaction.auditLog.create({ data: { actorId: access.user.id, action: "DISCOUNT_UPDATED", entityType: "Discount", entityId: discount.id, metadata: { code: discount.code, active: discount.active, scope: discount.scope, value: String(discount.value) } } });
+      await transaction.auditLog.create({ data: { actorId: authorization.access.user.id, action: "DISCOUNT_UPDATED", entityType: "Discount", entityId: discount.id, metadata: { code: discount.code, active: discount.active, scope: discount.scope, value: String(discount.value) } } });
       return discount;
     });
     if (!updated) return NextResponse.json({ error: "Discount not found." }, { status: 404 });

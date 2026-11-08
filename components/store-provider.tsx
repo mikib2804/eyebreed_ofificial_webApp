@@ -59,7 +59,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setCart(merged);
       await fetch("/api/account/cart",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:merged.filter(i=>!i.isGift).map(i=>({productId:i.id,quantity:i.quantity,size:i.selectedSize,color:null}))})});
     })();
-  }, [hydrated, session?.user?.id, status]);
+  }, [cart, hydrated, session?.user?.id, status]);
   useEffect(() => {
     if (status === "unauthenticated") syncedCartUserId.current = null;
   }, [status]);

@@ -90,7 +90,6 @@ export function OurStoryExperience() {
             <StoryArrow
               href="#story-beginning"
               label={c.chapter}
-              chapter="01"
               rtl={rtl}
             />
           </div>
@@ -135,7 +134,6 @@ export function OurStoryExperience() {
             <StoryArrow
               href="#story-philosophy"
               label={c.philosophy}
-              chapter="02"
               rtl={rtl}
               light
             />
@@ -177,7 +175,6 @@ export function OurStoryExperience() {
             <StoryArrow
               href="#story-future"
               label={c.future}
-              chapter="03"
               rtl={rtl}
             />
           </div>
@@ -238,13 +235,11 @@ export function OurStoryExperience() {
 function StoryArrow({
   href,
   label,
-  chapter,
   rtl,
   light = false,
 }: {
   href: string;
   label: string;
-  chapter: string;
   rtl: boolean;
   light?: boolean;
 }) {

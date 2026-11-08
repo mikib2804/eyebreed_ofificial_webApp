@@ -7,3 +7,6 @@ node_modules
 .codex-dev.*.log
 *.tsbuildinfo
 public/media/
+.tmp/
+.playwright-cli/
+output/playwright/

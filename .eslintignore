@@ -1,0 +1,7 @@
+.next
+.next-eyebreed
+node_modules
+.playwright-cli
+.tmp
+output
+next-env.d.ts

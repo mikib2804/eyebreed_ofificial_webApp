@@ -21,14 +21,14 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
   const hebrew = locale === "he";
 
   return (
-    <div className="bg-[#eee8df] px-4 py-8 text-[#171412] sm:px-6 md:px-10 lg:py-16">
+    <main id="main-content" className="bg-[#eee8df] px-4 py-8 text-[#171412] sm:px-6 md:px-10 lg:py-16">
       <div className="mx-auto grid min-h-[65vh] max-w-[1500px] gap-6 lg:grid-cols-[270px_minmax(0,1fr)] lg:gap-10">
         <aside className="h-fit overflow-hidden rounded-3xl bg-[#171412] p-4 text-[#f8f3ec] shadow-[0_22px_65px_rgba(23,20,18,.18)] lg:sticky lg:top-6 lg:p-5">
           <div className="border-b border-white/15 px-3 pb-5 pt-2">
             <p className="text-[9px] tracking-[.3em] text-white/50">EYEBREED</p>
             <h2 className="mt-2 font-display text-3xl text-white">{hebrew ? "החשבון שלי" : "My Account"}</h2>
           </div>
-          <nav className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
+          <nav aria-label={locale === "he" ? "ניווט בחשבון" : "Account navigation"} className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
             {links.map(([href, labelEn, labelHe, Icon]) => {
               const active = path === href;
               return (
@@ -53,7 +53,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
           {children}
         </section>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -61,7 +61,7 @@ export function PageTitle({ eyebrow, title, children }: { eyebrow?: string; titl
   const { locale } = useStore();
   const translations: Record<string, string> = { "My Orders": "ההזמנות שלי", "My Pre-orders": "הזמנות מוקדמות", "My Profile": "הפרופיל שלי", "My Addresses": "הכתובות שלי", Wishlist: "המועדפים שלי" };
   const displayTitle = locale === "he" ? (translations[title] ?? title) : title;
-  return <header className="mb-10 border-b border-black/10 pb-8"><p className="text-[9px] tracking-[.24em] text-black/45">{eyebrow ?? (locale === "he" ? "החשבון שלי" : "MY ACCOUNT")}</p><h1 className="mt-3 max-w-4xl font-display text-5xl leading-none text-[#171412] md:text-6xl">{displayTitle}</h1>{children}</header>;
+  return <header className="mb-10 border-b border-black/10 pb-8"><p className="text-[9px] tracking-[.24em] text-black/65">{eyebrow ?? (locale === "he" ? "החשבון שלי" : "MY ACCOUNT")}</p><h1 className="mt-3 max-w-4xl font-display text-5xl leading-none text-[#171412] md:text-6xl">{displayTitle}</h1>{children}</header>;
 }
 
 export function EmptyState({ title, text }: { title: string; text: string }) {

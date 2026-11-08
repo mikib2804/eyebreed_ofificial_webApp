@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { isSameOriginMutation } from "@/lib/request-security";
 
 const MAX_BODY_CHARS = 12_000;
 const MIN_COMPLETION_MS = 2_000;
@@ -14,7 +15,7 @@ const contactSchema = z.object({
   locale: z.enum(["he", "en"]).default("he"),
   company: z.string().max(200).optional().default(""),
   startedAt: z.number().int().positive(),
-});
+}).strict();
 
 function clientFingerprint(request: Request) {
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
@@ -27,12 +28,13 @@ function countLinks(value: string) {
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginMutation(request)) return NextResponse.json({ message: "Invalid request origin." }, { status: 403 });
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
     return NextResponse.json({ message: "Unsupported request." }, { status: 415 });
   }
 
   const rawBody = await request.text();
-  if (rawBody.length > MAX_BODY_CHARS) {
+  if (Buffer.byteLength(rawBody, "utf8") > MAX_BODY_CHARS) {
     return NextResponse.json({ message: "Message is too large." }, { status: 413 });
   }
 

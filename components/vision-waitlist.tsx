@@ -52,7 +52,7 @@ export function VisionWaitlist() {
         className="-z-30 object-cover object-center md:hidden"
       />
       <Image
-        src="/campaign/vision-of-life/hero-wide.webp"
+        src="/campaign/vision-of-life/hero.webp"
         alt="Two EYEBREED models wearing the Vision of Life collection"
         fill
         priority

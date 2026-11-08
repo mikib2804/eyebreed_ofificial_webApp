@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Pause, Play } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -21,18 +21,20 @@ const slides = modernAllImages.map((image, index) => ({
 export function LoginExperience({ initialMode = "login" }: { initialMode?: "login" | "register" }) {
   const router = useRouter();
   const [slide, setSlide] = useState(0);
+  const [slidesPaused, setSlidesPaused] = useState(false);
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (slidesPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(
       () => setSlide((current) => (current + 1) % slides.length),
       5500,
     );
     return () => window.clearInterval(timer);
-  }, []);
+  }, [slidesPaused]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,17 +77,19 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
   return (
     <main className="grid min-h-screen w-full max-w-full overflow-x-hidden bg-cream text-ink lg:grid-cols-[minmax(0,58%)_minmax(0,42%)]">
       <section className="relative min-w-0 min-h-[42vh] overflow-hidden bg-ink text-white lg:min-h-screen">
-        {slides.map((item, index) => (
-          <Image
-            key={item.image}
-            src={item.image}
-            alt="EYEBREED editorial campaign"
-            fill
-            priority={index === 0}
-            className={`object-cover object-center transition duration-[1400ms] ease-luxury ${slide === index ? "scale-100 opacity-75" : "scale-[1.035] opacity-0"}`}
-            sizes="(max-width: 1024px) 100vw, 58vw"
-          />
-        ))}
+        <div aria-hidden="true" className="absolute inset-0">
+          {slides.map((item, index) => (
+            <Image
+              key={item.image}
+              src={item.image}
+              alt=""
+              fill
+              priority={index === 0}
+              className={`object-cover object-center transition duration-[1400ms] ease-luxury motion-reduce:transform-none motion-reduce:transition-none ${slide === index ? "scale-100 opacity-75" : "scale-[1.035] opacity-0"}`}
+              sizes="(max-width: 1024px) 100vw, 58vw"
+            />
+          ))}
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/20" />
         <Link
           href="/"
@@ -107,6 +111,7 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
                 key={index}
                 onClick={() => setSlide(index)}
                 aria-label={`Show slide ${index + 1}`}
+                aria-pressed={slide === index}
                 className="h-px w-12 bg-white/35"
               >
                 <span
@@ -114,6 +119,14 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
                 />
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setSlidesPaused((paused) => !paused)}
+              aria-label={slidesPaused ? "Play slideshow" : "Pause slideshow"}
+              className="grid h-11 w-11 -translate-y-1/2 place-items-center border border-white/45"
+            >
+              {slidesPaused ? <Play size={15} /> : <Pause size={15} />}
+            </button>
           </div>
         </div>
       </section>
@@ -128,19 +141,23 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
           </Link>
           <div className="mt-14 flex border-b border-black/15 text-[10px] uppercase tracking-[.2em]">
             <button
+              type="button"
               onClick={() => {
                 setMode("login");
                 setError("");
               }}
+              aria-pressed={mode === "login"}
               className={`flex-1 pb-4 ${mode === "login" ? "border-b border-black text-black" : "text-black/75"}`}
             >
               Sign in
             </button>
             <button
+              type="button"
               onClick={() => {
                 setMode("register");
                 setError("");
               }}
+              aria-pressed={mode === "register"}
               className={`flex-1 pb-4 ${mode === "register" ? "border-b border-black text-black" : "text-black/75"}`}
             >
               Create account
@@ -233,6 +250,7 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
             <span className="h-px flex-1 bg-black/20" />
           </div>
           <button
+            type="button"
             onClick={() => signIn("google", { callbackUrl: "/" })}
             className="flex w-full items-center justify-center gap-4 border border-black/55 py-4 text-[10px] tracking-[.16em] transition hover:bg-white"
           >

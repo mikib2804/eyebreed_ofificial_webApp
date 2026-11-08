@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { isSameOriginMutation } from "@/lib/request-security";
 import { consumeRateLimit, requestFingerprint } from "@/lib/rate-limit";
+import { readJsonBody } from "@/lib/request-body";
 
 const schema = z.object({ token: z.string().length(64).regex(/^[a-f0-9]+$/), password: z.string().min(8).max(72) }).strict();
 
@@ -12,7 +13,9 @@ export async function POST(request: Request) {
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   const rate = await consumeRateLimit("reset-password", requestFingerprint(request), 10, 60 * 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const raw = await readJsonBody(request, 4_096);
+  if (!raw.ok) return NextResponse.json({ error: raw.error }, { status: raw.status });
+  const parsed = schema.safeParse(raw.data);
   if (!parsed.success) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   const tokenHash = createHash("sha256").update(parsed.data.token).digest("hex");
   const passwordHash = await hash(parsed.data.password, 12);

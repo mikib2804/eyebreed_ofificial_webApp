@@ -1,73 +1,34 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { getAdminAccess } from "@/lib/admin-auth";
+import { Prisma } from "@prisma/client";
+import { adminProductSchema } from "@/lib/admin-product-validation";
+import { authorizeAdminMutation } from "@/lib/admin-mutation";
 import { prisma } from "@/lib/prisma";
-import { isSameOriginMutation } from "@/lib/request-security";
-
-const httpsUrl = z.string().url().refine(
-  (value) => new URL(value).protocol === "https:",
-  "Only HTTPS media URLs are allowed",
-);
-
-const productSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  nameHe: z.string().trim().max(120).optional(),
-  slug: z.string().trim().min(2).max(100).regex(/^[a-z0-9-]+$/),
-  categoryId: z.string().min(1).max(64),
-  priceUsd: z.coerce.number().nonnegative().max(1_000_000),
-  priceIls: z.coerce.number().nonnegative().max(1_000_000),
-  priceEur: z.coerce.number().nonnegative().max(1_000_000),
-  inventory: z.coerce.number().int().nonnegative().max(100_000),
-  imageUrl: httpsUrl,
-  videoUrl: z.union([httpsUrl, z.literal("")]).optional(),
-  description: z.string().trim().min(10).max(10_000),
-}).strict();
+import { readJsonBody } from "@/lib/request-body";
 
 export async function POST(request: Request) {
-  if (!isSameOriginMutation(request)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
-  }
-
-  const access = await getAdminAccess();
-  if (access.status === "unauthenticated") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (access.status === "forbidden") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const parsed = productSchema.safeParse(Object.fromEntries(await request.formData()));
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  const { imageUrl, ...data } = parsed.data;
-  const product = await prisma.$transaction(async (transaction) => {
-    const created = await transaction.product.create({
-      data: {
-        ...data,
-        images: [imageUrl],
-        videoUrl: data.videoUrl || null,
-        story: data.description,
-        status: "ACTIVE",
-        variants: {
-          create: ["XS", "S", "M", "L", "XL"].map((size) => ({
-            size,
-            inventory: Math.floor(data.inventory / 5),
-          })),
-        },
-      },
+  const authorization = await authorizeAdminMutation(request, "products");
+  if ("response" in authorization) return authorization.response;
+  const body = await readJsonBody(request, 64_000);
+  if (!body.ok) return NextResponse.json({ error: body.error }, { status: body.status });
+  const parsed = adminProductSchema.safeParse(body.data);
+  if (!parsed.success) return NextResponse.json({ error: "Invalid product data", fields: parsed.error.flatten() }, { status: 400 });
+  const data = parsed.data;
+  try {
+    const product = await prisma.$transaction(async (tx) => {
+      const created = await tx.product.create({ data: {
+        name: data.name, nameHe: data.nameHe || null, slug: data.slug, categoryId: data.categoryId,
+        description: data.description, descriptionHe: data.descriptionHe || null, story: data.story || null, storyHe: data.storyHe || null,
+        material: data.material || null, priceUsd: data.priceUsd, priceIls: data.priceIls, priceEur: data.priceEur,
+        inventory: data.variants.reduce((sum, variant) => sum + variant.inventory, 0), images: data.images, videoUrl: data.videoUrl || null,
+        status: data.status, featured: data.featured, bestSeller: data.bestSeller, isNew: data.isNew, lowStockThreshold: data.lowStockThreshold,
+        variants: { create: data.variants },
+      } });
+      await tx.auditLog.create({ data: { actorId: authorization.access.user.id, action: "PRODUCT_CREATED", entityType: "Product", entityId: created.id, metadata: { slug: created.slug, status: created.status, variants: data.variants.length } } });
+      return created;
     });
-
-    await transaction.auditLog.create({
-      data: {
-        actorId: access.user.id,
-        action: "PRODUCT_CREATED",
-        entityType: "Product",
-        entityId: created.id,
-        metadata: { slug: created.slug, inventory: created.inventory },
-      },
-    });
-
-    return created;
-  });
-
-  return NextResponse.json(product, { status: 201 });
+    return NextResponse.json({ ok: true, id: product.id }, { status: 201 });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return NextResponse.json({ error: "That product slug or variant already exists." }, { status: 409 });
+    return NextResponse.json({ error: "Could not create product." }, { status: 500 });
+  }
 }

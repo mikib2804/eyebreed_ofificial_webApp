@@ -15,6 +15,7 @@ export function NotFoundExperience() {
   const [slide, setSlide] = useState(0);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => setSlide((current) => (current + 1) % archive.length), 5200);
     return () => window.clearInterval(timer);
   }, []);
@@ -26,10 +27,11 @@ export function NotFoundExperience() {
           <Image
             key={src}
             src={src}
-            alt="EYEBREED editorial archive"
+            alt=""
+            aria-hidden="true"
             fill
             priority={index === 0}
-            className={`object-cover object-center transition duration-[1500ms] ease-luxury ${slide === index ? "scale-100 opacity-70" : "scale-[1.04] opacity-0"}`}
+            className={`object-cover object-center transition duration-[1500ms] ease-luxury motion-reduce:transform-none motion-reduce:transition-none ${slide === index ? "scale-100 opacity-70" : "scale-[1.04] opacity-0"}`}
             sizes="(max-width: 1024px) 100vw, 61vw"
           />
         ))}
@@ -50,7 +52,7 @@ export function NotFoundExperience() {
           <p className="text-[9px] tracking-[.28em] text-white/75">ARCHIVE 0{slide + 1} / 0{archive.length}</p>
           <div className="mt-5 flex max-w-sm gap-3">
             {archive.map((_, index) => (
-              <button key={index} onClick={() => setSlide(index)} aria-label={`View archive image ${index + 1}`} className="h-px flex-1 bg-white/25">
+              <button key={index} type="button" onClick={() => setSlide(index)} aria-label={`View archive image ${index + 1}`} aria-pressed={slide === index} className="min-h-11 flex-1 bg-transparent py-5">
                 <span className={`block h-px bg-white transition-all duration-700 ${slide === index ? "w-full" : "w-0"}`} />
               </button>
             ))}

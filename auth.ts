@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { Adapter } from "next-auth/adapters";
@@ -9,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import authConfig from "@/auth.config";
 import { normalizedEmailSchema } from "@/lib/validation";
 import { consumeRateLimit, requestFingerprint } from "@/lib/rate-limit";
+import { logServerEvent } from "@/lib/server-log";
 
 const credentialsSchema = z.object({
   email: normalizedEmailSchema,
@@ -43,6 +45,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     })
   ],
+  events: {
+    async signIn({ user, account }) {
+      if (account?.provider !== "google" || !user.id || !user.email) return;
+      try {
+        const userId = user.id;
+        const email = user.email.normalize("NFKC").trim().toLowerCase();
+        await prisma.$transaction(async (transaction) => {
+          await transaction.user.updateMany({ where: { id: userId, emailVerified: null }, data: { emailVerified: new Date() } });
+          const [orders, preOrders] = await Promise.all([
+            transaction.order.updateMany({ where: { userId: null, customerEmail: { equals: email, mode: "insensitive" } }, data: { userId } }),
+            transaction.preOrder.updateMany({ where: { userId: null, email: { equals: email, mode: "insensitive" } }, data: { userId } }),
+          ]);
+          if (orders.count || preOrders.count) await transaction.auditLog.create({ data: { actorId: userId, action: "GOOGLE_VERIFIED_RECORDS_LINKED", entityType: "User", entityId: userId, metadata: { orders: orders.count, preOrders: preOrders.count } } });
+        });
+      } catch (error) {
+        logServerEvent("error", "auth", randomUUID(), "google_record_link_failed", { errorType: error instanceof Error ? error.name : "unknown" });
+      }
+    },
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {

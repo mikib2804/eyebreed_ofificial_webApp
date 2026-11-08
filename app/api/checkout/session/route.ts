@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { isSameOriginMutation } from "@/lib/request-security";
 import { getStripe } from "@/lib/stripe";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import { readJsonBody } from "@/lib/request-body";
+import { getRequestId, logServerEvent } from "@/lib/server-log";
 
 function appOrigin() {
   const configured = process.env.NEXT_PUBLIC_APP_URL;
@@ -18,13 +20,16 @@ function appOrigin() {
 }
 
 export async function POST(request: Request) {
+  const requestId = getRequestId(request);
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   if (process.env.STRIPE_CHECKOUT_ENABLED !== "true") return NextResponse.json({ error: "Test checkout is not enabled yet." }, { status: 503 });
   const session = await auth();
   if (!session?.user.id) return NextResponse.json({ error: "Sign in before checkout." }, { status: 401 });
   const rate = await consumeRateLimit("checkout", session.user.id, 10, 15 * 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many checkout attempts. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
-  const parsed = cartQuoteInputSchema.safeParse(await request.json().catch(() => null));
+  const raw = await readJsonBody(request, 32_768);
+  if (!raw.ok) return NextResponse.json({ error: raw.error }, { status: raw.status });
+  const parsed = cartQuoteInputSchema.safeParse(raw.data);
   if (!parsed.success) return NextResponse.json({ error: "Invalid cart data." }, { status: 400 });
 
   let pendingOrder: { id: string; orderNumber: string; total: Prisma.Decimal; currency: string; customerEmail: string };
@@ -77,7 +82,8 @@ export async function POST(request: Request) {
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   } catch (error) {
     if (error instanceof QuoteError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
-    return NextResponse.json({ error: "Could not create the pending order." }, { status: 500 });
+    logServerEvent("error", "checkout", requestId, "pending_order_failed", { errorType: error instanceof Error ? error.name : "unknown" });
+    return NextResponse.json({ error: "Could not create the pending order." }, { status: 500, headers: { "X-Request-ID": requestId } });
   }
 
   try {
@@ -94,12 +100,13 @@ export async function POST(request: Request) {
     }, { idempotencyKey: pendingOrder.id });
     await prisma.order.update({ where: { id: pendingOrder.id }, data: { stripeCheckoutSessionId: checkout.id } });
     return NextResponse.json({ url: checkout.url });
-  } catch {
+  } catch (error) {
     await prisma.$transaction(async (transaction) => {
       const redemption = await transaction.discountRedemption.findUnique({ where: { orderId: pendingOrder.id } });
       await transaction.order.delete({ where: { id: pendingOrder.id } }).catch(() => null);
       if (redemption) await transaction.discount.update({ where: { id: redemption.discountId }, data: { usageCount: { decrement: 1 } } });
     }).catch(() => null);
-    return NextResponse.json({ error: "Stripe test checkout is not configured or could not be created." }, { status: 503 });
+    logServerEvent("error", "checkout", requestId, "stripe_session_failed", { orderId: pendingOrder.id, errorType: error instanceof Error ? error.name : "unknown" });
+    return NextResponse.json({ error: "Stripe test checkout is not configured or could not be created." }, { status: 503, headers: { "X-Request-ID": requestId } });
   }
 }

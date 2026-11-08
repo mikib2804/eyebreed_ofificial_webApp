@@ -35,7 +35,7 @@ export function AccountOverview({ firstName, orders, totalOrders, pending, shipp
       </PageTitle>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        {stats.map(([value, label]) => <div key={label} className="rounded-2xl border border-black/10 bg-white p-6"><strong className="font-display text-4xl">{value}</strong><p className="mt-2 text-[9px] tracking-luxury text-black/55">{label}</p></div>)}
+        {stats.map(([value, label]) => <div key={label} className="rounded-2xl border border-black/10 bg-white p-6"><strong className="font-display text-4xl">{value}</strong><p className="mt-2 text-[9px] tracking-luxury text-black/70">{label}</p></div>)}
       </div>
 
       <h2 className="mb-5 mt-12 font-display text-3xl">{hebrew ? "רכישות אחרונות" : "Recent purchases"}</h2>

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Unsupported request." }, { status: 415 });
   }
   const raw = await request.text();
-  if (raw.length > 2_000) return NextResponse.json({ message: "Request is too large." }, { status: 413 });
+  if (Buffer.byteLength(raw, "utf8") > 2_000) return NextResponse.json({ message: "Request is too large." }, { status: 413 });
   let body: unknown;
   try { body = JSON.parse(raw); } catch { body = null; }
   const parsed = requestSchema.safeParse(body);

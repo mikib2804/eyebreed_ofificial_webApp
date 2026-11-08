@@ -54,7 +54,7 @@ export function CookieConsent() {
         };
 
   return (
-    <aside
+    <div
       role="dialog"
       aria-live="polite"
       aria-label={text.title}
@@ -70,7 +70,7 @@ export function CookieConsent() {
       </button>
 
       <div className="relative p-6 pe-14 sm:p-8 sm:pe-16">
-        <p className="text-[9px] tracking-luxury text-espresso-200">
+        <p className="text-[9px] tracking-luxury text-white/75">
           {text.eyebrow}
         </p>
         <h2 className="mt-3 font-display text-3xl sm:text-4xl">{text.title}</h2>
@@ -79,12 +79,13 @@ export function CookieConsent() {
         </p>
         <Image
           className={cn(
-            "absolute",
+            "absolute h-auto w-[70px]",
             locale === "he" ? "left-14 top-8" : "right-14 top-8 -scale-x-100",
           )}
           height={70}
           width={70}
-          alt="cookie"
+          alt=""
+          aria-hidden="true"
           src="/app_icons/cookie.png"
         />
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -108,6 +109,6 @@ export function CookieConsent() {
           </button>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

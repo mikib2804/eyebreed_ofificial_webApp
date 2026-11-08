@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   if (!isSameOriginMutation(request)) return NextResponse.json({ message: "Invalid request origin." }, { status: 403 });
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) return NextResponse.json({ message: "Unsupported request." }, { status: 415 });
   const raw = await request.text();
-  if (raw.length > 2_000) return NextResponse.json({ message: "Request is too large." }, { status: 413 });
+  if (Buffer.byteLength(raw, "utf8") > 2_000) return NextResponse.json({ message: "Request is too large." }, { status: 413 });
   const parsed = schema.safeParse((() => { try { return JSON.parse(raw); } catch { return null; } })());
   if (!parsed.success) return NextResponse.json({ message: "Enter a valid email and accept the subscription consent." }, { status: 400 });
   if (parsed.data.company) return NextResponse.json({ message: "Subscription saved." }, { status: 201 });

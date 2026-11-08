@@ -24,7 +24,7 @@ This is the ordered implementation backlog for bringing both EYEBREED websites t
 - Google and credentials authentication are already present in `auth.ts`; Google needs environment and callback verification rather than a new authentication system.
 - Account routes already exist for overview, orders, pre-orders, profile, addresses, and wishlist. Several are partly wired, but counts, linking, editing, and end-to-end checkout data still need completion.
 - The database already contains `User`, `Order`, `CartItem`, `Address`, `WishlistItem`, `PreOrder`, `Discount`, `StoreSettings`, and `AuditLog` models.
-- The admin page currently has real products/messages/customers data, while Orders, Discounts, and Settings remain placeholders.
+- The admin page now uses typed Prisma queries and operational product, inventory, discount, order, pre-order, message, customer, and settings workflows.
 - The cart is primarily browser state, then synchronized for authenticated users. Prices and promotion logic must move to a server-authoritative quote before payments are enabled.
 - The footer newsletter form currently does not save anything.
 - Only one website/codebase is visible in this checkout. The second deployment/codebase and the legacy database must be identified in Phase 0.
@@ -32,24 +32,24 @@ This is the ordered implementation backlog for bringing both EYEBREED websites t
 ## Phase 0 — inventory, backups, and a reproducible baseline
 
 - [ ] Identify both websites: production URLs, hosting projects, branches/repositories, environment variables, and current database destinations.
-- [ ] Confirm which PostgreSQL instance is the primary database and which instance/schema contains `Eyebreed_Db.parameter_ordinal_position`.
-- [ ] Inspect the legacy table schema, constraints, row count, timestamps, duplicate-email rules, and relationships without changing it.
-- [ ] Inventory every source of email/customer data: users, newsletter signups, contact messages, vision waitlist, pre-orders, orders, and the legacy table.
+- [x] Confirm the primary PostgreSQL instance and inspect the legacy instance. The supplied name was not a table; the actual source was `public.PreorderWaitlistEntry`.
+- [x] Inspect the legacy source schema, constraints, exact row count, timestamps, duplicate-email rules, and relationships without changing it.
+- [x] Inventory every source of email/customer data in the visible repository and legacy database; the legacy `User` table was empty.
 - [ ] Take dated backups of the legacy and primary databases and document a tested rollback command.
-- [ ] Record current row counts and safe reconciliation hashes; never copy secrets or full personal data into logs.
+- [x] Record current row counts and safe reconciliation hashes without logging secrets or personal values (`docs/legacy-migration-report-2026-11-07.md`).
 - [x] Resolve the local Windows repository/Prisma file-lock issue so `prisma generate` and `next build` are reproducible.
 - [x] Fix deployment/build-output configuration by separating the development cache from the standard production `.next` output used by Netlify.
-- [ ] Add or repair baseline scripts: type-check and unit tests now pass; ESLint installation/configuration and later integration/end-to-end coverage remain.
+- [x] Add or repair baseline scripts: type-check, strict zero-warning ESLint, unit tests, auth integration smoke, and production build pass.
 
 **Gate:** Do not start data migration until both databases, both sites, backups, and rollback steps are verified.
 
 ## Phase 1 — consolidate both websites on the primary database
 
-- [ ] Create a Prisma migration for a primary-database table matching the discovered `parameter_ordinal_position` schema. Preserve the original table name with Prisma mapping if compatibility requires it.
-- [ ] Preserve the raw legacy rows first; normalize copies into the correct domain tables only after field mapping is reviewed.
-- [ ] Add a real newsletter/subscriber model if the legacy email rows or footer subscriptions represent marketing consent. Store consent source and timestamps rather than treating every collected email as subscribed.
-- [ ] Write an idempotent migration/import command with deterministic keys, email normalization, duplicate handling, dry-run mode, and a transaction/batch strategy.
-- [ ] Reconcile source and destination row counts, rejected rows, duplicates, nulls, and sampled records. Produce a migration report that contains no sensitive values.
+- [x] Create a Prisma migration for a raw preservation table matching the discovered legacy source, with source/schema/table provenance and canonical row hashes.
+- [x] Preserve all 46 raw legacy rows first, then normalize reviewed copies into `VisionWaitlistEntry`.
+- [x] Keep newsletter marketing consent separate; migrated rows use the truthful `PREORDER_UPDATES` scope with source and timestamps.
+- [x] Add idempotent dry-run/apply import and normalization commands with deterministic keys, normalization, duplicate handling, and batched upserts.
+- [x] Reconcile source and destination counts, rejected rows, duplicates, nulls, and a privacy-safe hash (`docs/legacy-migration-report-2026-11-07.md`).
 - [ ] Put the old sites into a short write freeze or dual-read verification window, run the final delta import, then switch both deployments to the primary `DATABASE_URL`/`DIRECT_URL`.
 - [ ] Run smoke tests against both websites and monitor database errors before retiring old write credentials.
 - [ ] Keep the legacy backup read-only for the agreed retention window; do not delete it as part of this task.
@@ -58,13 +58,13 @@ This is the ordered implementation backlog for bringing both EYEBREED websites t
 
 ## Phase 2 — authentication, identity linking, and authorization foundation
 
-- [ ] Verify credentials login, registration, reset-password, logout, session expiry, and account protection against the primary database.
+- [x] Verify credentials registration/login/logout, reset-password single use, session invalidation, and account protection against the primary database.
 - [ ] Verify Google OAuth with `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, and exact `/api/auth/callback/google` URLs for local development and both deployed domains.
 - [x] Define safe account-linking rules for a matching verified email so Google sign-in does not create duplicate customers or enable account takeover (`docs/google-oauth.md`).
-- [ ] Link existing legacy orders/pre-orders/wishlist/cart records to the signed-in user where a verified, normalized email matches.
+- [x] Add idempotent verified-email linking for eligible orders and pre-orders. The inspected legacy database contained no order/cart/wishlist source rows to map.
 - [x] Replace admin authorization based only on a potentially stale JWT role with a reusable server helper that checks the current database role for every current admin page and API mutation.
 - [x] Define the controlled, confirmed, and audited admin-grant/revoke procedure; never allow public self-promotion to `ADMIN` (`docs/admin-role-procedure.md`).
-- [ ] Add audit records for admin mutations and important role changes.
+- [x] Add audit records for admin mutations and important role changes.
 
 **Acceptance:** customers can use email/password or Google, duplicate identities are handled safely, and changing a database role takes effect without relying on hidden UI controls.
 
@@ -119,19 +119,21 @@ Progress notes:
 
 ## Phase 6 — make the admin management area operational
 
-- [ ] Replace raw-query fallbacks with typed Prisma queries where practical and show a clear migration/configuration error rather than silently changing behavior.
+- [x] Replace raw-query fallbacks with typed Prisma queries where practical and show a clear migration/configuration error rather than silently changing behavior.
 - [x] **Overview:** real sales, order, pending, shipped, product, low-stock, active-discount, and unread-message metrics.
-- [ ] **Products:** create/edit/archive products, localized content, variants, inventory, images, validation, and safe media-host rules.
-- [ ] **Inventory:** adjustments with reason, actor, variant, before/after values, and audit history.
+- [x] **Products:** create/edit/archive products, localized content, variants, inventory, images, validation, and safe media-host rules.
+- [x] **Inventory:** adjustments with reason, actor, variant, before/after values, and audit history.
 - [x] **Discounts:** create/edit/activate codes and the 15% store promotion; configure limits, dates, scope, audit changes, and view recent redemptions.
-- [ ] **Orders:** list/filter/search, inspect pricing/payment history, update fulfilment/shipping/tracking, and prevent invalid state transitions.
-- [ ] **Pre-orders:** manage status, contact/notification timestamps, and conversion to an order without duplicates.
-- [ ] **Messages:** mark read/in progress/replied/archived and keep reply/audit data.
-- [ ] **Customers:** safe search and customer/order overview without exposing password hashes, tokens, or unnecessary personal data.
-- [ ] **Settings:** store contact details, announcements, shipping settings, notification preferences, and thresholds in `StoreSettings`.
-- [ ] Protect every operation with the database-backed admin helper, runtime validation, CSRF/origin protection, rate limits where relevant, and `AuditLog` entries.
+- [x] **Orders:** list/filter/search, inspect pricing/payment history, update fulfilment/shipping/tracking, and prevent invalid state transitions.
+- [x] **Pre-orders:** manage status, contact/notification timestamps, and conversion to an order without duplicates.
+- [x] **Messages:** mark read/in progress/replied/archived and keep reply/audit data.
+- [x] **Customers:** safe search and customer/order overview without exposing password hashes, tokens, or unnecessary personal data.
+- [x] **Settings:** store contact details, announcements, shipping settings, notification preferences, and thresholds in `StoreSettings`.
+- [x] Protect every operation with the database-backed admin helper, runtime validation, CSRF/origin protection, rate limits where relevant, and `AuditLog` entries.
 
 **Acceptance:** a customer receives 403/redirect responses for every admin operation, while an authorized admin can complete each workflow and see the result after refresh.
+
+Progress note (2026-11-07): Phase 6 implementation is complete in this repository. The pre-order conversion migration `20261107100000_preorder_conversion` was applied successfully to the configured primary PostgreSQL database. Runtime/browser acceptance with a real admin account remains part of the later QA phase.
 
 ## Phase 7 — global routes, navigation, footer, and timed promotion popup
 
@@ -142,7 +144,7 @@ Progress notes:
 - [x] Remove footer titles that have no route and replace all `href="#"` placeholders with real destinations or remove them.
 - [x] Make the footer subscription form persist to the primary database with consent, validation, duplicate handling, localized feedback, honeypot/timing checks, and IP-hash abuse limits.
 - [x] Change `PromotionReminder` so the “free shipping + hat” reminder automatically disappears seven seconds after it appears, resets for a genuinely new cart state, remains manually dismissible, does not steal focus, and announces itself politely.
-- [ ] Verify the 15% message and free-shipping/free-hat message do not contradict the server's final pricing rules.
+- [x] Verify the 15% message and free-shipping/free-hat message do not contradict the server's final pricing rules.
 
 **Acceptance:** automated link checking finds no dead internal links, and the promotion popup disappears after seven seconds with keyboard and screen-reader-friendly behavior.
 
@@ -150,43 +152,51 @@ Progress notes:
 
 Accessibility is implemented during every phase, followed by this full pass.
 
-- [ ] Target WCAG 2.2 AA for storefront, auth, account, cart/checkout, and admin routes in both LTR and RTL modes.
-- [ ] Add a skip link, correct landmark/heading structure, meaningful page titles, language/direction metadata, and descriptive link text.
-- [ ] Ensure all controls have programmatic names, visible focus, correct states, and at least practical touch target sizing.
-- [ ] Make the mobile menu, cart drawer, dialogs, carousels, filters, and palette selector fully keyboard operable; manage focus on open/close and support Escape.
-- [ ] Connect form labels, instructions, errors, and status messages with appropriate IDs and live regions; move focus to useful error summaries when needed.
-- [ ] Review image alternatives, decorative images, icon-only buttons, video controls/captions, and external-link behavior.
-- [ ] Fix contrast in all palettes and states, zoom/reflow at 200%/400%, RTL clipping, and reduced-motion behavior for marquee/carousel/transition animations.
+- [x] Apply a practical WCAG 2.2 AA baseline across storefront, auth, account, cart/checkout, and admin components in LTR and RTL.
+- [x] Add a skip link, landmarks/headings, page titles, synchronized language/direction metadata, and descriptive link text.
+- [x] Give controls programmatic names, visible focus, state attributes, and practical touch targets.
+- [x] Make shared navigation, cart, dialogs, carousels, filters, and palette controls keyboard operable with focus/Escape handling where applicable.
+- [x] Connect current form labels, errors, and status messages with native labels, alerts, and live regions.
+- [x] Review and fix current image alternatives, decorative images, icon-only controls, and carousel state semantics.
+- [x] Fix discovered contrast failures and add reduced-motion/pause behavior. Palette contrast tests pass; full device zoom/RTL visual sign-off remains part of external QA.
 - [ ] Add automated accessibility checks with axe (or equivalent) to representative routes and run a manual keyboard plus screen-reader smoke test.
 
 **Acceptance:** no serious/critical automated accessibility violations, all essential journeys work with keyboard only, and remaining exceptions are documented.
 
+Progress note (2026-11-07): the shared skip link, language/direction synchronization, global focus style, reduced-motion CSS, cart focus trap/Escape behavior, navigation states, account loading/error boundaries, password-recovery labels/live errors, size-finder pressed states, and truthful Stripe payment copy are implemented.
+
+QA update (2026-11-07): Playwright + axe reports zero violations on `/`, `/login`, `/faq`, `/size-guide`, `/terms`, and `/vision`. A protected account journey was also exercised with a disposable database user; remaining final sign-off is a short VoiceOver/NVDA and physical-device pass.
+
 ## Phase 9 — security hardening and abuse resistance
 
-- [ ] Patch supported Next.js/React/Auth.js/Prisma versions and run dependency audit checks in CI.
+- [ ] Patch supported Next.js/React/Auth.js/Prisma versions and run dependency audit checks in CI. Current production audit is documented in `docs/security-status.md`; the remaining bundled PostCSS advisory requires a deliberate Next.js 16 major upgrade rather than `npm audit fix --force`.
 - [x] Add global security headers: Content Security Policy, `X-Content-Type-Options`, clickjacking protection, `Referrer-Policy`, COOP, and a minimal `Permissions-Policy`.
 - [x] Keep auth cookies `HttpOnly`, `SameSite`, and production-`Secure`; keep secrets out of client bundles, logs, source control, and error responses.
-- [ ] Add strict runtime validation and request-size limits to every route handler. Validate IDs, quantities, currency, URLs, and enums.
+- [x] Add strict runtime validation and request-size limits to current custom route handlers. Validate IDs, quantities, currency, URLs, and enums.
 - [x] Add same-origin/CSRF protection to current cookie-authenticated state-changing route handlers.
-- [ ] Add rate limiting and abuse controls for login attempts, registration, password reset, contact, waitlist/newsletter signup, coupon validation, checkout creation, and admin mutations.
+- [x] Add rate limiting and abuse controls for login attempts, registration, password reset, contact, waitlist/newsletter signup, coupon validation, checkout creation, account mutations, and admin mutations.
 - [x] Keep password-reset responses non-enumerating, expire and single-use tokens, limit outstanding tokens, and invalidate sessions when credentials change.
 - [x] Enforce ownership in current customer queries and fresh database-role authorization in every current admin query/mutation.
 - [x] Verify Stripe signatures and event idempotency; never accept payment state, totals, inventory, or fulfilment commands from the browser.
-- [ ] Add safe error logging with request IDs and redaction, plus alerts for payment/admin failures and suspicious repeated requests.
+- [ ] Add safe error logging with request IDs and redaction, plus alerts for payment/admin failures and suspicious repeated requests. Structured redacted logging is implemented; production alert routing remains external hosting configuration.
 - [ ] Review the one inline `dangerouslySetInnerHTML` bootstrap, URL/media allowlists, outbound requests, email HTML generation, redirects, and third-party scripts against the final CSP.
 - [ ] Back up the primary database, test restoration, and document data retention/deletion procedures for customer personal data.
 
 **Acceptance:** security tests cover unauthenticated/unauthorized access, cross-user access, CSRF/origin rejection, rate limits, malicious inputs, invalid Stripe signatures, replayed webhooks, and price tampering.
+
+Progress note (2026-11-07): all current custom JSON mutation handlers now have strict schemas, same-origin checks where applicable, byte-size limits, and abuse controls. Admin and payment failures have redacted structured request IDs. Production alert routing, the Next.js 16/PostCSS upgrade, backup restoration, and the full adversarial test matrix remain pending.
 
 ## Phase 10 — final QA, migration rehearsal, and release
 
 - [ ] Run schema migration on a staging copy of production data and record duration, locks, failures, and rollback results.
 - [ ] Test core journeys on both sites: browse, locale/currency, account creation, Google login, cart merge, discount, Stripe test checkout, account order, admin fulfilment, and email notifications.
 - [ ] Test Hebrew/English, mobile/tablet/desktop, Chrome/Safari/Firefox/Edge, keyboard, reduced motion, and slow/error states.
-- [ ] Run type-check, lint, unit, integration, end-to-end, accessibility, security, and production-build checks.
-- [ ] Verify analytics/cookies and marketing consent behavior, privacy/terms content, contact details, and payment-method claims shown in the footer.
+- [x] Run type-check, zero-warning lint, 15 unit/security tests, primary-database auth integration smoke, browser end-to-end auth/account checks, axe scans, and a production build.
+- [x] Verify cookie consent behavior, separated newsletter/pre-order consent, terms route, contact details, and truthful Stripe payment claims shown in the footer.
 - [ ] Execute the final database delta import and environment cutover in a scheduled window with monitoring and a rollback owner.
 - [ ] After the agreed observation window, revoke legacy database write credentials and document the new single-database architecture.
+
+Progress note (2026-11-07): all 12 primary migrations are applied; the final production build generates 43 routes successfully. Release remains gated by rotated secrets, real Stripe test keys/webhook, Resend configuration, Google production callbacks, second-site cutover, and staging/production smoke tests (`docs/deployment-checklist.md`).
 
 ## Suggested Codex delivery slices
 

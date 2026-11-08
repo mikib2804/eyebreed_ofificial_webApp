@@ -14,6 +14,7 @@ export function ProductSlideshow({
   useEffect(() => setIndex(0), [images]);
   useEffect(() => {
     if (images.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(
       () => setIndex((current) => (current + 1) % images.length),
       5000,
@@ -27,17 +28,20 @@ export function ProductSlideshow({
       dir="ltr"
       className="order-first relative min-h-[46vh] overflow-hidden bg-charcoal sm:min-h-[56vh] lg:order-none lg:sticky lg:top-0 lg:h-screen"
     >
-      {images.map((src, i) => (
-        <Image
-          key={src}
-          src={src}
-          alt={`${title} campaign view ${i + 1}`}
-          fill
-          priority={i === 0}
-          className={`object-cover transition duration-1000 ease-luxury ${i === index ? "scale-100 opacity-100" : "scale-[1.025] opacity-0"}`}
-          sizes="(max-width:1024px) 100vw, 44vw"
-        />
-      ))}
+      <div className="absolute inset-0">
+        {images.map((src, i) => (
+          <Image
+            key={src}
+            src={src}
+            alt={i === index ? `${title} campaign view ${i + 1}` : ""}
+            aria-hidden={i !== index}
+            fill
+            priority={i === 0}
+            className={`object-cover transition duration-1000 ease-luxury motion-reduce:transform-none motion-reduce:transition-none ${i === index ? "scale-100 opacity-100" : "scale-[1.025] opacity-0"}`}
+            sizes="(max-width:1024px) 100vw, 44vw"
+          />
+        ))}
+      </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/15" />
       <button
         onClick={() => move(-1)}
@@ -59,6 +63,7 @@ export function ProductSlideshow({
             key={src}
             onClick={() => setIndex(i)}
             aria-label={`Show image ${i + 1}`}
+            aria-pressed={i === index}
             className={`relative h-16 w-12 shrink-0 overflow-hidden border ${i === index ? "border-white" : "border-white/25 opacity-60"}`}
           >
             <Image

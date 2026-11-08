@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { isSameOriginMutation } from "@/lib/request-security";
 import { normalizedEmailSchema } from "@/lib/validation";
 import { consumeRateLimit, requestFingerprint } from "@/lib/rate-limit";
+import { readJsonBody } from "@/lib/request-body";
 
 const schema = z.object({ email: normalizedEmailSchema }).strict();
 
@@ -14,8 +15,10 @@ export async function POST(request: Request) {
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   const rate = await consumeRateLimit("forgot-password", requestFingerprint(request), 5, 60 * 60);
   if (!rate.allowed) return NextResponse.json({ ok: true, message: "If an account exists, a reset link has been sent." }, { headers: { "Retry-After": String(rate.retryAfter) } });
-  const parsed = schema.safeParse(await request.json().catch(() => null));
   const response = NextResponse.json({ ok: true, message: "If an account exists, a reset link has been sent." });
+  const raw = await readJsonBody(request, 4_096);
+  if (!raw.ok) return response;
+  const parsed = schema.safeParse(raw.data);
   if (!parsed.success) return response;
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (!user) return response;

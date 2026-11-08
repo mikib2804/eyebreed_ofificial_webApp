@@ -3,6 +3,8 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isSameOriginMutation } from "@/lib/request-security";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { readJsonBody } from "@/lib/request-body";
 
 const updateSchema = z.object({
   label: z.string().trim().min(1).max(30).optional(),
@@ -22,7 +24,11 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   const session = await auth();
   if (!session?.user.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const parsed = updateSchema.safeParse(await request.json().catch(() => null));
+  const rate = await consumeRateLimit("account-address", session.user.id, 40, 15 * 60);
+  if (!rate.allowed) return NextResponse.json({ error: "Too many address updates. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
+  const raw = await readJsonBody(request, 8_192);
+  if (!raw.ok) return NextResponse.json({ error: raw.error }, { status: raw.status });
+  const parsed = updateSchema.safeParse(raw.data);
   if (!parsed.success) return NextResponse.json({ error: "Please check the address details." }, { status: 400 });
   const { id } = await params;
 
@@ -52,6 +58,8 @@ export async function DELETE(request: Request, { params }: RouteContext) {
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   const session = await auth();
   if (!session?.user.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const rate = await consumeRateLimit("account-address", session.user.id, 40, 15 * 60);
+  if (!rate.allowed) return NextResponse.json({ error: "Too many address updates. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
   const { id } = await params;
   const deleted = await prisma.$transaction(async (transaction) => {
     const address = await transaction.address.findFirst({ where: { id, userId: session.user.id }, select: { id: true, isDefault: true } });

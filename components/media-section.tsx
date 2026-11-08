@@ -15,6 +15,10 @@ export function MediaSection() {
     void videoRef.current?.play();
   };
 
+  const previewFilm = () => {
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) showFilm();
+  };
+
   const hideFilm = () => {
     setFilmActive(false);
     videoRef.current?.pause();
@@ -30,7 +34,7 @@ export function MediaSection() {
     <section className="grid bg-ink text-white lg:grid-cols-2">
       <div
         className="group relative min-h-[420px] overflow-hidden lg:min-h-[620px]"
-        onMouseEnter={showFilm}
+        onMouseEnter={previewFilm}
         onMouseLeave={hideFilm}
       >
         <Image
@@ -57,7 +61,7 @@ export function MediaSection() {
             aria-label={filmActive ? "Pause film" : "Play film"}
             aria-pressed={filmActive}
             onClick={toggleFilm}
-            onFocus={showFilm}
+            onFocus={previewFilm}
             className={`mt-8 flex h-16 w-16 items-center justify-center rounded-full border border-white/80 transition duration-300 hover:bg-white hover:text-black ${filmActive ? "bg-black/25 opacity-70 hover:opacity-100" : ""}`}
           >
             {filmActive ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}

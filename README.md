@@ -27,7 +27,10 @@ In Google Cloud Console:
 4. Add `http://localhost:3000/api/auth/callback/google` as an authorized redirect URI.
 5. Put the client ID and secret in `.env.local`.
 
-For production, add the deployed domain and its `/api/auth/callback/google` URI.
+For production, add
+`https://eyebreedofficial.com/api/auth/callback/google` as an authorized
+redirect URI and `https://eyebreedofficial.com` as an authorized JavaScript
+origin.
 
 ## 3. Install and migrate
 
@@ -40,6 +43,43 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+## Run with Docker
+
+Docker Compose reads the existing `.env` file for the app configuration. Build
+and start the container with:
+
+```bash
+docker compose up -d --build
+```
+
+Open `http://localhost:3000`. To stop it, run:
+
+```bash
+docker compose down
+```
+
+For production, clone the project and create `.env` from
+`.env.production.example`. The production Docker stack is configured for
+`https://eyebreedofficial.com`; fill in the remaining secret values. Point the
+domain's DNS A/AAAA records to the VPS and allow inbound TCP ports 80 and 443
+plus UDP port 443. Then start the production stack:
+
+```bash
+docker compose -f compose.prod.yaml up -d --build
+```
+
+Check its status and logs with:
+
+```bash
+docker compose -f compose.prod.yaml ps
+docker compose -f compose.prod.yaml logs -f web caddy
+```
+
+Caddy is the only service exposed to the internet. It proxies requests to the
+private `web` container and automatically obtains and renews the site's HTTPS
+certificate. Keep the `caddy_data` volume when updating the deployment because
+it stores Caddy's certificate state.
 
 ## 4. Grant an administrator role
 

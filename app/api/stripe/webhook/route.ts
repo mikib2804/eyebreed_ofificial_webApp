@@ -3,17 +3,25 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
+import { getRequestId, logServerEvent } from "@/lib/server-log";
 
 export async function POST(request: Request) {
+  const requestId = getRequestId(request);
   const signature = request.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!signature || !secret) return NextResponse.json({ error: "Webhook is not configured." }, { status: 503 });
 
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > 1_048_576) return NextResponse.json({ error: "Webhook payload is too large." }, { status: 413 });
+
   let event: Stripe.Event;
   try {
-    event = getStripe().webhooks.constructEvent(await request.text(), signature, secret);
-  } catch {
-    return NextResponse.json({ error: "Invalid webhook signature." }, { status: 400 });
+    const raw = await request.text();
+    if (Buffer.byteLength(raw, "utf8") > 1_048_576) return NextResponse.json({ error: "Webhook payload is too large." }, { status: 413 });
+    event = getStripe().webhooks.constructEvent(raw, signature, secret);
+  } catch (error) {
+    logServerEvent("warn", "stripe-webhook", requestId, "signature_rejected", { errorType: error instanceof Error ? error.name : "unknown" });
+    return NextResponse.json({ error: "Invalid webhook signature." }, { status: 400, headers: { "X-Request-ID": requestId } });
   }
 
   if (!["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired"].includes(event.type)) return NextResponse.json({ received: true });
@@ -55,7 +63,8 @@ export async function POST(request: Request) {
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return NextResponse.json({ received: true, duplicate: true });
-    return NextResponse.json({ error: "Webhook processing failed." }, { status: 500 });
+    logServerEvent("error", "stripe-webhook", requestId, "processing_failed", { eventType: event.type, errorType: error instanceof Error ? error.name : "unknown" });
+    return NextResponse.json({ error: "Webhook processing failed." }, { status: 500, headers: { "X-Request-ID": requestId } });
   }
   return NextResponse.json({ received: true });
 }

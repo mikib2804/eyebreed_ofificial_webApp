@@ -12,6 +12,7 @@ const google = Google({
       id: profile.sub,
       name: profile.name,
       email: profile.email.normalize("NFKC").toLowerCase(),
+      emailVerified: new Date(),
       image: profile.picture,
       role: "CUSTOMER" as const,
     };
@@ -19,6 +20,7 @@ const google = Google({
 });
 
 export default {
+  trustHost: process.env.AUTH_TRUST_HOST === "true",
   providers: [google],
   pages: { signIn: "/login" },
   session: { strategy: "jwt" },

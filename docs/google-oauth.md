@@ -3,8 +3,7 @@
 Configure one Google OAuth web client with an authorized callback for every application origin:
 
 - Local: `http://localhost:3000/api/auth/callback/google`
-- Production site 1: `https://<domain-1>/api/auth/callback/google`
-- Production site 2: `https://<domain-2>/api/auth/callback/google`
+- Production: `https://eyebreedofficial.com/api/auth/callback/google`
 
 Set the client values as `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` in each deployment. Never expose the secret through a `NEXT_PUBLIC_` variable.
 
