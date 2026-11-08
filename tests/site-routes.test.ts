@@ -17,7 +17,9 @@ test("global site routes are unique and resolve to internal destinations", () =>
 });
 
 test("navigation and footer expose every intended public route", () => {
-  const navigationIds = new Set(primaryNavigationRoutes.map((route) => route.id));
+  const navigationIds = new Set(
+    primaryNavigationRoutes.map((route) => route.id),
+  );
   const footerIds = new Set(
     [...footerShopRoutes, ...footerHelpRoutes].map((route) => route.id),
   );

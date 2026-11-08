@@ -21,7 +21,7 @@ const contentSecurityPolicy = [
 const nextConfig: NextConfig = {
   // Keep the long-running development server away from the production build
   // output. Netlify and `next start` continue to use Next.js' standard `.next`.
-  distDir: isDevelopment ? ".next-eyebreed" : ".next",
+  distDir: isDevelopment ? ".next-dev" : ".next",
   output: "standalone",
   poweredByHeader: false,
   images: {

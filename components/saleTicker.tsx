@@ -9,17 +9,21 @@ export default function SaleTicker({ text }: SaleTickerProps) {
   const { locale } = useStore();
   const message =
     text ??
-    (locale === "he"
-      ? "15% הנחה על הזמנות באתר"
-      : "15% OFF WEBSITE ORDERS");
-  // Keep each duplicated marquee track wider than large desktop displays so
-  // the loop never exposes an empty area in the middle of the ticker.
-  const items = Array.from({ length: 40 }, () => message);
+    (locale === "he" ? "15% הנחה על הזמנות באתר" : "15% OFF WEBSITE ORDERS");
+  // Each duplicated track stays wider than a large desktop without creating
+  // tens of thousands of pixels of scrollable overflow in RTL documents.
+  const items = Array.from({ length: 12 }, () => message);
 
   return (
-    <div dir="ltr" className="w-full overflow-hidden bg-espresso-400 text-ink">
+    <div
+      dir="ltr"
+      className="relative isolate h-8 w-full max-w-full overflow-x-clip bg-espresso-400 text-ink [contain:strict]"
+    >
       <span className="sr-only">{message}</span>
-      <div aria-hidden="true" className="flex w-max animate-marquee will-change-transform motion-reduce:animate-none">
+      <div
+        aria-hidden="true"
+        className="absolute inset-y-0 start-0 flex w-max items-center animate-marquee will-change-transform motion-reduce:animate-none"
+      >
         <div className="flex shrink-0">
           {items.map((text, index) => (
             <span

@@ -50,7 +50,7 @@ export function Footer() {
           <form className="mt-8 max-w-sm" onSubmit={subscribe}>
             <div className="flex border border-white/50"><input name="email" type="email" required autoComplete="email" placeholder={locale === "he" ? "האימייל שלך" : "YOUR EMAIL"} aria-label={locale === "he" ? "אימייל להרשמה" : "Subscription email"} className="min-w-0 flex-1 bg-transparent px-5 py-4 text-[10px] tracking-luxury outline-none" /><button disabled={newsletterBusy} className="min-h-12 px-5 transition-all duration-300 hover:translate-x-0.5 disabled:opacity-50" aria-label={locale === "he" ? "הרשמה לעדכונים" : "Subscribe"}>{newsletterBusy ? "…" : "→"}</button></div>
             <label className="mt-3 flex items-start gap-2 text-[10px] leading-5 text-white/75"><input name="consent" type="checkbox" required className="mt-1" /><span>{locale === "he" ? "אני מסכים/ה לקבל עדכונים שיווקיים ויכול/ה לבטל בכל עת." : "I agree to receive marketing updates and can unsubscribe at any time."}</span></label>
-            <input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" />
+            <input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="sr-only" />
             {newsletterMessage && <p role={newsletterError ? "alert" : "status"} aria-live="polite" className={`mt-3 text-xs ${newsletterError ? "text-red-300" : "text-green-300"}`}>{newsletterMessage}</p>}
           </form>
         </div>

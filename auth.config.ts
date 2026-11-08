@@ -20,7 +20,9 @@ const google = Google({
 });
 
 export default {
-  trustHost: process.env.AUTH_TRUST_HOST === "true",
+  // Local development runs directly on localhost. Production remains opt-in
+  // so a deployment must explicitly trust its configured reverse proxy/host.
+  trustHost: process.env.NODE_ENV !== "production" || process.env.AUTH_TRUST_HOST === "true",
   providers: [google],
   pages: { signIn: "/login" },
   session: { strategy: "jwt" },

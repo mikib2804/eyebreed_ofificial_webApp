@@ -27,3 +27,19 @@ export function toStoreProduct(product: DbProduct): StoreProduct {
     }
   };
 }
+
+export function applyPercentageDiscount(product: StoreProduct, percentage: number, label?: string): StoreProduct {
+  const safePercentage = Math.min(100, Math.max(0, percentage));
+  if (safePercentage <= 0) return product;
+  const multiplier = 1 - safePercentage / 100;
+  return {
+    ...product,
+    saleLabel: label?.trim() || `${safePercentage}% SALE`,
+    compareAtPrices: { ...product.prices },
+    prices: {
+      USD: Math.round(product.prices.USD * multiplier * 100) / 100,
+      ILS: Math.round(product.prices.ILS * multiplier * 100) / 100,
+      EUR: Math.round(product.prices.EUR * multiplier * 100) / 100,
+    },
+  };
+}

@@ -1,6 +1,7 @@
 node_modules
 .next
 .next-eyebreed
+.next-dev
 .env
 .env.local
 *.log

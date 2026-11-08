@@ -10,10 +10,16 @@
   display: none;
 }
 html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   scroll-behavior: smooth;
 }
 body {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background: var(--ink);
   font-family: var(--font-montserrat), sans-serif;
 }
@@ -29,6 +35,24 @@ a {
 }
 button {
   cursor: pointer;
+}
+
+.admin-discount-form input,
+.admin-discount-form select,
+.admin-discount-form option {
+  color: #171412;
+  background-color: #fff;
+  -webkit-text-fill-color: #171412;
+  opacity: 1;
+}
+
+.admin-discount-form input:-webkit-autofill,
+.admin-discount-form input:-webkit-autofill:hover,
+.admin-discount-form input:-webkit-autofill:focus,
+.admin-discount-form select:-webkit-autofill {
+  -webkit-text-fill-color: #171412 !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  caret-color: #171412;
 }
 
 .vision-demo-cursor {

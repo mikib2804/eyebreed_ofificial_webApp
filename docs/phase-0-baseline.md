@@ -6,7 +6,7 @@ This record contains no database credentials or customer data.
 
 - Repository: one checkout on branch `newUpdates`, with one GitHub remote.
 - Application: one Next.js 15 / React 19 codebase with one Prisma PostgreSQL datasource.
-- Production output: development uses `.next-eyebreed`; production and Netlify use the standard `.next` output.
+- Production output: development uses the fresh untracked `.next-dev`; production and Netlify use the standard `.next` output.
 - Auth middleware: Edge-safe Auth.js configuration is separated from the Node-only Prisma, bcrypt, and credentials configuration.
 - TypeScript: `npm run typecheck` passes.
 - Unit tests: `npm test` runs 7 tests and all pass.
@@ -29,7 +29,7 @@ This record contains no database credentials or customer data.
 
 - Added `npm run typecheck`, `npm test`, `npm run check`, and the read-only `npm run db:inventory` command.
 - Added a safe `.env.example` inventory containing placeholders only.
-- Added `.next-eyebreed` to `.gitignore` and separated development/production build directories.
+- Added `.next-dev` to `.gitignore` and separated development/production build directories. The older tracked `.next-eyebreed` cache is no longer used because Windows file locks made it unreliable.
 - Restored the two palette definitions expected by the existing tests and made unknown palette IDs fall back to `original` deterministically.
 - Split Auth.js configuration so middleware no longer bundles Prisma or bcrypt into the Edge runtime.
 

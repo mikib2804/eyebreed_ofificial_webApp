@@ -225,10 +225,12 @@ ${careHe}`,
   },
   {
     folder: "pants-first",
-    name: "Uneven Pants",
-    nameHe: "מכנסי Uneven",
+    name: "No One Cares Pants – EYEBREED",
+    nameHe: "מכנסי No One Cares – EYEBREED",
     slug: "uneven-pants",
-    description: `Uneven Pants bring an asymmetric approach to the Vision silhouette, with an oversized wide-leg fit, sculpted seam lines and contrasting pink EYEBREED embroidery.
+    description: `Part of the premium No One Cares tracksuit by EYEBREED, featuring an oversized hoodie and pants cut from premium 500 GSM fleece in an 80% cotton and 20% polyester composition.
+
+The set features a double-layer hood, hidden pockets, uniquely designed seams and pink EYEBREED embroidery to complete the look.
 
 Details:
 • Fit: Oversized / Wide leg
@@ -238,7 +240,9 @@ Details:
 • Adjustable drawcord hems
 
 ${careEn}`,
-    descriptionHe: `מכנסי Uneven מביאים גישה א־סימטרית לצללית של קולקציית Vision, עם גזרה רחבה ואוברסייז, קווי תפר מודגשים ורקמת EYEBREED ורודה.
+    descriptionHe: `סט פוטר פרימיום הכולל קפוצ’ון ומכנסיים בגזרת Oversized, עשוי בד Fleece איכותי במשקל 500GSM, בהרכב 80% כותנה ו־20% פוליאסטר.
+
+הסט כולל כובע כפול, כיסים נסתרים, תפרים בעיצוב ייחודי ורקמת EYEBREED ורודה להשלמת הלוק.
 
 פרטים:
 • גזרה: Oversized / Wide leg
@@ -250,7 +254,7 @@ ${careEn}`,
 ${careHe}`,
     story: brandStoryEn,
     storyHe: brandStoryHe,
-    material: "Heavyweight washed cotton",
+    material: "500 GSM Fleece · 80% cotton · 20% polyester",
     prices: { USD: 54.71, ILS: 203.99, EUR: 50.85 },
     compareAtPrices: { USD: 64.36, ILS: 239.99, EUR: 59.82 },
     sizes: ["XS", "S", "M", "L", "XL"],
@@ -265,10 +269,12 @@ ${careHe}`,
   },
   {
     folder: "hoodie-first",
-    name: "Uneven Hoodie",
-    nameHe: "קפוצ׳ון Uneven",
+    name: "No One Cares Hoodie – EYEBREED",
+    nameHe: "קפוצ׳ון No One Cares – EYEBREED",
     slug: "uneven-hoodie",
-    description: `Uneven Hoodie is a heavyweight oversized pullover defined by an asymmetric front panel, a washed charcoal finish and contrasting pink EYEBREED embroidery.
+    description: `Part of the premium No One Cares tracksuit by EYEBREED, featuring an oversized hoodie and pants cut from premium 500 GSM fleece in an 80% cotton and 20% polyester composition.
+
+The set features a double-layer hood, hidden pockets, uniquely designed seams and pink EYEBREED embroidery to complete the look.
 
 Details:
 • Fit: Oversized
@@ -278,7 +284,9 @@ Details:
 • Kangaroo pockets integrated into the panel lines
 
 ${careEn}`,
-    descriptionHe: `קפוצ׳ון Uneven הוא פריט אוברסייז כבד עם מבנה קדמי א־סימטרי, גימור פחם Washed ורקמת EYEBREED ורודה בניגודיות גבוהה.
+    descriptionHe: `סט פוטר פרימיום הכולל קפוצ’ון ומכנסיים בגזרת Oversized, עשוי בד Fleece איכותי במשקל 500GSM, בהרכב 80% כותנה ו־20% פוליאסטר.
+
+הסט כולל כובע כפול, כיסים נסתרים, תפרים בעיצוב ייחודי ורקמת EYEBREED ורודה להשלמת הלוק.
 
 פרטים:
 • גזרה: Oversized
@@ -290,7 +298,7 @@ ${careEn}`,
 ${careHe}`,
     story: brandStoryEn,
     storyHe: brandStoryHe,
-    material: "Heavyweight washed cotton fleece",
+    material: "500 GSM Fleece · 80% cotton · 20% polyester",
     prices: { USD: 75.57, ILS: 280.49, EUR: 69.71 },
     compareAtPrices: { USD: 88.9, ILS: 329.99, EUR: 82.01 },
     sizes: ["XS", "S", "M", "L", "XL"],

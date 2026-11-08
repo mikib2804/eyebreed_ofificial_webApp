@@ -20,27 +20,36 @@ export function ProductGrid({
 }) {
   const { locale, currency, addToCart, t } = useStore();
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [liked, setLiked] = useState<boolean[]>([]);
-  const [likeBurst, setLikeBurst] = useState<{ index: number; key: number } | null>(null);
+  const [likeBurst, setLikeBurst] = useState<{
+    index: number;
+    key: number;
+  } | null>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(
     () => new Set(),
   );
 
   useEffect(() => {
-    if (status !== "authenticated") return;
+    const userId = session?.user?.id;
+    if (status !== "authenticated" || !userId) {
+      setLiked([]);
+      return;
+    }
     let cancelled = false;
 
     void fetch("/api/account/wishlist", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : { productIds: [] })
+      .then((response) => (response.ok ? response.json() : { productIds: [] }))
       .then((data: { productIds?: string[] }) => {
         if (cancelled) return;
         const saved = new Set(data.productIds ?? []);
         setLiked(products.map((product) => saved.has(product.id)));
       });
 
-    return () => { cancelled = true; };
-  }, [products, status]);
+    return () => {
+      cancelled = true;
+    };
+  }, [products, session?.user?.id, status]);
   return (
     <section
       id="products"
@@ -62,6 +71,12 @@ export function ProductGrid({
             {products.map((product, index) => {
               const displayImage = displayImages[product.slug] ?? product.image;
               const imageFailed = failedImages.has(displayImage);
+              const salePercentage = product.compareAtPrices
+                ? Math.round(
+                    (1 - product.prices.ILS / product.compareAtPrices.ILS) *
+                      100,
+                  )
+                : 0;
               return (
                 <article
                   key={product.id}
@@ -70,8 +85,8 @@ export function ProductGrid({
                   {!imageFailed && (
                     <div className="relative aspect-square overflow-hidden bg-white">
                       {product.compareAtPrices && (
-                        <div className="absolute start-0 top-5 z-20 border-y-2 border-white bg-red-600 px-4 py-2 text-[10px] font-bold tracking-[.2em] text-white shadow-[4px_5px_0_#fff]">
-                          UNEVEN · 15% SALE
+                        <div className="absolute start-0 border-b-2 border-black top-5 z-20   bg-red-600 px-4 py-2 text-[10px] font-bold tracking-[.2em] text-white shadow-[4px_5px_0_#fff]">
+                          {product.saleLabel ?? `${salePercentage}% SALE`}
                         </div>
                       )}
                       <Link
@@ -113,7 +128,10 @@ export function ProductGrid({
                           });
                           if (next) setLikeBurst({ index, key: Date.now() });
 
-                          const response = await fetch(`/api/account/wishlist/${product.id}`, { method: next ? "PUT" : "DELETE" });
+                          const response = await fetch(
+                            `/api/account/wishlist/${product.id}`,
+                            { method: next ? "PUT" : "DELETE" },
+                          );
                           if (!response.ok) {
                             setLiked((prev) => {
                               const rolledBack = [...prev];
@@ -122,12 +140,24 @@ export function ProductGrid({
                             });
                           }
                         }}
-                        aria-label={liked[index] ? (locale === "he" ? "הסרה מהמועדפים" : "Remove from wishlist") : (locale === "he" ? "הוספה למועדפים" : "Add to wishlist")}
+                        aria-label={
+                          liked[index]
+                            ? locale === "he"
+                              ? "הסרה מהמועדפים"
+                              : "Remove from wishlist"
+                            : locale === "he"
+                              ? "הוספה למועדפים"
+                              : "Add to wishlist"
+                        }
                         aria-pressed={liked[index] ?? false}
                         className="absolute end-4 top-4 z-30 grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-105"
                       >
                         {likeBurst?.index === index && (
-                          <span key={likeBurst.key} aria-hidden="true" className="like-burst">
+                          <span
+                            key={likeBurst.key}
+                            aria-hidden="true"
+                            className="like-burst"
+                          >
                             {Array.from({ length: 8 }, (_, particle) => (
                               <span key={particle} className="like-particle" />
                             ))}
@@ -172,10 +202,20 @@ export function ProductGrid({
                     <div className="shrink-0 text-end text-xs">
                       {product.compareAtPrices && (
                         <p className="mb-1 text-[10px] text-black/45 line-through">
-                          {money(product.compareAtPrices[currency], currency, locale)}
+                          {money(
+                            product.compareAtPrices[currency],
+                            currency,
+                            locale,
+                          )}
                         </p>
                       )}
-                      <p className={product.compareAtPrices ? "font-semibold text-red-700" : ""}>
+                      <p
+                        className={
+                          product.compareAtPrices
+                            ? "font-semibold text-red-700"
+                            : ""
+                        }
+                      >
                         {money(product.prices[currency], currency, locale)}
                       </p>
                     </div>

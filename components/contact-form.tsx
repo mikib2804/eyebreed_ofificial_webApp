@@ -57,7 +57,7 @@ export function ContactForm({ compact = false }: { compact?: boolean }) {
         <span className="mt-2 block text-[9px] text-black/45">{hebrew ? "10–2,000 תווים" : "10–2,000 characters"}</span>
       </label>
 
-      <div className="absolute -start-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+      <div className="sr-only" aria-hidden="true">
         <label>Company<input name="company" type="text" tabIndex={-1} autoComplete="off" /></label>
       </div>
 

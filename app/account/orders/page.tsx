@@ -1,6 +1,7 @@
 import type { OrderStatus } from "@prisma/client";
 import { AccountOrdersView } from "@/components/account-orders-view";
 import { requireCustomer } from "@/lib/account";
+import { campaignProducts } from "@/lib/campaign-catalog";
 import { prisma } from "@/lib/prisma";
 
 const PAGE_SIZE = 10;
@@ -20,7 +21,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const page = Math.min(requestedPage, totalPages);
   const orders = await prisma.order.findMany({
     where,
-    include: { items: { include: { product: { select: { images: true } } } } },
+    include: { items: { include: { product: { select: { slug: true, images: true } } } } },
     orderBy: { createdAt: "desc" },
     skip: (page - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
@@ -46,7 +47,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         size: item.size,
         color: item.color,
         quantity: item.quantity,
-        image: item.product?.images[0] ?? null,
+        image: campaignProducts.find((product) => product.slug === item.product?.slug)?.displayImage ?? item.product?.images[0] ?? null,
       })),
     }))}
   />;

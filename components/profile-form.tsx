@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useStore } from "@/components/store-provider";
 
-const fieldClass = "mt-2 w-full rounded-xl border border-black/15 bg-white px-4 py-3.5 text-sm text-[#171412] outline-none transition focus:border-espresso-600 focus:ring-1 focus:ring-espresso-600 disabled:cursor-not-allowed disabled:bg-black/5 disabled:text-black/55";
+const fieldClass = "mt-2 w-full rounded-md border border-black/15 bg-white px-4 py-3.5 text-sm text-[#171412] outline-none transition focus:border-espresso-600 focus:ring-1 focus:ring-espresso-600 disabled:cursor-not-allowed disabled:bg-black/5 disabled:text-black/55";
 
 export function ProfileForm({ user, canChangePassword }: { user: { name: string | null; email: string | null; phone: string | null }; canChangePassword: boolean }) {
   const { locale } = useStore();
@@ -37,9 +37,9 @@ export function ProfileForm({ user, canChangePassword }: { user: { name: string 
       <legend className="sr-only">{hebrew ? "שינוי סיסמה" : "Change password"}</legend>
       <Field name="currentPassword" label={hebrew ? "סיסמה נוכחית" : "CURRENT PASSWORD"} type="password" maxLength={72} autoComplete="current-password" />
       <Field name="newPassword" label={hebrew ? "סיסמה חדשה" : "NEW PASSWORD"} type="password" minLength={8} maxLength={72} autoComplete="new-password" />
-    </fieldset> : <p className="rounded-xl bg-black/5 px-4 py-3 text-xs leading-5">{hebrew ? "החשבון מחובר באמצעות Google ואין לו סיסמה מקומית לשינוי." : "This account signs in with Google and does not have a local password to change."}</p>}
-    {message && <p role={isError ? "alert" : "status"} aria-live="polite" className={`rounded-xl px-4 py-3 text-xs ${isError ? "bg-red-50 text-red-800" : "bg-emerald-50 text-emerald-900"}`}>{message}</p>}
-    <button disabled={saving} className="min-h-12 rounded-full bg-[#171412] px-8 py-4 text-[9px] tracking-luxury !text-white transition hover:bg-espresso-700 disabled:cursor-wait disabled:opacity-55">{saving ? (hebrew ? "שומר…" : "SAVING…") : (hebrew ? "שמירת שינויים" : "SAVE CHANGES")}</button>
+    </fieldset> : <p className="rounded-md bg-black/5 px-4 py-3 text-xs leading-5">{hebrew ? "החשבון מחובר באמצעות Google ואין לו סיסמה מקומית לשינוי." : "This account signs in with Google and does not have a local password to change."}</p>}
+    {message && <p role={isError ? "alert" : "status"} aria-live="polite" className={`rounded-md px-4 py-3 text-xs ${isError ? "bg-red-50 text-red-800" : "bg-emerald-50 text-emerald-900"}`}>{message}</p>}
+    <button disabled={saving} className="min-h-12 rounded-md bg-[#171412] px-8 py-4 text-[9px] tracking-luxury !text-white transition hover:bg-espresso-700 disabled:cursor-wait disabled:opacity-55">{saving ? (hebrew ? "שומר…" : "SAVING…") : (hebrew ? "שמירת שינויים" : "SAVE CHANGES")}</button>
   </form>;
 }
 

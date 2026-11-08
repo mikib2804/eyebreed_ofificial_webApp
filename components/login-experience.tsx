@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Eye, EyeOff, Pause, Play } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -21,20 +21,19 @@ const slides = modernAllImages.map((image, index) => ({
 export function LoginExperience({ initialMode = "login" }: { initialMode?: "login" | "register" }) {
   const router = useRouter();
   const [slide, setSlide] = useState(0);
-  const [slidesPaused, setSlidesPaused] = useState(false);
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (slidesPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(
       () => setSlide((current) => (current + 1) % slides.length),
       5500,
     );
     return () => window.clearInterval(timer);
-  }, [slidesPaused]);
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,14 +118,6 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
                 />
               </button>
             ))}
-            <button
-              type="button"
-              onClick={() => setSlidesPaused((paused) => !paused)}
-              aria-label={slidesPaused ? "Play slideshow" : "Pause slideshow"}
-              className="grid h-11 w-11 -translate-y-1/2 place-items-center border border-white/45"
-            >
-              {slidesPaused ? <Play size={15} /> : <Pause size={15} />}
-            </button>
           </div>
         </div>
       </section>

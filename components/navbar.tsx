@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, ShoppingBag, X, UserRound } from "lucide-react";
+import { Menu, Settings, ShoppingBag, X, UserRound } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useStore } from "@/components/store-provider";
@@ -23,13 +23,31 @@ function NavTooltip({ children }: { children: React.ReactNode }) {
 }
 
 export function Navbar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [adminAllowed, setAdminAllowed] = useState(false);
   const navigationRef = useRef<HTMLElement>(null);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user?.id) {
+      setAdminAllowed(false);
+      return;
+    }
+    let cancelled = false;
+    void fetch("/api/admin/access", { cache: "no-store" })
+      .then((response) => {
+        if (!cancelled) setAdminAllowed(response.ok);
+      })
+      .catch(() => {
+        if (!cancelled) setAdminAllowed(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id, status]);
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 1280px)");
     const handleResize = () => {
@@ -60,8 +78,16 @@ export function Navbar() {
       document.removeEventListener("keydown", escape);
     };
   }, [menuOpen]);
-  const { locale, setLocale, currency, setCurrency, cart, cartOpen, setCartOpen, t } =
-    useStore();
+  const {
+    locale,
+    setLocale,
+    currency,
+    setCurrency,
+    cart,
+    cartOpen,
+    setCartOpen,
+    t,
+  } = useStore();
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -73,6 +99,7 @@ export function Navbar() {
       <nav
         ref={navigationRef}
         aria-label="Main navigation"
+        onMouseLeave={() => setMenuOpen(false)}
         className="relative mx-auto grid h-22 max-w-[1600px] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 md:h-24 md:px-10"
       >
         <div className="hidden grid-cols-3 items-center gap-x-5 gap-y-2 text-[9px] tracking-[.14em] xl:grid">
@@ -81,16 +108,11 @@ export function Navbar() {
               key={route.id}
               href={route.href}
               aria-current={pathname === route.href ? "page" : undefined}
-              className="link-line w-fit whitespace-nowrap"
+              className="link-line text-[11px] w-fit whitespace-nowrap font-semibold"
             >
               {route.label[locale].toUpperCase()}
             </Link>
           ))}
-          {session?.user.role === "ADMIN" && (
-            <Link href="/admin" className="link-line w-fit whitespace-nowrap">
-              {locale === "he" ? "ניהול" : "ADMIN"}
-            </Link>
-          )}
         </div>
         <button
           ref={menuToggleRef}
@@ -98,6 +120,7 @@ export function Navbar() {
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
           aria-controls="mobile-navigation"
+          onMouseEnter={() => setMenuOpen(true)}
           onClick={() => setMenuOpen((current) => !current)}
           className="grid h-11 w-11 place-items-center justify-self-start xl:hidden"
         >
@@ -105,8 +128,9 @@ export function Navbar() {
         </button>
         <div
           id="mobile-navigation"
-          hidden={!menuOpen}
-          className="absolute inset-x-0 top-full z-50 border-b border-white/20 bg-ink px-5 py-4 text-[10px] tracking-[.17em] shadow-xl md:px-10 xl:hidden"
+          aria-hidden={!menuOpen}
+          inert={!menuOpen}
+          className={`absolute inset-x-0 top-full z-50 origin-top border-b border-white/20 bg-ink px-5 py-4 text-[10px] tracking-[.17em] shadow-xl transition-[opacity,transform,visibility] duration-300 ease-out md:px-10 xl:hidden ${menuOpen ? "visible translate-y-0 scale-y-100 opacity-100" : "invisible pointer-events-none -translate-y-3 scale-y-95 opacity-0"}`}
         >
           {primaryNavigationRoutes.map((route) => (
             <Link
@@ -130,11 +154,6 @@ export function Navbar() {
                 ? "התחברות / הרשמה"
                 : "LOGIN / REGISTER"}
           </Link>
-          {session?.user.role === "ADMIN" && (
-            <Link href="/admin" className="flex min-h-11 items-center">
-              {locale === "he" ? "ניהול" : "ADMIN"}
-            </Link>
-          )}
         </div>
         <Link
           href="/"
@@ -175,6 +194,20 @@ export function Navbar() {
                   : "LOGIN OR REGISTER"}
             </NavTooltip>
           </Link>
+          {adminAllowed && (
+            <Link
+              href="/admin"
+              aria-label={locale === "he" ? "ניהול" : "Management"}
+              className="group/admin relative flex h-10 max-w-10 items-center overflow-hidden rounded-full border border-white/20 bg-espresso-700 text-[9px] tracking-wider shadow-[inset_0_1px_0_rgba(255,255,255,.08)] transition-[max-width,background-color,border-color] duration-300 hover:max-w-36 hover:border-white/40 hover:bg-espresso-600 focus-visible:max-w-36 focus-visible:border-white/40 focus-visible:bg-espresso-600"
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center">
+                <Settings size={16} strokeWidth={1.5} aria-hidden="true" />
+              </span>
+              <span className="whitespace-nowrap pe-4 opacity-0 transition-opacity delay-75 duration-200 group-hover/admin:opacity-100 group-focus-visible/admin:opacity-100">
+                {locale === "he" ? "ניהול" : "MANAGEMENT"}
+              </span>
+            </Link>
+          )}
           <button
             onClick={() => setCartOpen(true)}
             aria-label="Open cart"
@@ -212,13 +245,15 @@ export function Navbar() {
           </select>
           <button
             onClick={() => setLocale(locale === "en" ? "he" : "en")}
-            aria-label={locale === "en" ? "Switch language to Hebrew" : "החלפת שפה לאנגלית"}
+            aria-label={
+              locale === "en"
+                ? "Switch language to Hebrew"
+                : "החלפת שפה לאנגלית"
+            }
             className="group relative min-h-10 border-s border-white/30 ps-3 text-[10px] tracking-wider"
           >
             {locale === "en" ? "HE" : "EN"}
-            <NavTooltip>
-              {locale === "en" ? "עברית" : "ENGLISH"}
-            </NavTooltip>
+            <NavTooltip>{locale === "en" ? "עברית" : "ENGLISH"}</NavTooltip>
           </button>
         </div>
       </nav>

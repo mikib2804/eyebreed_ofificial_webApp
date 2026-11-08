@@ -25,7 +25,13 @@ export function VisionWaitlist() {
       const response = await fetch("/api/vision-waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, locale: "he", consent: data.get("consent") === "on", company: data.get("company"), startedAt: startedAt.current }),
+        body: JSON.stringify({
+          email,
+          locale: "he",
+          consent: data.get("consent") === "on",
+          company: data.get("company"),
+          startedAt: startedAt.current,
+        }),
       });
       const result = (await response.json()) as { message?: string };
 
@@ -112,7 +118,13 @@ export function VisionWaitlist() {
             dir="rtl"
             className="mt-5 text-xl tracking-[.15em] sm:mt-7 sm:text-2xl"
           >
-            <input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px]" />
+            <input
+              name="company"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="sr-only"
+            />
             הזמנה מוקדמת
           </p>
 
@@ -140,8 +152,16 @@ export function VisionWaitlist() {
               />
             </div>
             <label className="flex items-start gap-3 text-start text-[11px] leading-5 text-white/85">
-              <input name="consent" type="checkbox" required className="mt-1 size-4 shrink-0 accent-white" />
-              <span>I agree to receive availability updates for the Vision of Life collection. I can unsubscribe at any time.</span>
+              <input
+                name="consent"
+                type="checkbox"
+                required
+                className="mt-1 size-4 shrink-0 accent-white"
+              />
+              <span>
+                I agree to receive availability updates for the Vision of Life
+                collection. I can unsubscribe at any time.
+              </span>
             </label>
             <div className="relative">
               <button

@@ -1,11 +1,14 @@
 services:
   web:
     image: eyebreed-web:production
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     build:
       context: .
       dockerfile: Dockerfile.prod
       args:
-        NEXT_PUBLIC_APP_URL: https://eyebreedofficial.com
+        NEXT_PUBLIC_APP_URL: https://shop.eyebreedofficial.com
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
         MEDIA_ALLOWED_HOSTS: ${MEDIA_ALLOWED_HOSTS:-images.unsplash.com}
     env_file:
@@ -14,7 +17,9 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: 3000
-      NEXT_PUBLIC_APP_URL: https://eyebreedofficial.com
+      NEXT_PUBLIC_APP_URL: https://shop.eyebreedofficial.com
+      AUTH_URL: https://shop.eyebreedofficial.com
+      AUTH_TRUST_HOST: "true"
     expose:
       - "3000"
     restart: unless-stopped
@@ -31,11 +36,14 @@ services:
 
   caddy:
     image: caddy:2-alpine
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     depends_on:
       web:
         condition: service_healthy
     environment:
-      DOMAIN: eyebreedofficial.com
+      DOMAIN: shop.eyebreedofficial.com
     ports:
       - "80:80"
       - "443:443"
