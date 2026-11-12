@@ -11,20 +11,27 @@ async function main() {
   });
   if (!product) throw new Error("No active database product is available for the quote smoke test.");
   const variant = product.variants[0];
-  const response = await fetch(`${baseUrl}/api/cart/quote`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Origin: baseUrl },
-    body: JSON.stringify({
-      currency: "ILS",
-      items: [{ productId: product.id, quantity: 1, size: variant?.size ?? null, color: variant?.color ?? null }],
-    }),
-  });
-  const quote = await response.json() as { subtotal?: number; discountAmount?: number; total?: number; promotion?: { percentage?: number }; error?: string };
-  if (!response.ok) throw new Error(quote.error ?? `Quote failed with ${response.status}`);
-  if (quote.promotion?.percentage !== 15) throw new Error("The automatic promotion was not 15%.");
-  if (typeof quote.subtotal !== "number" || typeof quote.discountAmount !== "number" || typeof quote.total !== "number") throw new Error("Quote totals are missing.");
-  if (Math.round((quote.subtotal - quote.discountAmount) * 100) !== Math.round(quote.total * 100)) throw new Error("Quote total does not reconcile.");
-  console.log(`Quote smoke test passed for one active product: subtotal ${quote.subtotal} ILS, discount ${quote.discountAmount} ILS, total ${quote.total} ILS.`);
+  const requestQuote = async (productId: string, slug?: string) => {
+    const response = await fetch(`${baseUrl}/api/cart/quote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: baseUrl },
+      body: JSON.stringify({
+        currency: "ILS",
+        items: [{ productId, slug, quantity: 1, size: variant?.size ?? null, color: variant?.color ?? null }],
+      }),
+    });
+    const quote = await response.json() as { subtotal?: number; discountAmount?: number; total?: number; promotion?: { percentage?: number }; error?: string };
+    if (!response.ok) throw new Error(quote.error ?? `Quote failed with ${response.status}`);
+    if (quote.promotion?.percentage !== 15) throw new Error("The automatic promotion was not 15%.");
+    if (typeof quote.subtotal !== "number" || typeof quote.discountAmount !== "number" || typeof quote.total !== "number") throw new Error("Quote totals are missing.");
+    if (Math.round((quote.subtotal - quote.discountAmount) * 100) !== Math.round(quote.total * 100)) throw new Error("Quote total does not reconcile.");
+    return quote;
+  };
+
+  const quote = await requestQuote(product.id);
+  await requestQuote(`campaign-${product.slug}`);
+  await requestQuote("stale-database-product-id", product.slug);
+  console.log(`Quote smoke test passed for current, campaign, and stale database cart references: subtotal ${quote.subtotal} ILS, discount ${quote.discountAmount} ILS, total ${quote.total} ILS.`);
 }
 
 main().finally(() => prisma.$disconnect());

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { quoteCart, QuoteError } from "@/lib/cart-quote";
 import { cartQuoteInputSchema } from "@/lib/cart-quote-schema";
@@ -10,6 +11,10 @@ import { getStripe } from "@/lib/stripe";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-body";
 import { getRequestId, logServerEvent } from "@/lib/server-log";
+
+const checkoutSessionInputSchema = cartQuoteInputSchema.extend({
+  addressId: z.string().min(1).max(64).optional(),
+});
 
 function appOrigin() {
   const configured = process.env.NEXT_PUBLIC_APP_URL;
@@ -29,7 +34,7 @@ export async function POST(request: Request) {
   if (!rate.allowed) return NextResponse.json({ error: "Too many checkout attempts. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
   const raw = await readJsonBody(request, 32_768);
   if (!raw.ok) return NextResponse.json({ error: raw.error }, { status: raw.status });
-  const parsed = cartQuoteInputSchema.safeParse(raw.data);
+  const parsed = checkoutSessionInputSchema.safeParse(raw.data);
   if (!parsed.success) return NextResponse.json({ error: "Invalid cart data." }, { status: 400 });
 
   let pendingOrder: { id: string; orderNumber: string; total: Prisma.Decimal; currency: string; customerEmail: string };
@@ -37,7 +42,7 @@ export async function POST(request: Request) {
     pendingOrder = await prisma.$transaction(async (transaction) => {
       const [user, address] = await Promise.all([
         transaction.user.findUnique({ where: { id: session.user.id }, select: { id: true, email: true, name: true } }),
-        transaction.address.findFirst({ where: { userId: session.user.id }, orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }] }),
+        transaction.address.findFirst({ where: { userId: session.user.id, ...(parsed.data.addressId ? { id: parsed.data.addressId } : {}) }, orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }] }),
       ]);
       if (!user?.email) throw new QuoteError("EMAIL_REQUIRED", "Your account needs an email address before checkout.");
       if (!address) throw new QuoteError("ADDRESS_REQUIRED", "Add a shipping address before checkout.");

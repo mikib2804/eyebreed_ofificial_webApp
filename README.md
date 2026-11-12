@@ -74,5 +74,9 @@ The homepage catalog uses a typed local fallback so the visual storefront works 
 
 ## VPS deployment
 
-For the production Nginx, systemd, HTTPS, database migration, and update
-procedure, see [`docs/VPS_NGINX_DEPLOYMENT.md`](docs/VPS_NGINX_DEPLOYMENT.md).
+Production operations are documented in:
+
+- [`docs/VPS_NGINX_DEPLOYMENT.md`](docs/VPS_NGINX_DEPLOYMENT.md): first VPS setup, Nginx, systemd, and HTTPS.
+- [`deploy/firewall/README.md`](deploy/firewall/README.md): OCI, UFW, and iptables rules.
+- [`docs/DEPLOYING_UPDATES.md`](docs/DEPLOYING_UPDATES.md): deploying and verifying a new version.
+- [`docs/TECH_STACK.md`](docs/TECH_STACK.md): application and infrastructure technologies.

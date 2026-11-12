@@ -205,7 +205,7 @@ export function VisionWaitlist() {
           <p>IT’S NOT THE EYES</p>
           <p>IT’S THE VISION</p>
           <div className="mx-auto mt-16 justify-center items-center flex max-w-[1600px] flex-col gap-3 border-t border-white/15 pt-6 text-[9px] tracking-wider text-white/75 sm:flex-row sm:justify-between">
-            <span>© 2026 EYEBREED-STUDIO™. All Rights Reserved.</span>
+            <span>© 2026 EYEBREED™. All Rights Reserved.</span>
             <PaymentSupport />
             <span className="flex gap-2 justify-center text-center items-center sm:justify-end">
               DESIGNED AND POWERED BY EASYPASSPROJECTS ©

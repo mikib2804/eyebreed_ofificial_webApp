@@ -74,78 +74,78 @@ const paletteDefinitions = [
     ],
   },
 
-  {
-    id: "ocean",
-    name: "High-Fashion Midnight & Cool Steel",
-    roles: [
-      {
-        role: "Primary Dark",
-        name: "Charcoal Obsidian",
-        hex: "#121315",
-        use: "Hero banner and footer background",
-      },
-      {
-        role: "Accent Tone",
-        name: "Slate Blue",
-        hex: "#3B4856",
-        use: "Primary CTAs, hover states, active menu items",
-      },
-      {
-        role: "Highlight",
-        name: "Cool Silver",
-        hex: "#8C9A9E",
-        use: "Secondary badges and supporting copy",
-      },
-      {
-        role: "Soft Background",
-        name: "Off-White Pearl",
-        hex: "#F2F4F5",
-        use: "Light sections and switch backgrounds",
-      },
-      {
-        role: "Logo Color",
-        name: "Pure White",
-        hex: "#FFFFFF",
-        use: "Primary logo variant",
-      },
-    ],
-  },
-  {
-    id: "navy",
-    name: "Deep Regal Navy & Champagne",
-    roles: [
-      {
-        role: "Primary Dark",
-        name: "Midnight Navy",
-        hex: "#0B1320",
-        use: "Full-site dark backdrop",
-      },
-      {
-        role: "Accent Tone",
-        name: "Deep Indigo",
-        hex: "#1C2A3A",
-        use: "Card containers and navigation headers",
-      },
-      {
-        role: "Warm Highlight",
-        name: "Champagne Gold",
-        hex: "#D4AF37",
-        use: "Badges, discount banners, price highlights",
-      },
-      {
-        role: "Soft Background",
-        name: "Sand Linen",
-        hex: "#F7F5F0",
-        use: "Content section backgrounds",
-      },
-      {
-        role: "Logo Color",
-        name: "Pure White",
-        hex: "#FFFFFF",
-        use: "Primary logo variant",
-      },
-    ],
-  },
+  // {
+  //   id: "ocean",
+  //   name: "High-Fashion Midnight & Cool Steel",
+  //   roles: [
+  //     {
+  //       role: "Primary Dark",
+  //       name: "Charcoal Obsidian",
+  //       hex: "#121315",
+  //       use: "Hero banner and footer background",
+  //     },
+  //     {
+  //       role: "Accent Tone",
+  //       name: "Slate Blue",
+  //       hex: "#3B4856",
+  //       use: "Primary CTAs, hover states, active menu items",
+  //     },
+  //     {
+  //       role: "Highlight",
+  //       name: "Cool Silver",
+  //       hex: "#8C9A9E",
+  //       use: "Secondary badges and supporting copy",
+  //     },
+  //     {
+  //       role: "Soft Background",
+  //       name: "Off-White Pearl",
+  //       hex: "#F2F4F5",
+  //       use: "Light sections and switch backgrounds",
+  //     },
+  //     {
+  //       role: "Logo Color",
+  //       name: "Pure White",
+  //       hex: "#FFFFFF",
+  //       use: "Primary logo variant",
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "navy",
+  //   name: "Deep Regal Navy & Champagne",
+  //   roles: [
+  //     {
+  //       role: "Primary Dark",
+  //       name: "Midnight Navy",
+  //       hex: "#0B1320",
+  //       use: "Full-site dark backdrop",
+  //     },
+  //     {
+  //       role: "Accent Tone",
+  //       name: "Deep Indigo",
+  //       hex: "#1C2A3A",
+  //       use: "Card containers and navigation headers",
+  //     },
+  //     {
+  //       role: "Warm Highlight",
+  //       name: "Champagne Gold",
+  //       hex: "#D4AF37",
+  //       use: "Badges, discount banners, price highlights",
+  //     },
+  //     {
+  //       role: "Soft Background",
+  //       name: "Sand Linen",
+  //       hex: "#F7F5F0",
+  //       use: "Content section backgrounds",
+  //     },
+  //     {
+  //       role: "Logo Color",
+  //       name: "Pure White",
+  //       hex: "#FFFFFF",
+  //       use: "Primary logo variant",
+  //     },
+  //   ],
+  // },
   {
     id: "sage",
     name: "The Banker's Color Palette",

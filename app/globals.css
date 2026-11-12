@@ -337,6 +337,7 @@ button {
 
 .admin-field {
   display: grid;
+  min-width: 0;
   gap: 0.5rem;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
@@ -345,12 +346,23 @@ button {
 .admin-field input,
 .admin-field select,
 .admin-field textarea {
+  width: 100%;
+  min-width: 0;
   border: 1px solid rgb(var(--color-ink) / 0.25);
   background: transparent;
   padding: 0.85rem;
   outline: none;
   text-transform: none;
   letter-spacing: normal;
+}
+
+@media (max-width: 639px) {
+  .admin-field input,
+  .admin-field select,
+  .admin-field textarea {
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
 }
 .admin-field input:focus,
 .admin-field select:focus,

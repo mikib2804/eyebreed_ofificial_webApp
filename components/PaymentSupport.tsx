@@ -1,23 +1,59 @@
 "use client";
-import { FaCcVisa, FaCcMastercard, FaCcAmex } from "react-icons/fa";
+import {
+  FaApplePay,
+  FaCcMastercard,
+  FaCcVisa,
+  FaGooglePay,
+} from "react-icons/fa";
 
-export default function PaymentSupport() {
+type PaymentSupportProps = {
+  variant?: "footer" | "checkout";
+};
+
+export default function PaymentSupport({
+  variant = "footer",
+}: PaymentSupportProps) {
+  const checkout = variant === "checkout";
+  const caption = (
+    <span
+      className={`text-center  uppercase tracking-[.16em] ${checkout ? "text-[8px] text-black/45" : "text-[7px] text-white/55"}`}
+    >
+      Secure checkout powered by{" "}
+      <a
+        href="https://stripe.com/"
+        target="_blank"
+        rel="noreferrer"
+        className="underline underline-offset-2 transition hover:opacity-75"
+      >
+        Stripe
+      </a>
+    </span>
+  );
+
   return (
-    <div className="border-t border-black/10 py-6">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
-        <div className="flex flex-wrap items-center justify-center gap-4 text-white/90">
-          <span className="text-[10px] uppercase tracking-[.18em]">
-            Secure checkout powered by Stripe
+    <div className={checkout ? "py-4" : "py-3"}>
+      <div
+        className={`flex flex-col items-center justify-center gap-3 ${checkout ? "text-black/70" : "text-white/90"}`}
+      >
+        <span className="sr-only">
+          Payment methods: Visa, Mastercard, Google Pay, Apple Pay, and bit.
+          Availability is confirmed securely at checkout.
+        </span>
+        <div
+          aria-hidden="true"
+          className="flex flex-wrap items-center justify-center gap-3"
+        >
+          <FaCcVisa className={checkout ? "h-8 w-auto" : "h-7 w-auto"} />
+          <FaCcMastercard className={checkout ? "h-8 w-auto" : "h-7 w-auto"} />
+          <FaGooglePay className={checkout ? "h-8 w-auto" : "h-7 w-auto"} />
+          <FaApplePay className={checkout ? "h-8 w-auto" : "h-7 w-auto"} />
+          <span
+            className={`grid min-w-10 place-items-center rounded border px-2 font-sans text-sm font-bold lowercase leading-none ${checkout ? "h-7 border-black/35" : "h-6 border-white/45"}`}
+          >
+            bit
           </span>
-          <span className="sr-only">
-            Available payment methods are shown securely by Stripe at checkout.
-          </span>
-          <div aria-hidden="true" className="flex items-center gap-3">
-            <FaCcVisa className="h-7 w-auto" />
-            <FaCcMastercard className="h-7 w-auto" />
-            <FaCcAmex className="h-7 w-auto" />
-          </div>
         </div>
+        {caption}
       </div>
     </div>
   );

@@ -47,10 +47,12 @@ check(value("AUTH_TRUST_HOST") === "true" ? "PASS" : "FAIL", "AUTH_TRUST_HOST", 
 const stripeSecret = value("STRIPE_SECRET_KEY");
 const stripePublic = value("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
 const stripeWebhook = value("STRIPE_WEBHOOK_SECRET");
-check(/^sk_test_.+/.test(stripeSecret) && !isPlaceholder(stripeSecret) ? "PASS" : "FAIL", "STRIPE_SECRET_KEY", "Use a Stripe test secret key on the server only.");
-check(/^pk_test_.+/.test(stripePublic) && !isPlaceholder(stripePublic) ? "PASS" : "FAIL", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "Use the matching Stripe test publishable key.");
-check(/^whsec_.+/.test(stripeWebhook) && !isPlaceholder(stripeWebhook) ? "PASS" : "FAIL", "STRIPE_WEBHOOK_SECRET", "Use this deployment's webhook signing secret.");
-check(value("STRIPE_CHECKOUT_ENABLED") === "true" ? "PASS" : "WARN", "STRIPE_CHECKOUT_ENABLED", "Keep false until webhook delivery and one complete test payment are verified.");
+const stripeEnabled = value("STRIPE_CHECKOUT_ENABLED") === "true";
+const stripeLevel = (valid: boolean): Level => valid ? "PASS" : stripeEnabled ? "FAIL" : "WARN";
+check(stripeLevel(/^sk_test_.+/.test(stripeSecret) && !isPlaceholder(stripeSecret)), "STRIPE_SECRET_KEY", stripeEnabled ? "Use a Stripe test secret key on the server only." : "Optional while Stripe checkout is disabled.");
+check(stripeLevel(/^pk_test_.+/.test(stripePublic) && !isPlaceholder(stripePublic)), "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", stripeEnabled ? "Use the matching Stripe test publishable key." : "Optional while Stripe checkout is disabled.");
+check(stripeLevel(/^whsec_.+/.test(stripeWebhook) && !isPlaceholder(stripeWebhook)), "STRIPE_WEBHOOK_SECRET", stripeEnabled ? "Use this deployment's webhook signing secret." : "Optional while Stripe checkout is disabled.");
+check(stripeEnabled ? "PASS" : "WARN", "STRIPE_CHECKOUT_ENABLED", "Keep false until webhook delivery and one complete test payment are verified.");
 
 check(/^re_.+/.test(value("RESEND_API_KEY")) && !isPlaceholder(value("RESEND_API_KEY")) ? "PASS" : "WARN", "RESEND_API_KEY", "Required for real transactional email delivery.");
 check(value("EMAIL_FROM").includes("@") && !isPlaceholder(value("EMAIL_FROM")) ? "PASS" : "WARN", "EMAIL_FROM", "Use an address on a domain verified by your email provider.");

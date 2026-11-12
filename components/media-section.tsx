@@ -16,7 +16,8 @@ export function MediaSection() {
   };
 
   const previewFilm = () => {
-    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) showFilm();
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      showFilm();
   };
 
   const hideFilm = () => {
@@ -46,7 +47,7 @@ export function MediaSection() {
         />
         <video
           ref={videoRef}
-          src="/media/eyebreed-viral.mp4"
+          src="/media/new-drop.mp4"
           muted
           loop
           playsInline
@@ -54,8 +55,14 @@ export function MediaSection() {
           aria-label="EYEBREED Autumn Film"
           className={`pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${filmActive ? "opacity-100" : "opacity-0"}`}
         />
-        <div className={`absolute inset-0 flex flex-col items-center justify-center bg-black/15 transition-all duration-500 ${filmActive ? "bg-black/0" : "bg-black/15"}`}>
-          <h2 className={`p-3 font-display text-5xl transition duration-500 md:text-7xl ${filmActive ? "-translate-y-3 opacity-0" : "translate-y-0 opacity-100"}`}>{t.media}</h2>
+        <div
+          className={`absolute inset-0 flex flex-col items-center justify-center bg-black/15 transition-all duration-500 ${filmActive ? "bg-black/0" : "bg-black/15"}`}
+        >
+          <h2
+            className={`p-3 font-display text-5xl transition duration-500 md:text-7xl ${filmActive ? "-translate-y-3 opacity-0" : "translate-y-0 opacity-100"}`}
+          >
+            {t.media}
+          </h2>
           <button
             type="button"
             aria-label={filmActive ? "Pause film" : "Play film"}
@@ -64,7 +71,11 @@ export function MediaSection() {
             onFocus={previewFilm}
             className={`mt-8 flex h-16 w-16 items-center justify-center rounded-full border border-white/80 transition duration-300 hover:bg-white hover:text-black ${filmActive ? "bg-black/25 opacity-70 hover:opacity-100" : ""}`}
           >
-            {filmActive ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+            {filmActive ? (
+              <Pause size={18} fill="currentColor" />
+            ) : (
+              <Play size={18} fill="currentColor" />
+            )}
           </button>
         </div>
       </div>

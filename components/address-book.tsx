@@ -76,7 +76,7 @@ function CreateAddressForm() {
     event.currentTarget.reset(); router.refresh();
   }
   return <form onSubmit={submit} className="grid gap-5 rounded-md border border-black/10 bg-[#f7f2eb] p-5 sm:grid-cols-2 sm:p-7">
-    <Field name="label" label={hebrew ? "תווית" : "LABEL"} placeholder={hebrew ? "בית" : "Home"} />
+    <Field name="label" label={hebrew ? "תווית" : "LABEL"} defaultValue={hebrew ? "בית" : "Home"} />
     <Field name="fullName" label={hebrew ? "שם מלא" : "FULL NAME"} autoComplete="name" required />
     <Field name="phone" label={hebrew ? "טלפון" : "PHONE"} autoComplete="tel" />
     <Field name="line1" label={hebrew ? "כתובת" : "ADDRESS"} autoComplete="address-line1" required />

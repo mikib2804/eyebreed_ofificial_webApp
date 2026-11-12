@@ -3,9 +3,10 @@ import "server-only";
 import type { DiscountType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { fixedDiscount, fromMinorUnits, percentageDiscount, toMinorUnits, WEBSITE_PROMOTION_PERCENT } from "@/lib/pricing";
+import { productReferenceKeys, splitProductReferences } from "@/lib/product-reference";
 
 export type QuoteCurrency = "USD" | "ILS" | "EUR";
-export type QuoteItemInput = { productId: string; quantity: number; size?: string | null; color?: string | null };
+export type QuoteItemInput = { productId: string; slug?: string | null; quantity: number; size?: string | null; color?: string | null };
 export type CartQuoteInput = { items: QuoteItemInput[]; currency: QuoteCurrency; code?: string | null };
 
 export class QuoteError extends Error {
@@ -20,15 +21,24 @@ function priceFor(product: { priceUsd: unknown; priceIls: unknown; priceEur: unk
 
 export async function quoteCart(input: CartQuoteInput, database: QuoteDatabase = prisma) {
   const ids = [...new Set(input.items.map((item) => item.productId))];
+  const { directIds, legacySlugs } = splitProductReferences(ids);
+  const requestedSlugs = [...new Set([...legacySlugs, ...input.items.map((item) => item.slug).filter((slug): slug is string => Boolean(slug))])];
   const products = await database.product.findMany({
-    where: { id: { in: ids }, status: "ACTIVE" },
+    where: {
+      status: "ACTIVE",
+      OR: [
+        ...(directIds.length ? [{ id: { in: directIds } }] : []),
+        ...(requestedSlugs.length ? [{ slug: { in: requestedSlugs } }] : []),
+      ],
+    },
     include: { variants: true },
   });
-  const productMap = new Map(products.map((product) => [product.id, product]));
+  const productMap = new Map(products.flatMap((product) => productReferenceKeys(product).map((key) => [key, product] as const)));
+  const productSlugMap = new Map(products.map((product) => [product.slug, product]));
   const lines: Array<{ productId: string; slug: string; name: string; quantity: number; size: string | null; color: string | null; categoryId: string; unitAmount: number; lineAmount: number }> = [];
 
   for (const item of input.items) {
-    const product = productMap.get(item.productId);
+    const product = productMap.get(item.productId) ?? (item.slug ? productSlugMap.get(item.slug) : undefined);
     if (!product) throw new QuoteError("PRODUCT_UNAVAILABLE", "One or more products are no longer available.", 409);
     const size = item.size ?? null;
     const color = item.color ?? null;

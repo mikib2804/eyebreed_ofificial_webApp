@@ -5,6 +5,7 @@ import { Gift, X } from "lucide-react";
 import type { StoreProduct } from "@/lib/catalog";
 import { copy, type Currency, type Locale } from "@/lib/i18n";
 import { campaignProducts, campaignProductToStoreProduct } from "@/lib/campaign-catalog";
+import { isPromotionGiftLine, PROMOTION_GIFT_ID } from "@/lib/cart-promotion";
 import { useSession } from "next-auth/react";
 import { useRef } from "react";
 
@@ -28,10 +29,12 @@ const HAT_SLUG = "vision-logo-beanie";
 const ZIP_SLUG = "vision-washed-zip-hoodie";
 const POLO_SLUG = "vision-25-layered-jersey";
 const PROMOTION_REMINDER_MS = 7_000;
+const CART_STORAGE_KEY = "eyebreed.cart.v1";
+const GIFT_DISMISSED_STORAGE_KEY = "eyebreed.cart.gift-dismissed.v1";
 const hatCatalogItem = campaignProducts.find((product) => product.slug === HAT_SLUG)!;
 const freeHatProduct: StoreProduct = {
   ...campaignProductToStoreProduct(hatCatalogItem),
-  id: "promotion-free-vision-hat",
+  id: PROMOTION_GIFT_ID,
   prices: { USD: 0, ILS: 0, EUR: 0 },
   compareAtPrices: undefined,
 };
@@ -44,9 +47,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [giftDismissed, setGiftDismissed] = useState(false);
 
-  useEffect(() => { try { const saved = localStorage.getItem("eyebreed.cart.v1"); if (saved) setCart(JSON.parse(saved)); } catch {} finally { setHydrated(true); } }, []);
-  useEffect(() => { if (hydrated) localStorage.setItem("eyebreed.cart.v1", JSON.stringify(cart.filter(i => !i.isGift))); }, [cart, hydrated]);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      if (saved) setCart(JSON.parse(saved));
+      setGiftDismissed(localStorage.getItem(GIFT_DISMISSED_STORAGE_KEY) === "true");
+    } catch {} finally {
+      setHydrated(true);
+    }
+  }, []);
+  useEffect(() => { if (hydrated) localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart.filter(i => !isPromotionGiftLine(i)))); }, [cart, hydrated]);
   useEffect(() => {
     const userId = session?.user?.id;
     if (!hydrated || status !== "authenticated" || !userId || syncedCartUserId.current === userId) return;
@@ -57,7 +69,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const incoming: CartLine[] = remote.map(({productId,quantity,size,product}) => ({id:productId,slug:product.slug,name:product.name,nameHe:product.nameHe??product.name,material:product.material??"",image:product.images[0]??"",images:product.images,description:product.description,descriptionHe:product.descriptionHe??product.description,story:product.story??"",storyHe:product.storyHe??product.story??"",inventory:product.inventory,sizes:product.variants.map(v=>({size:v.size,inventory:v.inventory})),prices:{USD:Number(product.priceUsd),ILS:Number(product.priceIls),EUR:Number(product.priceEur)},quantity,selectedSize:size??"ONE SIZE"}));
       const merged = [...cart]; for (const line of incoming) { const found=merged.find(i=>i.id===line.id&&i.selectedSize===line.selectedSize); if(found) found.quantity=Math.max(found.quantity,line.quantity); else merged.push(line); }
       setCart(merged);
-      await fetch("/api/account/cart",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:merged.filter(i=>!i.isGift).map(i=>({productId:i.id,quantity:i.quantity,size:i.selectedSize,color:null}))})});
+      await fetch("/api/account/cart",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:merged.filter(i=>!isPromotionGiftLine(i)).map(i=>({productId:i.id,quantity:i.quantity,size:i.selectedSize,color:null}))})});
     })();
   }, [cart, hydrated, session?.user?.id, status]);
   useEffect(() => {
@@ -65,7 +77,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [status]);
   useEffect(() => {
     if (!session?.user?.id || syncedCartUserId.current !== session.user.id || status !== "authenticated") return;
-    const timer = window.setTimeout(() => { void fetch("/api/account/cart", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: cart.filter(i => !i.isGift).map(i => ({ productId: i.id, quantity: i.quantity, size: i.selectedSize, color: null })) }) }); }, 400);
+    const timer = window.setTimeout(() => { void fetch("/api/account/cart", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: cart.filter(i => !isPromotionGiftLine(i)).map(i => ({ productId: i.id, quantity: i.quantity, size: i.selectedSize, color: null })) }) }); }, 400);
     return () => window.clearTimeout(timer);
   }, [cart, session?.user?.id, status]);
 
@@ -75,16 +87,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [locale]);
 
   useEffect(() => {
-    const paidItemCount = cart.reduce((sum, item) => sum + (item.isGift ? 0 : item.quantity), 0);
-    const hasGift = cart.some((item) => item.isGift);
+    const paidItemCount = cart.reduce((sum, item) => sum + (isPromotionGiftLine(item) ? 0 : item.quantity), 0);
+    const hasGift = cart.some(isPromotionGiftLine);
+    const qualifiesForGift = paidItemCount >= 3;
 
-    if (paidItemCount >= 3 && !hasGift) {
+    if (qualifiesForGift && !hasGift && !giftDismissed) {
       const selectedSize = freeHatProduct.sizes.find((size) => size.inventory > 0)?.size ?? "M";
       setCart((current) => [...current, { ...freeHatProduct, quantity: 1, selectedSize, isGift: true }]);
-    } else if (paidItemCount < 3 && hasGift) {
-      setCart((current) => current.filter((item) => !item.isGift));
+    } else if (!qualifiesForGift) {
+      if (hasGift) setCart((current) => current.filter((item) => !isPromotionGiftLine(item)));
+      if (giftDismissed) {
+        setGiftDismissed(false);
+        localStorage.removeItem(GIFT_DISMISSED_STORAGE_KEY);
+      }
     }
-  }, [cart]);
+  }, [cart, giftDismissed]);
 
   const addToCart = (product: StoreProduct, size?: string) => {
     const selectedSize = size ?? product.sizes.find((variant) => variant.inventory > 0)?.size ?? "ONE SIZE";
@@ -103,7 +120,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setLocale, setCurrency, setCartOpen, addToCart,
     updateQuantity: (lineId: string, quantity: number) =>
       setCart((current) => quantity < 1 ? current.filter((i) => `${i.id}:${i.selectedSize}` !== lineId) : current.map((i) => `${i.id}:${i.selectedSize}` === lineId ? { ...i, quantity } : i)),
-    removeFromCart: (lineId: string) => setCart((current) => current.filter((i) => `${i.id}:${i.selectedSize}` !== lineId))
+    removeFromCart: (lineId: string) => {
+      if (cart.some((item) => `${item.id}:${item.selectedSize}` === lineId && isPromotionGiftLine(item))) {
+        setGiftDismissed(true);
+        localStorage.setItem(GIFT_DISMISSED_STORAGE_KEY, "true");
+      }
+      setCart((current) => current.filter((item) => `${item.id}:${item.selectedSize}` !== lineId));
+    }
   }), [locale, currency, cart, cartOpen]);
 
   return (
@@ -122,7 +145,7 @@ export function useStore() {
 
 function PromotionReminder() {
   const { cart, locale } = useStore();
-  const paidItems = cart.filter((item) => !item.isGift);
+  const paidItems = cart.filter((item) => !isPromotionGiftLine(item));
   const paidItemCount = paidItems.reduce((sum, item) => sum + item.quantity, 0);
   const hasZip = paidItems.some((item) => item.slug === ZIP_SLUG);
   const hasPolo = paidItems.some((item) => item.slug === POLO_SLUG);

@@ -2,6 +2,9 @@
 Description=EYEBREED Next.js storefront
 After=network-online.target
 Wants=network-online.target
+ConditionPathExists=/var/www/eyebreed/app/.next/BUILD_ID
+StartLimitIntervalSec=60s
+StartLimitBurst=5
 
 [Service]
 Type=simple

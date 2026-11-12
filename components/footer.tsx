@@ -19,10 +19,28 @@ export function Footer() {
   const [newsletterBusy, setNewsletterBusy] = useState(false);
 
   async function subscribe(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setNewsletterBusy(true); setNewsletterMessage(""); setNewsletterError(false);
+    event.preventDefault();
+    setNewsletterBusy(true);
+    setNewsletterMessage("");
+    setNewsletterError(false);
     const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/newsletter", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: form.get("email"), locale, consent: form.get("consent") === "on", company: form.get("company"), startedAt: newsletterStartedAt }) });
-    const result = await response.json().catch(() => ({})); setNewsletterBusy(false); setNewsletterError(!response.ok); setNewsletterMessage(result.message ?? (response.ok ? "Subscribed." : "Could not subscribe."));
+    const response = await fetch("/api/newsletter", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: form.get("email"),
+        locale,
+        consent: form.get("consent") === "on",
+        company: form.get("company"),
+        startedAt: newsletterStartedAt,
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    setNewsletterBusy(false);
+    setNewsletterError(!response.ok);
+    setNewsletterMessage(
+      result.message ?? (response.ok ? "Subscribed." : "Could not subscribe."),
+    );
     if (response.ok) event.currentTarget.reset();
   }
   return (
@@ -48,10 +66,50 @@ export function Footer() {
             ON NEW ARRIVALS AND EDITORIALS.
           </p>
           <form className="mt-8 max-w-sm" onSubmit={subscribe}>
-            <div className="flex border border-white/50"><input name="email" type="email" required autoComplete="email" placeholder={locale === "he" ? "האימייל שלך" : "YOUR EMAIL"} aria-label={locale === "he" ? "אימייל להרשמה" : "Subscription email"} className="min-w-0 flex-1 bg-transparent px-5 py-4 text-[10px] tracking-luxury outline-none" /><button disabled={newsletterBusy} className="min-h-12 px-5 transition-all duration-300 hover:translate-x-0.5 disabled:opacity-50" aria-label={locale === "he" ? "הרשמה לעדכונים" : "Subscribe"}>{newsletterBusy ? "…" : "→"}</button></div>
-            <label className="mt-3 flex items-start gap-2 text-[10px] leading-5 text-white/75"><input name="consent" type="checkbox" required className="mt-1" /><span>{locale === "he" ? "אני מסכים/ה לקבל עדכונים שיווקיים ויכול/ה לבטל בכל עת." : "I agree to receive marketing updates and can unsubscribe at any time."}</span></label>
-            <input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="sr-only" />
-            {newsletterMessage && <p role={newsletterError ? "alert" : "status"} aria-live="polite" className={`mt-3 text-xs ${newsletterError ? "text-red-300" : "text-green-300"}`}>{newsletterMessage}</p>}
+            <div className="flex border border-white/50">
+              <input
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder={locale === "he" ? "האימייל שלך" : "YOUR EMAIL"}
+                aria-label={
+                  locale === "he" ? "אימייל להרשמה" : "Subscription email"
+                }
+                className="min-w-0 flex-1 bg-transparent px-5 py-4 text-[10px] tracking-luxury outline-none"
+              />
+              <button
+                disabled={newsletterBusy}
+                className="min-h-12 px-5 transition-all duration-300 hover:translate-x-0.5 disabled:opacity-50"
+                aria-label={locale === "he" ? "הרשמה לעדכונים" : "Subscribe"}
+              >
+                {newsletterBusy ? "…" : "→"}
+              </button>
+            </div>
+            <label className="mt-3 flex items-start gap-2 text-[10px] leading-5 text-white/75">
+              <input name="consent" type="checkbox" required className="mt-1" />
+              <span>
+                {locale === "he"
+                  ? "אני מסכים/ה לקבל עדכונים שיווקיים ויכול/ה לבטל בכל עת."
+                  : "I agree to receive marketing updates and can unsubscribe at any time."}
+              </span>
+            </label>
+            <input
+              name="company"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="sr-only"
+            />
+            {newsletterMessage && (
+              <p
+                role={newsletterError ? "alert" : "status"}
+                aria-live="polite"
+                className={`mt-3 cursor-pointer text-xs ${newsletterError ? "text-red-300" : "text-green-300"}`}
+              >
+                {newsletterMessage}
+              </p>
+            )}
           </form>
         </div>
         <FooterLinks
@@ -111,7 +169,7 @@ export function Footer() {
         </div>
       </div>
       <div className="mx-auto mt-16 justify-center items-center flex max-w-[1600px] flex-col gap-3 border-t border-white/15 pt-6 text-[9px] tracking-wider text-white/75 sm:flex-row sm:justify-between">
-        <span>© 2026 EYEBREED-STUDIO™. All Rights Reserved.</span>
+        <span dir="ltr">All Rights Reserved EYEBREED 2026 ©.</span>
         <PaymentSupport />
         <span className="flex gap-2 justify-center text-center items-center sm:justify-end">
           DESIGNED AND POWERED BY EASYPASSPROJECTS ©

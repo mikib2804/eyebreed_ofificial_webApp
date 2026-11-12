@@ -64,7 +64,7 @@ export function CookieConsent() {
         type="button"
         aria-label={text.close}
         onClick={() => saveChoice("necessary")}
-        className="absolute end-4 top-4 p-2 text-white/75 hover:text-white"
+        className="absolute end-4 top-4 z-10 p-2 text-white/75 hover:text-white"
       >
         <X size={17} strokeWidth={1.4} />
       </button>
