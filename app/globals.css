@@ -370,6 +370,19 @@ button {
   border-color: var(--espresso);
 }
 
+@media (max-width: 639px) {
+  .admin-field,
+  .admin-field input,
+  .admin-field select,
+  .admin-field textarea {
+    max-width: 100%;
+  }
+
+  .admin-field textarea {
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (max-width: 1023px) {
   .hero-image::after {
     background: linear-gradient(

@@ -9,7 +9,7 @@ export default function SaleTicker({ text }: SaleTickerProps) {
   const { locale } = useStore();
   const message =
     text ??
-    (locale === "he" ? "15% הנחה על הזמנות באתר" : "15% OFF WEBSITE ORDERS");
+    (locale === "he" ? "מחירי השקה באתר" : "LAUNCH PRICES ON THE WEBSITE");
   // Each duplicated track stays wider than a large desktop without creating
   // tens of thousands of pixels of scrollable overflow in RTL documents.
   const items = Array.from({ length: 12 }, () => message);

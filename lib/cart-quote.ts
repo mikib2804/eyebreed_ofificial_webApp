@@ -71,8 +71,44 @@ export async function quoteCart(input: CartQuoteInput, database: QuoteDatabase =
   let discountAmount = automaticDiscount;
   let discountCode: string | null = null;
   let appliedDiscountId: string | null = null;
-  let promotion = { source: "WEBSITE_15" as "WEBSITE_15" | "CODE", label: configuredPromotion?.name ?? "15% website promotion", percentage: automaticPercentage };
+  let promotion = { source: "WEBSITE_15" as "WEBSITE_15" | "BUNDLE" | "CODE", label: configuredPromotion?.name ?? "15% website promotion", percentage: automaticPercentage };
   let codeMessage: string | null = null;
+
+  // An automatic fixed PRODUCT promotion is a bundle target price. It only
+  // applies when every linked product is present, so a single suit piece never
+  // receives the bundle reduction. The configured value is the ILS target;
+  // other currencies follow the products' current database price ratio.
+  const bundlePromotions = await database.discount.findMany({
+    where: {
+      code: null,
+      active: true,
+      type: "FIXED",
+      scope: "PRODUCT",
+      AND: [
+        { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+        { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
+      ],
+    },
+    include: { products: { select: { id: true, priceIls: true, priceUsd: true, priceEur: true } } },
+  });
+
+  for (const bundle of bundlePromotions) {
+    if (bundle.usageLimit !== null && bundle.usageCount >= bundle.usageLimit) continue;
+    if (bundle.products.length < 2) continue;
+    const quantities = bundle.products.map((product) => lines.filter((line) => line.productId === product.id).reduce((sum, line) => sum + line.quantity, 0));
+    const bundleCount = Math.min(...quantities);
+    if (bundleCount < 1) continue;
+    const regularBundleTotal = bundle.products.reduce((sum, product) => sum + toMinorUnits(priceFor(product, input.currency)), 0);
+    const regularIlsTotal = bundle.products.reduce((sum, product) => sum + Number(product.priceIls), 0);
+    if (regularBundleTotal <= 0 || regularIlsTotal <= 0) continue;
+    const targetInCurrency = toMinorUnits(Number(bundle.value) * (fromMinorUnits(regularBundleTotal) / regularIlsTotal));
+    const bundleDiscount = Math.max(0, regularBundleTotal - targetInCurrency) * bundleCount;
+    if (bundleDiscount > discountAmount) {
+      discountAmount = bundleDiscount;
+      appliedDiscountId = bundle.id;
+      promotion = { source: "BUNDLE", label: bundle.name, percentage: 0 };
+    }
+  }
 
   const requestedCode = input.code?.trim().toUpperCase();
   if (requestedCode) {
@@ -91,14 +127,14 @@ export async function quoteCart(input: CartQuoteInput, database: QuoteDatabase =
     const eligibleSubtotal = lines.filter((line) => discount.scope === "STORE" || (discount.scope === "PRODUCT" && eligibleProductIds.has(line.productId)) || (discount.scope === "CATEGORY" && eligibleCategoryIds.has(line.categoryId))).reduce((sum, line) => sum + line.lineAmount, 0);
     if (!eligibleSubtotal) throw new QuoteError("CODE_NOT_APPLICABLE", "This code does not apply to the items in your cart.");
     const codeDiscount = calculateConfiguredDiscount(discount.type, Number(discount.value), eligibleSubtotal);
-    if (codeDiscount > automaticDiscount) {
+    if (codeDiscount > discountAmount) {
       discountAmount = codeDiscount;
       discountCode = discount.code;
       appliedDiscountId = discount.id;
       promotion = { source: "CODE", label: discount.name, percentage: discount.type === "PERCENTAGE" ? Number(discount.value) : 0 };
       codeMessage = "Discount code applied.";
     } else {
-      codeMessage = "Code is valid, but the 15% website promotion gives you an equal or better price.";
+      codeMessage = "Code is valid, but the automatic promotion gives you an equal or better price.";
     }
   }
 

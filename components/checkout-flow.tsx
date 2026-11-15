@@ -9,6 +9,8 @@ import { isPromotionGiftLine } from "@/lib/cart-promotion";
 import { money } from "@/lib/i18n";
 import PaymentSupport from "@/components/PaymentSupport";
 import { useStore } from "@/components/store-provider";
+import { personNameInputAttributes, phoneInputAttributes, placeNameInputAttributes, postalCodeInputAttributes, sanitizePhoneInput } from "@/lib/input-constraints";
+import { useSubmitGuard } from "@/lib/use-submit-guard";
 
 type Address = {
   id: string;
@@ -53,6 +55,8 @@ export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
   const [addressMessage, setAddressMessage] = useState("");
   const [paymentPending, setPaymentPending] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  const { blocked: addressBlocked, run: runAddressSubmit } = useSubmitGuard();
+  const { blocked: paymentBlocked, run: runPaymentSubmit } = useSubmitGuard(2_000);
 
   useEffect(() => {
     setMounted(true);
@@ -85,44 +89,50 @@ export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
   }, [code, currency, hebrew, quoteItems]);
 
   async function addAddress(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setAddressPending(true); setAddressMessage("");
+    event.preventDefault();
     const formElement = event.currentTarget;
-    const form = new FormData(formElement);
-    const response = await fetch("/api/account/addresses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...Object.fromEntries(form), isDefault: addresses.length === 0 || form.get("isDefault") === "on" }),
+    await runAddressSubmit(async () => {
+      setAddressPending(true); setAddressMessage("");
+      try {
+        const form = new FormData(formElement);
+        const response = await fetch("/api/account/addresses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...Object.fromEntries(form), isDefault: addresses.length === 0 || form.get("isDefault") === "on" }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) { setAddressMessage(result.error ?? (hebrew ? "לא ניתן לשמור את הכתובת." : "Could not save the address.")); return; }
+        formElement.reset();
+        setAddressMessage(hebrew ? "הכתובת נשמרה." : "Address saved.");
+        router.refresh();
+      } finally { setAddressPending(false); }
     });
-    const result = await response.json().catch(() => ({}));
-    setAddressPending(false);
-    if (!response.ok) { setAddressMessage(result.error ?? (hebrew ? "לא ניתן לשמור את הכתובת." : "Could not save the address.")); return; }
-    formElement.reset();
-    setAddressMessage(hebrew ? "הכתובת נשמרה." : "Address saved.");
-    router.refresh();
   }
 
   async function continueToPayment() {
     if (!selectedAddressId || !quote) return;
-    setPaymentPending(true); setPaymentError("");
-    const response = await fetch("/api/checkout/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: quoteItems, currency, code, addressId: selectedAddressId }),
+    await runPaymentSubmit(async () => {
+      setPaymentPending(true); setPaymentError("");
+      const response = await fetch("/api/checkout/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: quoteItems, currency, code, addressId: selectedAddressId }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || typeof result.url !== "string") {
+        setPaymentPending(false);
+        setPaymentError(result.error ?? (hebrew ? "לא ניתן לעבור לתשלום." : "Could not continue to payment."));
+        return;
+      }
+      try {
+        const destination = new URL(result.url);
+        if (destination.protocol !== "https:" || destination.hostname !== "checkout.stripe.com") throw new Error("Unexpected checkout URL");
+        window.location.assign(destination.toString());
+      } catch {
+        setPaymentPending(false);
+        setPaymentError(hebrew ? "כתובת התשלום שהתקבלה אינה תקינה." : "The payment destination was invalid.");
+      }
     });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || typeof result.url !== "string") {
-      setPaymentPending(false);
-      setPaymentError(result.error ?? (hebrew ? "לא ניתן לעבור לתשלום." : "Could not continue to payment."));
-      return;
-    }
-    try {
-      const destination = new URL(result.url);
-      if (destination.protocol !== "https:" || destination.hostname !== "checkout.stripe.com") throw new Error("Unexpected checkout URL");
-      window.location.assign(destination.toString());
-    } catch {
-      setPaymentPending(false);
-      setPaymentError(hebrew ? "כתובת התשלום שהתקבלה אינה תקינה." : "The payment destination was invalid.");
-    }
   }
 
   if (!mounted) return <main className="min-h-[70vh] bg-cream px-5 py-24"><div className="mx-auto max-w-6xl animate-pulse"><div className="h-16 w-72 bg-black/10" /></div></main>;
@@ -152,16 +162,16 @@ export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
 
           {showAddressForm && <form onSubmit={addAddress} className="mt-6 grid gap-5 border border-black/15 bg-white/55 p-5 sm:grid-cols-2 sm:p-7">
             <div className="sm:col-span-2 flex items-center gap-3 border-b border-black/10 pb-4"><MapPin size={18} /><h3 className="font-display text-3xl">{hebrew ? "הוספת כתובת" : "Add an address"}</h3></div>
-            <Field name="label" label={hebrew ? "תווית" : "LABEL"} defaultValue={hebrew ? "בית" : "Home"} />
-            <Field name="fullName" label={hebrew ? "שם מלא" : "FULL NAME"} autoComplete="name" required />
-            <Field name="phone" label={hebrew ? "טלפון" : "PHONE"} autoComplete="tel" />
-            <Field name="line1" label={hebrew ? "כתובת" : "ADDRESS"} autoComplete="address-line1" required />
-            <Field name="line2" label={hebrew ? "דירה / יחידה" : "APARTMENT / UNIT"} autoComplete="address-line2" />
-            <Field name="city" label={hebrew ? "עיר" : "CITY"} autoComplete="address-level2" required />
-            <Field name="postalCode" label={hebrew ? "מיקוד" : "POSTAL CODE"} autoComplete="postal-code" />
-            <Field name="country" label={hebrew ? "מדינה" : "COUNTRY"} defaultValue="Israel" autoComplete="country-name" required />
+            <Field name="label" label={hebrew ? "תווית" : "LABEL"} defaultValue={hebrew ? "בית" : "Home"} maxLength={30} />
+            <Field name="fullName" label={hebrew ? "שם מלא" : "FULL NAME"} autoComplete="name" {...personNameInputAttributes} required />
+            <Field name="phone" label={hebrew ? "טלפון" : "PHONE"} {...phoneInputAttributes} onInput={(event) => { event.currentTarget.value = sanitizePhoneInput(event.currentTarget.value); }} />
+            <Field name="line1" label={hebrew ? "כתובת" : "ADDRESS"} autoComplete="address-line1" minLength={3} maxLength={120} required />
+            <Field name="line2" label={hebrew ? "דירה / יחידה" : "APARTMENT / UNIT"} autoComplete="address-line2" maxLength={120} />
+            <Field name="city" label={hebrew ? "עיר" : "CITY"} autoComplete="address-level2" {...placeNameInputAttributes} required />
+            <Field name="postalCode" label={hebrew ? "מיקוד" : "POSTAL CODE"} autoComplete="postal-code" {...postalCodeInputAttributes} />
+            <Field name="country" label={hebrew ? "מדינה" : "COUNTRY"} defaultValue="Israel" autoComplete="country-name" {...placeNameInputAttributes} required />
             {addresses.length > 0 && <label className="flex items-center gap-2 text-xs"><input type="checkbox" name="isDefault" />{hebrew ? "הגדרה כברירת מחדל" : "Set as default"}</label>}
-            <div className="sm:col-span-2">{addressMessage && <p role="status" className={`mb-3 text-xs ${addressMessage.includes("נשמרה") || addressMessage.includes("saved") ? "text-green-800" : "text-red-700"}`}>{addressMessage}</p>}<button disabled={addressPending} className="min-h-12 bg-ink px-7 text-[10px] tracking-luxury text-white disabled:opacity-40">{addressPending ? (hebrew ? "שומר…" : "SAVING…") : (hebrew ? "שמירת כתובת" : "SAVE ADDRESS")}</button></div>
+            <div className="sm:col-span-2">{addressMessage && <p role="status" className={`mb-3 text-xs ${addressMessage.includes("נשמרה") || addressMessage.includes("saved") ? "text-green-800" : "text-red-700"}`}>{addressMessage}</p>}<button disabled={addressPending || addressBlocked} className="min-h-12 bg-ink px-7 text-[10px] tracking-luxury text-white disabled:opacity-40">{addressPending ? (hebrew ? "שומר…" : "SAVING…") : (hebrew ? "שמירת כתובת" : "SAVE ADDRESS")}</button></div>
           </form>}
         </section>
 
@@ -174,7 +184,7 @@ export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
           <div className="mt-6 flex gap-3 bg-cream p-4 text-xs leading-5 text-black/65"><LockKeyhole size={18} className="mt-0.5 shrink-0" /><p>{hebrew ? "פרטי הכרטיס מוזנים באופן מאובטח בעמוד התשלום של Stripe בשלב הבא. האתר אינו שומר פרטי כרטיס." : "Card details are entered securely on Stripe in the next step. This store does not save card details."}</p></div>
           {paymentError && <p role="alert" className="mt-4 text-xs leading-5 text-red-700">{paymentError}</p>}
           {!selectedAddressId && <p role="status" className="mt-4 text-xs text-amber-800">{hebrew ? "שמרו כתובת למשלוח כדי להמשיך." : "Save a shipping address to continue."}</p>}
-          <button type="button" onClick={continueToPayment} disabled={!selectedAddressId || !quote || quotePending || paymentPending} className="mt-5 w-full bg-ink py-5 text-[10px] tracking-luxury text-white disabled:opacity-40">{paymentPending ? (hebrew ? "מעביר ל-Stripe…" : "OPENING STRIPE…") : (hebrew ? "המשך לתשלום מאובטח" : "CONTINUE TO SECURE PAYMENT")}</button>
+          <button type="button" onClick={continueToPayment} disabled={!selectedAddressId || !quote || quotePending || paymentPending || paymentBlocked} className="mt-5 w-full bg-ink py-5 text-[10px] tracking-luxury text-white disabled:opacity-40">{paymentPending ? (hebrew ? "מעביר ל-Stripe…" : "OPENING STRIPE…") : (hebrew ? "המשך לתשלום מאובטח" : "CONTINUE TO SECURE PAYMENT")}</button>
           <PaymentSupport variant="checkout" />
         </aside>
       </div>

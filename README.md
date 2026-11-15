@@ -77,6 +77,7 @@ The homepage catalog uses a typed local fallback so the visual storefront works 
 Production operations are documented in:
 
 - [`docs/VPS_NGINX_DEPLOYMENT.md`](docs/VPS_NGINX_DEPLOYMENT.md): first VPS setup, Nginx, systemd, and HTTPS.
+- [`docs/ORACLE_CLOUD_DOCKER_DEPLOYMENT.md`](docs/ORACLE_CLOUD_DOCKER_DEPLOYMENT.md): containerized Oracle Cloud deployment, migrations, updates, and rollback.
 - [`deploy/firewall/README.md`](deploy/firewall/README.md): OCI, UFW, and iptables rules.
 - [`docs/DEPLOYING_UPDATES.md`](docs/DEPLOYING_UPDATES.md): deploying and verifying a new version.
 - [`docs/TECH_STACK.md`](docs/TECH_STACK.md): application and infrastructure technologies.

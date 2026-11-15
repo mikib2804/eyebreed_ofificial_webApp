@@ -5,6 +5,8 @@ import { discountInputSchema } from "@/lib/discount-validation";
 import { prisma } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-body";
 import { z } from "zod";
+import { sendDiscountCampaign } from "@/lib/email";
+import { logServerEvent } from "@/lib/server-log";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const authorization = await authorizeAdminMutation(request, "discounts"); if ("response" in authorization) return authorization.response;
@@ -29,7 +31,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return discount;
     });
     if (!updated) return NextResponse.json({ error: "Discount not found." }, { status: 404 });
-    return NextResponse.json({ ok: true });
+    const campaign = await sendDiscountCampaign(updated.id).catch((error) => { logServerEvent("error", "email", updated.id, "discount_campaign_failed", { errorType: error instanceof Error ? error.name : "unknown" }); return { recipients: 0 }; });
+    return NextResponse.json({ ok: true, marketingRecipients: campaign.recipients });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return NextResponse.json({ error: "That discount code already exists." }, { status: 409 });
     return NextResponse.json({ error: "Could not update the discount." }, { status: 500 });

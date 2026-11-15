@@ -11,6 +11,10 @@ import { applyPercentageDiscount, productWithVariants, toStoreProduct } from "@/
 import { campaignProducts } from "@/lib/campaign-catalog";
 import { getInstagramVideos } from "@/lib/instagram";
 
+// The catalog and discounts come from PostgreSQL and must be resolved when a
+// request arrives, not while the Docker image is being built.
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const visionSlugs = campaignProducts.map((item) => item.slug);
   const now = new Date();

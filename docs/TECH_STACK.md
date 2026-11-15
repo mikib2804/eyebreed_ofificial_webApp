@@ -20,7 +20,7 @@
 | Database | PostgreSQL / Prisma Postgres | Production relational data store |
 | ORM and migrations | Prisma 6 | Typed queries and committed production migrations |
 | Payments | Stripe SDK | Optional test-mode checkout and signed webhooks; disabled with `STRIPE_CHECKOUT_ENABLED=false` |
-| Email | Resend API | Optional transactional email delivery |
+| Email | Gmail SMTP via Nodemailer | Optional transactional email delivery using a Google App Password |
 | Social media | Instagram Graph API | Optional reel/media integration |
 
 ## Production infrastructure
@@ -28,8 +28,9 @@
 | Component | Technology | Role |
 |---|---|---|
 | Compute | Oracle Cloud Ubuntu VPS | Application host |
-| Runtime | Node.js 22 LTS | Runs the Next.js production server |
-| Process supervisor | systemd | Starts, restarts, and logs the app service |
+| Container runtime | Docker Engine and Compose | Reproducible ARM64/AMD64 image, health monitoring, restarts, and release operations |
+| Application runtime | Node.js 20, Debian Bookworm slim | Runs the standalone Next.js production server as a non-root user |
+| Alternative runtime | Node.js 22 LTS with systemd | Supported direct-host deployment path documented separately |
 | Reverse proxy | Nginx | Public HTTP/HTTPS endpoint and proxy to `127.0.0.1:3000` |
 | TLS | Let's Encrypt with Certbot | Certificate issuance and automatic renewal |
 | Network security | OCI security list/NSG, UFW, iptables | Allows public 80/443 and SSH 22 while keeping port 3000 private |
@@ -42,7 +43,8 @@ Browser
   -> OCI public IP and security rules
   -> Ubuntu UFW/iptables
   -> Nginx :80/:443
-  -> Next.js 127.0.0.1:3000
+  -> Docker loopback mapping 127.0.0.1:3000
+  -> standalone Next.js container :3000
   -> Prisma
   -> PostgreSQL
 ```

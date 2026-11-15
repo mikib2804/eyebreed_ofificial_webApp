@@ -1,0 +1,33 @@
+name: eyebreed
+
+services:
+  app:
+    image: eyebreed-web:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      target: runner
+      args:
+        MEDIA_ALLOWED_HOSTS: ${MEDIA_ALLOWED_HOSTS:-images.unsplash.com}
+    env_file:
+      - .env.production
+    init: true
+    restart: unless-stopped
+    ports:
+      # Keep Next.js private; the host Nginx proxy exposes ports 80 and 443.
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 20s
+
+  migrate:
+    image: eyebreed-migrate:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      target: migrator
+    env_file:
+      - .env.production
+    profiles:
+      - tools
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"

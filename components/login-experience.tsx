@@ -7,6 +7,9 @@ import { signIn } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { modernAllImages } from "@/lib/campaign-catalog";
+import { personNameInputAttributes, phoneInputAttributes, sanitizePhoneInput } from "@/lib/input-constraints";
+import { useStore } from "@/components/store-provider";
+import { useSubmitGuard } from "@/lib/use-submit-guard";
 
 const slideLabels = [
   "THE ART OF ARRIVAL.",
@@ -20,11 +23,13 @@ const slides = modernAllImages.map((image, index) => ({
 
 export function LoginExperience({ initialMode = "login" }: { initialMode?: "login" | "register" }) {
   const router = useRouter();
+  const { locale } = useStore();
   const [slide, setSlide] = useState(0);
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { blocked, run } = useSubmitGuard(2_000);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -37,40 +42,42 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
-    setError("");
-    const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "");
-    const password = String(formData.get("password") ?? "");
+    await run(async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const formData = new FormData(event.currentTarget);
+        const email = String(formData.get("email") ?? "");
+        const password = String(formData.get("password") ?? "");
 
-    if (mode === "register") {
-      if (password !== String(formData.get("confirmPassword") ?? "")) { setError("Passwords do not match."); setLoading(false); return; }
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formData.get("name"), email, phone: formData.get("phone"), password, acceptedTerms: formData.get("terms") === "on" }),
-      });
-      if (!response.ok) {
-        const body = await response.json();
-        setError(body.error ?? "We could not create your account.");
+        if (mode === "register") {
+          if (password !== String(formData.get("confirmPassword") ?? "")) { setError("Passwords do not match."); return; }
+          const response = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: formData.get("name"), email, phone: formData.get("phone"), password, acceptedTerms: formData.get("terms") === "on", acceptMarketingEmails: formData.get("marketing") === "on", locale }),
+          });
+          if (!response.ok) {
+            const body = await response.json();
+            setError(body.error ?? "We could not create your account.");
+            return;
+          }
+        }
+
+        const result = await signIn("credentials", { email, password, redirect: false });
+        if (result?.error) {
+          setError("Email or password is incorrect.");
+          return;
+        }
+        const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+        router.push(callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/account");
+        router.refresh();
+      } catch {
+        setError("We could not complete your request. Please try again.");
+      } finally {
         setLoading(false);
-        return;
       }
-    }
-
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
     });
-    if (result?.error) {
-      setError("Email or password is incorrect.");
-      setLoading(false);
-      return;
-    }
-    const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
-    router.push(callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/account");
-    router.refresh();
   }
 
   return (
@@ -170,14 +177,16 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
                 name="name"
                 type="text"
                 autoComplete="name"
+                {...personNameInputAttributes}
                 required
-              /><AuthField label="PHONE (OPTIONAL)" name="phone" type="tel" autoComplete="tel" /><label className="mt-5 flex gap-3 text-[10px]"><input type="checkbox" name="terms" required/><span>I accept the <Link href="/terms" className="underline">Terms and Conditions</Link>.</span></label></>
+              /><AuthField label="PHONE (OPTIONAL)" name="phone" {...phoneInputAttributes} onInput={(event) => { event.currentTarget.value = sanitizePhoneInput(event.currentTarget.value); }} /><label className="mt-5 flex gap-3 text-[10px]"><input type="checkbox" name="terms" required/><span>I accept the <Link href="/terms" className="underline">Terms and Conditions</Link>.</span></label><label className="flex gap-3 text-[10px] leading-5"><input type="checkbox" name="marketing"/><span>{locale === "he" ? "אני מאשר/ת לקבל מ-Eyebreed הודעות פרסומיות, מבצעים והנחות באמצעות דואר אלקטרוני." : "I agree to receive marketing emails, advertisements, promotions, and special discounts from Eyebreed."}</span></label></>
             )}
             <AuthField
               label="EMAIL ADDRESS"
               name="email"
               type="email"
               autoComplete="email"
+              maxLength={254}
               required
             />
             <div>
@@ -224,7 +233,7 @@ export function LoginExperience({ initialMode = "login" }: { initialMode?: "logi
               </p>
             )}
             <button
-              disabled={loading}
+              disabled={loading || blocked}
               className="w-full bg-ink py-5 text-[10px] tracking-luxury text-white transition hover:bg-espresso-700 disabled:opacity-50"
             >
               {loading

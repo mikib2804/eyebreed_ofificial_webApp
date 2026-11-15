@@ -54,8 +54,13 @@ check(stripeLevel(/^pk_test_.+/.test(stripePublic) && !isPlaceholder(stripePubli
 check(stripeLevel(/^whsec_.+/.test(stripeWebhook) && !isPlaceholder(stripeWebhook)), "STRIPE_WEBHOOK_SECRET", stripeEnabled ? "Use this deployment's webhook signing secret." : "Optional while Stripe checkout is disabled.");
 check(stripeEnabled ? "PASS" : "WARN", "STRIPE_CHECKOUT_ENABLED", "Keep false until webhook delivery and one complete test payment are verified.");
 
-check(/^re_.+/.test(value("RESEND_API_KEY")) && !isPlaceholder(value("RESEND_API_KEY")) ? "PASS" : "WARN", "RESEND_API_KEY", "Required for real transactional email delivery.");
+const gmailUser = value("GMAIL_USER");
+const gmailAppPassword = value("GMAIL_APP_PASSWORD").replace(/\s+/g, "");
+const genericSmtp = Boolean(value("SMTP_HOST") && value("SMTP_USER") && value("SMTP_PASSWORD"));
+const gmailSmtp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmailUser) && gmailAppPassword.length === 16 && !isPlaceholder(gmailUser) && !isPlaceholder(gmailAppPassword);
+check(genericSmtp || gmailSmtp ? "PASS" : "WARN", "SMTP delivery", "Configure SMTP_HOST/SMTP_USER/SMTP_PASSWORD or the Gmail fallback variables.");
 check(value("EMAIL_FROM").includes("@") && !isPlaceholder(value("EMAIL_FROM")) ? "PASS" : "WARN", "EMAIL_FROM", "Use an address on a domain verified by your email provider.");
+check(value("CRON_SECRET").length >= 32 && !isPlaceholder(value("CRON_SECRET")) ? "PASS" : stripeEnabled ? "FAIL" : "WARN", "CRON_SECRET", "Required to protect interrupted-checkout processing.");
 check(!value("NEXT_PUBLIC_STRIPE_SECRET_KEY") ? "PASS" : "FAIL", "Secret exposure guard", "Never define NEXT_PUBLIC_STRIPE_SECRET_KEY.");
 check(!value("NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET") ? "PASS" : "FAIL", "Webhook exposure guard", "Never define NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET.");
 

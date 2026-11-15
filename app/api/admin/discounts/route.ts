@@ -4,6 +4,8 @@ import { authorizeAdminMutation } from "@/lib/admin-mutation";
 import { discountInputSchema } from "@/lib/discount-validation";
 import { prisma } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-body";
+import { sendDiscountCampaign } from "@/lib/email";
+import { logServerEvent } from "@/lib/server-log";
 
 export async function POST(request: Request) {
   const authorization = await authorizeAdminMutation(request, "discounts"); if ("response" in authorization) return authorization.response;
@@ -23,7 +25,8 @@ export async function POST(request: Request) {
       await transaction.auditLog.create({ data: { actorId: authorization.access.user.id, action: "DISCOUNT_CREATED", entityType: "Discount", entityId: created.id, metadata: { code: created.code, type: created.type, scope: created.scope, value: String(created.value) } } });
       return created;
     });
-    return NextResponse.json({ id: discount.id }, { status: 201 });
+    const campaign = await sendDiscountCampaign(discount.id).catch((error) => { logServerEvent("error", "email", discount.id, "discount_campaign_failed", { errorType: error instanceof Error ? error.name : "unknown" }); return { recipients: 0 }; });
+    return NextResponse.json({ id: discount.id, marketingRecipients: campaign.recipients }, { status: 201 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return NextResponse.json({ error: "That discount code already exists." }, { status: 409 });
     return NextResponse.json({ error: "Could not create the discount." }, { status: 500 });

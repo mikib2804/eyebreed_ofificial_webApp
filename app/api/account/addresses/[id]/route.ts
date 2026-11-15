@@ -1,22 +1,10 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { auth } from "@/auth";
+import { addressUpdateSchema } from "@/lib/address-schema";
 import { prisma } from "@/lib/prisma";
 import { isSameOriginMutation } from "@/lib/request-security";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-body";
-
-const updateSchema = z.object({
-  label: z.string().trim().min(1).max(30).optional(),
-  fullName: z.string().trim().min(2).max(80).optional(),
-  phone: z.string().trim().max(30).nullable().optional(),
-  line1: z.string().trim().min(3).max(120).optional(),
-  line2: z.string().trim().max(120).nullable().optional(),
-  city: z.string().trim().min(2).max(80).optional(),
-  postalCode: z.string().trim().max(20).nullable().optional(),
-  country: z.string().trim().min(2).max(80).optional(),
-  isDefault: z.boolean().optional(),
-}).strict().refine((value) => Object.keys(value).length > 0, "No changes supplied");
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -28,7 +16,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   if (!rate.allowed) return NextResponse.json({ error: "Too many address updates. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
   const raw = await readJsonBody(request, 8_192);
   if (!raw.ok) return NextResponse.json({ error: raw.error }, { status: raw.status });
-  const parsed = updateSchema.safeParse(raw.data);
+  const parsed = addressUpdateSchema.safeParse(raw.data);
   if (!parsed.success) return NextResponse.json({ error: "Please check the address details." }, { status: 400 });
   const { id } = await params;
 

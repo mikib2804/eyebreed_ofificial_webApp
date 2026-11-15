@@ -3,11 +3,11 @@ import { z } from "zod";
 import { authorizeAdminMutation } from "@/lib/admin-mutation";
 import { prisma } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-body";
-import { normalizedEmailSchema } from "@/lib/validation";
+import { normalizedEmailSchema, phoneOrEmptySchema } from "@/lib/validation";
 
 const schema = z.object({
   contactEmail: z.union([normalizedEmailSchema, z.literal("")]),
-  contactPhone: z.string().trim().max(40),
+  contactPhone: phoneOrEmptySchema,
   shippingInfo: z.string().trim().max(5_000),
   defaultLowStockThreshold: z.coerce.number().int().min(0).max(10_000),
   announcement: z.string().trim().max(500),

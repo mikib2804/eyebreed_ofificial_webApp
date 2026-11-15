@@ -3,14 +3,16 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { isSameOriginMutation } from "@/lib/request-security";
+import { normalizedEmailSchema, personNameSchema } from "@/lib/validation";
+import { sendContactRequestConfirmation, sendContactRequestNotification } from "@/lib/email";
 
 const MAX_BODY_CHARS = 12_000;
 const MIN_COMPLETION_MS = 2_000;
 const MAX_COMPLETION_MS = 2 * 60 * 60 * 1_000;
 
 const contactSchema = z.object({
-  fullName: z.string().trim().min(2).max(80),
-  email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
+  fullName: personNameSchema,
+  email: normalizedEmailSchema,
   message: z.string().trim().min(10).max(2_000),
   locale: z.enum(["he", "en"]).default("he"),
   company: z.string().max(200).optional().default(""),
@@ -100,13 +102,28 @@ export async function POST(request: Request) {
       );
     }
 
+    const messageId = randomUUID();
     await prisma.$executeRaw`
       INSERT INTO "ContactMessage" ("id", "fullName", "email", "message", "locale", "ipHash", "createdAt")
-      VALUES (${randomUUID()}, ${fullName}, ${email}, ${message}, ${locale}, ${ipHash}, CURRENT_TIMESTAMP)
+      VALUES (${messageId}, ${fullName}, ${email}, ${message}, ${locale}, ${ipHash}, CURRENT_TIMESTAMP)
     `;
 
+    const settings = await prisma.storeSettings.findUnique({ where: { id: "store" }, select: { contactEmail: true, notificationPreferences: true } });
+    const preferences = settings?.notificationPreferences && typeof settings.notificationPreferences === "object" && !Array.isArray(settings.notificationPreferences)
+      ? settings.notificationPreferences as Record<string, unknown>
+      : {};
+    const teamEmail = settings?.contactEmail?.trim()
+      || process.env.CONTACT_NOTIFICATION_EMAIL?.trim()
+      || process.env.EMAIL_REPLY_TO?.trim()
+      || process.env.SMTP_USER?.trim()
+      || process.env.GMAIL_USER?.trim()
+      || "eyebreedofficial@gmail.com";
+    const deliveries: Array<Promise<unknown>> = [sendContactRequestConfirmation({ id: messageId, email, locale })];
+    if (teamEmail && preferences.contactMessage !== false) deliveries.push(sendContactRequestNotification({ id: messageId, to: teamEmail, email, fullName, message, locale }));
+    await Promise.allSettled(deliveries);
+
     return NextResponse.json(
-      { message: locale === "he" ? "ההודעה נשלחה בהצלחה." : "Your message was sent successfully." },
+      { message: locale === "he" ? "הפנייה התקבלה. הצוות שלנו יחזור אליך בהקדם האפשרי." : "Request received. Our team will contact you as soon as possible." },
       { status: 201, headers: { "Cache-Control": "no-store" } },
     );
   } catch {

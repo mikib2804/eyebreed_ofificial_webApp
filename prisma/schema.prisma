@@ -75,27 +75,29 @@ enum MessageStatus {
 }
 
 model User {
-  id            String     @id @default(cuid())
-  name          String?
-  email         String?    @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  phone         String?
-  role          Role       @default(CUSTOMER)
-  sessionVersion Int       @default(0)
-  accounts      Account[]
-  sessions      Session[]
-  cartItems     CartItem[]
-  orders        Order[]
-  addresses     Address[]
-  wishlist      WishlistItem[]
-  preOrders     PreOrder[]
-  discountRedemptions DiscountRedemption[]
-  passwordResetTokens PasswordResetToken[]
-  emailChangeTokens EmailChangeToken[]
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id                    String               @id @default(cuid())
+  name                  String?
+  email                 String?              @unique
+  emailVerified         DateTime?
+  image                 String?
+  passwordHash          String?
+  phone                 String?
+  acceptMarketingEmails Boolean              @default(false)
+  emailLocale           String               @default("he")
+  role                  Role                 @default(CUSTOMER)
+  sessionVersion        Int                  @default(0)
+  accounts              Account[]
+  sessions              Session[]
+  cartItems             CartItem[]
+  orders                Order[]
+  addresses             Address[]
+  wishlist              WishlistItem[]
+  preOrders             PreOrder[]
+  discountRedemptions   DiscountRedemption[]
+  passwordResetTokens   PasswordResetToken[]
+  emailChangeTokens     EmailChangeToken[]
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 }
 
 model Address {
@@ -130,26 +132,26 @@ model WishlistItem {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String   @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId, expiresAt])
 }
 
 model EmailChangeToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   newEmail  String
-  tokenHash String   @unique
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId, expiresAt])
   @@index([newEmail])
@@ -273,17 +275,17 @@ model CartItem {
 }
 
 model VisionWaitlistEntry {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  locale    String   @default("he")
-  consentAt DateTime
-  consentScope String  @default("PREORDER_UPDATES")
-  source      String   @default("vision-page")
+  id            String    @id @default(cuid())
+  email         String    @unique
+  locale        String    @default("he")
+  consentAt     DateTime
+  consentScope  String    @default("PREORDER_UPDATES")
+  source        String    @default("vision-page")
   lastEmailedAt DateTime?
-  ipHash    String
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  ipHash        String
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([ipHash, createdAt])
   @@index([source, createdAt])
@@ -324,35 +326,35 @@ model ContactMessage {
 }
 
 model Order {
-  id               String         @id @default(cuid())
-  orderNumber      String         @unique
-  userId           String?
-  user             User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  customerName     String
-  customerEmail    String
-  shippingAddress  Json
-  total            Decimal        @db.Decimal(10, 2)
-  subtotal         Decimal        @default(0) @db.Decimal(10, 2)
-  discountAmount   Decimal        @default(0) @db.Decimal(10, 2)
-  shippingAmount   Decimal        @default(0) @db.Decimal(10, 2)
-  taxAmount        Decimal        @default(0) @db.Decimal(10, 2)
-  discountCode     String?
-  promotionSnapshot Json?
-  currency         String         @default("ILS")
-  status           OrderStatus    @default(PENDING_PAYMENT)
-  paymentStatus    PaymentStatus  @default(PENDING)
-  shippingStatus   ShippingStatus @default(NOT_SHIPPED)
-  trackingNumber   String?
-  shippingProvider String?
-  items            OrderItem[]
-  history          OrderHistory[]
-  discountRedemption DiscountRedemption?
-  stripeCheckoutSessionId String? @unique
-  stripePaymentIntentId String? @unique
-  paidAt            DateTime?
-  sourcePreOrder    PreOrder?      @relation("ConvertedPreOrder")
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  id                      String              @id @default(cuid())
+  orderNumber             String              @unique
+  userId                  String?
+  user                    User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName            String
+  customerEmail           String
+  shippingAddress         Json
+  total                   Decimal             @db.Decimal(10, 2)
+  subtotal                Decimal             @default(0) @db.Decimal(10, 2)
+  discountAmount          Decimal             @default(0) @db.Decimal(10, 2)
+  shippingAmount          Decimal             @default(0) @db.Decimal(10, 2)
+  taxAmount               Decimal             @default(0) @db.Decimal(10, 2)
+  discountCode            String?
+  promotionSnapshot       Json?
+  currency                String              @default("ILS")
+  status                  OrderStatus         @default(PENDING_PAYMENT)
+  paymentStatus           PaymentStatus       @default(PENDING)
+  shippingStatus          ShippingStatus      @default(NOT_SHIPPED)
+  trackingNumber          String?
+  shippingProvider        String?
+  items                   OrderItem[]
+  history                 OrderHistory[]
+  discountRedemption      DiscountRedemption?
+  stripeCheckoutSessionId String?             @unique
+  stripePaymentIntentId   String?             @unique
+  paidAt                  DateTime?
+  sourcePreOrder          PreOrder?           @relation("ConvertedPreOrder")
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
 
   @@index([status, createdAt])
   @@index([customerEmail])
@@ -387,24 +389,24 @@ model OrderHistory {
 }
 
 model Discount {
-  id               String        @id @default(cuid())
+  id               String               @id @default(cuid())
   name             String
-  code             String?       @unique
+  code             String?              @unique
   type             DiscountType
-  scope            DiscountScope @default(STORE)
-  value            Decimal       @db.Decimal(10, 2)
-  active           Boolean       @default(true)
+  scope            DiscountScope        @default(STORE)
+  value            Decimal              @db.Decimal(10, 2)
+  active           Boolean              @default(true)
   startsAt         DateTime?
   endsAt           DateTime?
-  minimumPurchase  Decimal?      @db.Decimal(10, 2)
+  minimumPurchase  Decimal?             @db.Decimal(10, 2)
   usageLimit       Int?
   perCustomerLimit Int?
-  usageCount       Int           @default(0)
+  usageCount       Int                  @default(0)
   products         Product[]
   categories       Category[]
   redemptions      DiscountRedemption[]
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
   @@index([active, startsAt, endsAt])
 }
@@ -437,38 +439,51 @@ model StripeWebhookEvent {
 }
 
 model PreOrder {
-  id           String         @id @default(cuid())
-  customerName String
-  userId       String?
-  user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  email        String
-  phone        String?
-  productId    String
-  product      Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  size         String?
-  color        String?
-  quantity     Int            @default(1)
-  status       PreOrderStatus @default(WAITING)
-  contactedAt  DateTime?
-  notifiedAt   DateTime?
-  convertedOrderId String?      @unique
-  convertedOrder   Order?       @relation("ConvertedPreOrder", fields: [convertedOrderId], references: [id], onDelete: SetNull)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id               String         @id @default(cuid())
+  customerName     String
+  userId           String?
+  user             User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email            String
+  phone            String?
+  productId        String
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size             String?
+  color            String?
+  quantity         Int            @default(1)
+  status           PreOrderStatus @default(WAITING)
+  contactedAt      DateTime?
+  notifiedAt       DateTime?
+  convertedOrderId String?        @unique
+  convertedOrder   Order?         @relation("ConvertedPreOrder", fields: [convertedOrderId], references: [id], onDelete: SetNull)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   @@unique([email, productId, size, color])
   @@index([status, createdAt])
   @@index([userId, createdAt])
 }
 
-model EmailNotification {
-  id        String   @id @default(cuid())
-  eventKey  String   @unique
-  recipient String
-  template  String
-  sentAt    DateTime @default(now())
+model PreorderWaitlistEntry {
+  id            String    @id @default(cuid())
+  email         String
+  createdAt     DateTime  @default(now())
+  lastEmailedAt DateTime?
 
-  @@index([recipient, sentAt])
+  @@index([createdAt])
+}
+
+model EmailNotification {
+  id          String    @id @default(cuid())
+  eventKey    String    @unique
+  recipient   String
+  template    String
+  status      String    @default("PENDING")
+  error       String?   @db.Text
+  attemptedAt DateTime  @default(now())
+  sentAt      DateTime?
+
+  @@index([recipient, attemptedAt])
+  @@index([status, attemptedAt])
 }
 
 model InventoryAdjustment {

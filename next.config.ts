@@ -19,6 +19,8 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Produce the minimal self-contained server used by the production image.
+  output: "standalone",
   // Keep the long-running development server away from the production build
   // output. Netlify and `next start` continue to use Next.js' standard `.next`.
   distDir: isDevelopment ? ".next-dev" : ".next",

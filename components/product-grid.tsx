@@ -6,7 +6,7 @@ import { Heart } from "lucide-react";
 import type { StoreProduct } from "@/lib/catalog";
 import { money } from "@/lib/i18n";
 import { useStore } from "@/components/store-provider";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,8 @@ export function ProductGrid({
   const router = useRouter();
   const { data: session, status } = useSession();
   const [liked, setLiked] = useState<boolean[]>([]);
+  const wishlistLocks = useRef(new Set<string>());
+  const [wishlistPending, setWishlistPending] = useState<Set<string>>(() => new Set());
   const [likeBurst, setLikeBurst] = useState<{
     index: number;
     key: number;
@@ -119,6 +121,9 @@ export function ProductGrid({
                             router.push("/login?callbackUrl=%2F%23products");
                             return;
                           }
+                          if (wishlistLocks.current.has(product.id)) return;
+                          wishlistLocks.current.add(product.id);
+                          setWishlistPending((current) => new Set(current).add(product.id));
 
                           const next = !(liked[index] ?? false);
                           setLiked((prev) => {
@@ -128,18 +133,30 @@ export function ProductGrid({
                           });
                           if (next) setLikeBurst({ index, key: Date.now() });
 
-                          const response = await fetch(
-                            `/api/account/wishlist/${product.id}`,
-                            { method: next ? "PUT" : "DELETE" },
-                          );
-                          if (!response.ok) {
-                            setLiked((prev) => {
-                              const rolledBack = [...prev];
-                              rolledBack[index] = !next;
-                              return rolledBack;
-                            });
+                          try {
+                            const response = await fetch(
+                              `/api/account/wishlist/${product.id}`,
+                              { method: next ? "PUT" : "DELETE" },
+                            );
+                            if (!response.ok) {
+                              setLiked((prev) => {
+                                const rolledBack = [...prev];
+                                rolledBack[index] = !next;
+                                return rolledBack;
+                              });
+                            }
+                          } finally {
+                            window.setTimeout(() => {
+                              wishlistLocks.current.delete(product.id);
+                              setWishlistPending((current) => {
+                                const nextPending = new Set(current);
+                                nextPending.delete(product.id);
+                                return nextPending;
+                              });
+                            }, 1_000);
                           }
                         }}
+                        disabled={wishlistPending.has(product.id)}
                         aria-label={
                           liked[index]
                             ? locale === "he"
@@ -150,7 +167,7 @@ export function ProductGrid({
                               : "Add to wishlist"
                         }
                         aria-pressed={liked[index] ?? false}
-                        className="absolute left-2 top-2 z-30 grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-105 lg:end-4 lg:left-auto lg:top-4 lg:h-10 lg:w-10"
+                        className="absolute left-2 top-2 z-30 grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-105 disabled:cursor-wait disabled:opacity-55 lg:end-4 lg:left-auto lg:top-4 lg:h-10 lg:w-10"
                       >
                         {likeBurst?.index === index && (
                           <span

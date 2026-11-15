@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ArrowRight, Mail, MousePointer2 } from "lucide-react";
 import { FormEvent, useRef, useState } from "react";
 import PaymentSupport from "./PaymentSupport";
+import { useSubmitGuard } from "@/lib/use-submit-guard";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
@@ -11,17 +12,17 @@ export function VisionWaitlist() {
   const [status, setStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
   const startedAt = useRef(Date.now());
+  const { blocked, run } = useSubmitGuard(2_500);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
     const email = String(data.get("email") ?? "").trim();
-
-    setStatus("submitting");
-    setMessage("");
-
-    try {
+    await run(async () => {
+      setStatus("submitting");
+      setMessage("");
+      try {
       const response = await fetch("/api/vision-waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -41,10 +42,11 @@ export function VisionWaitlist() {
       setMessage(result.message || "You’re on the list.");
       form.reset();
       startedAt.current = Date.now();
-    } catch (error) {
-      setStatus("error");
-      setMessage(error instanceof Error ? error.message : "Please try again.");
-    }
+      } catch (error) {
+        setStatus("error");
+        setMessage(error instanceof Error ? error.message : "Please try again.");
+      }
+    });
   }
 
   return (
@@ -142,6 +144,7 @@ export function VisionWaitlist() {
                 type="email"
                 required
                 autoComplete="email"
+                maxLength={254}
                 placeholder="EMAIL ADDRESS"
                 className="min-w-0 flex-1  bg-transparent font-display text-xl tracking-[.04em] text-white outline-none ring-0 placeholder:text-white/65 focus:border-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 sm:text-2xl"
               />
@@ -166,7 +169,7 @@ export function VisionWaitlist() {
             <div className="relative">
               <button
                 type="submit"
-                disabled={status === "submitting"}
+                disabled={status === "submitting" || blocked}
                 className="vision-join-button group flex min-h-16 w-full items-center justify-center gap-5 rounded-2xl bg-[#f3ebdf] px-6 font-display text-lg font-semibold tracking-[.32em] text-[#17100d] shadow-[0_12px_45px_rgba(0,0,0,.24)] transition duration-300 hover:bg-white focus-visible:outline-white disabled:cursor-wait disabled:opacity-70 sm:min-h-[74px] sm:text-2xl"
               >
                 <span>

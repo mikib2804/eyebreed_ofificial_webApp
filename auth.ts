@@ -14,7 +14,7 @@ import { logServerEvent } from "@/lib/server-log";
 
 const credentialsSchema = z.object({
   email: normalizedEmailSchema,
-  password: z.string().min(8)
+  password: z.string().min(8).max(72)
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({

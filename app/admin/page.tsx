@@ -2,10 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAdminAccess } from "@/lib/admin-auth";
+import { campaignProducts } from "@/lib/campaign-catalog";
 import { AdminProductForm } from "@/components/admin-product-form";
 import { AdminDiscountManager } from "@/components/admin-discount-manager";
+import { AdminMobileNavigation } from "@/components/admin-navigation";
 import {
   AdminCustomers,
+  AdminPreOrderCustomers,
   AdminInventory,
   AdminMessages,
   AdminOrders,
@@ -60,12 +63,14 @@ export default async function AdminPage({
   const params = await searchParams;
   const locale: AdminLocale = params.lang === "en" ? "en" : "he";
   const t = (key: AdminTextKey) => adminText(locale, key);
-  const active = params.section ?? "Overview";
+  const requestedSection = params.section ?? "Overview";
+  const active = sections.some(([section]) => section === requestedSection) ? requestedSection : "Overview";
   const [
     categories,
     productRecords,
     messages,
     customers,
+    preorderWaitlist,
     waitlist,
     discounts,
     discountRedemptions,
@@ -133,6 +138,12 @@ export default async function AdminPage({
       orderBy: { createdAt: "desc" },
       take: 250,
     }),
+    prisma.$queryRaw<Array<{ id: string; email: string; createdAt: Date }>>`
+      SELECT "id", "email", "createdAt"
+      FROM "PreorderWaitlistEntry"
+      ORDER BY "createdAt" DESC
+      LIMIT 500
+    `,
     prisma.visionWaitlistEntry.findMany({
       select: { id: true, email: true, createdAt: true },
       orderBy: { createdAt: "desc" },
@@ -194,7 +205,9 @@ export default async function AdminPage({
     prisma.preOrder.findMany({
       select: {
         id: true,
+        customerName: true,
         email: true,
+        phone: true,
         status: true,
         createdAt: true,
         product: { select: { name: true } },
@@ -292,11 +305,12 @@ export default async function AdminPage({
   return (
     <main
       dir={locale === "he" ? "rtl" : "ltr"}
-      className="min-h-screen overflow-x-hidden bg-[#f1eee8] text-[#171412]"
+      className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f1eee8] text-[#171412]"
     >
-      <div className="grid min-h-screen lg:grid-cols-[250px_1fr]">
-        <aside className="border-b border-black/10 bg-[#211b17] p-4 text-white sm:p-6 lg:sticky lg:top-0 lg:h-screen">
-          <div className="flex items-end justify-between gap-4 lg:block">
+      <AdminMobileNavigation active={active} locale={locale} managerLabel={t("manager")} storeLabel={t("store")} sections={sections.map(([id, key]) => ({ id, label: t(key) }))} />
+      <div className="grid min-h-screen w-full max-w-full lg:grid-cols-[250px_minmax(0,1fr)]">
+        <aside className="hidden bg-[#211b17] p-6 text-white lg:sticky lg:top-0 lg:block lg:h-screen">
+          <div>
             <div>
               <p className="text-[9px] tracking-[.35em] text-white/55 sm:text-[10px]">
                 EYEBREED
@@ -305,12 +319,6 @@ export default async function AdminPage({
                 {t("manager")}
               </h1>
             </div>
-            <Link
-              href="/#products"
-              className="text-[10px] uppercase tracking-wider text-white/70 lg:hidden"
-            >
-              {t("store")} ↗
-            </Link>
           </div>
           <div className="mt-4 flex w-fit rounded border border-white/20 p-1 text-[10px]">
             <Link
@@ -330,7 +338,7 @@ export default async function AdminPage({
           </div>
           <nav
             aria-label={locale === "he" ? "חלקי ניהול" : "Admin sections"}
-            className="-mx-1 mt-5 flex gap-2 overflow-x-auto px-1 pb-2 lg:mx-0 lg:mt-8 lg:block lg:space-y-1 lg:overflow-visible lg:px-0 lg:pb-0"
+            className="mt-8 space-y-1"
           >
             {sections.map(([section, key]) => (
               <Link
@@ -344,7 +352,7 @@ export default async function AdminPage({
             ))}
             <Link
               href="/#products"
-              className="mt-2 hidden whitespace-nowrap border-t border-white/10 px-3 py-4 text-xs uppercase tracking-[.14em] text-white/75 transition hover:bg-white/10 hover:text-white lg:mt-5 lg:flex"
+              className="mt-5 flex whitespace-nowrap border-t border-white/10 px-3 py-4 text-xs uppercase tracking-[.14em] text-white/75 transition hover:bg-white/10 hover:text-white"
               aria-label={t("collection")}
             >
               {t("collection")}{" "}
@@ -354,7 +362,7 @@ export default async function AdminPage({
             </Link>
           </nav>
         </aside>
-        <section className="min-w-0 p-3 sm:p-5 md:p-10">
+        <section className="w-full max-w-full min-w-0 overflow-hidden px-4 py-6 sm:px-6 sm:py-8 lg:p-10">
           <header className="mb-6 flex min-w-0 flex-col gap-3 sm:mb-10 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4">
             <div className="min-w-0">
               <p className="text-[9px] uppercase tracking-[.24em] text-black/45 sm:text-[10px] sm:tracking-[.3em]">
@@ -385,7 +393,7 @@ export default async function AdminPage({
                     <p className="text-[8px] uppercase tracking-[.12em] text-black/45 sm:text-[10px] sm:tracking-[.18em]">
                       {label}
                     </p>
-                    <p className="mt-4 break-words font-display text-2xl sm:mt-5 sm:text-4xl">
+                    <p className="mt-4 break-all font-display text-xl leading-tight sm:mt-5 sm:text-4xl">
                       {value}
                     </p>
                   </article>
@@ -400,7 +408,11 @@ export default async function AdminPage({
             </>
           )}
           {active === "Products" && (
-            <AdminProductForm
+            <>
+              <div className="flex justify-end">
+                <Link href={`/admin/print/products?lang=${locale}`} className="inline-flex min-h-11 items-center justify-center rounded-md border border-black bg-white px-5 text-[10px] font-semibold tracking-wider transition hover:bg-black hover:text-white">{t("printAllProducts")}</Link>
+              </div>
+              <AdminProductForm
               locale={locale}
               categories={categories}
               products={productRecords.map((product) => ({
@@ -423,10 +435,16 @@ export default async function AdminPage({
                 isNew: product.isNew,
                 lowStockThreshold: product.lowStockThreshold,
                 images: product.images,
+                previewImage:
+                  campaignProducts.find((item) => item.slug === product.slug)
+                    ?.displayImage ??
+                  product.images[0] ??
+                  "",
                 videoUrl: product.videoUrl,
                 variants: product.variants,
               }))}
-            />
+              />
+            </>
           )}
           {active === "Discounts" && (
             <AdminDiscountManager
@@ -509,25 +527,46 @@ export default async function AdminPage({
             </Panel>
           )}
           {active === "Customers" && (
-            <Panel title={t("registeredCustomers")}>
-              <AdminCustomers
-                locale={locale}
-                customers={customers.map((customer) => ({
-                  id: customer.id,
-                  name: customer.name,
-                  email: customer.email,
-                  phone: customer.phone,
-                  emailVerified: customer.emailVerified?.toISOString() ?? null,
-                  createdAt: customer.createdAt.toISOString(),
-                  counts: customer._count,
-                  orders: customer.orders.map((order) => ({
-                    ...order,
-                    total: Number(order.total),
-                    createdAt: order.createdAt.toISOString(),
-                  })),
-                }))}
-              />
-            </Panel>
+            <>
+              <Panel title={t("registeredCustomers")}>
+                <AdminCustomers
+                  locale={locale}
+                  customers={customers.map((customer) => ({
+                    id: customer.id,
+                    name: customer.name,
+                    email: customer.email,
+                    phone: customer.phone,
+                    emailVerified: customer.emailVerified?.toISOString() ?? null,
+                    createdAt: customer.createdAt.toISOString(),
+                    counts: customer._count,
+                    orders: customer.orders.map((order) => ({
+                      ...order,
+                      total: Number(order.total),
+                      createdAt: order.createdAt.toISOString(),
+                    })),
+                  }))}
+                />
+              </Panel>
+              <Panel title={t("preOrderCustomers")}>
+                <AdminPreOrderCustomers
+                  locale={locale}
+                  items={preOrders.map((item) => ({
+                    id: item.id,
+                    customerName: item.customerName,
+                    email: item.email,
+                    phone: item.phone,
+                    productName: item.product.name,
+                    status: item.status,
+                    createdAt: item.createdAt.toISOString(),
+                  }))}
+                  waitlistItems={preorderWaitlist.map((item) => ({
+                    id: item.id,
+                    email: item.email,
+                    createdAt: item.createdAt.toISOString(),
+                  }))}
+                />
+              </Panel>
+            </>
           )}
           {active === "Pre-orders" && (
             <>
@@ -546,7 +585,7 @@ export default async function AdminPage({
                 />
               </Panel>
               <Panel title={t("visionWaitlist")}>
-                <div className="divide-y divide-black/10">
+                <div className="max-h-[min(68dvh,42rem)] divide-y divide-black/10 overflow-y-auto overscroll-contain pe-1 [scrollbar-gutter:stable]">
                   {waitlist.map((w) => (
                     <div
                       className="flex min-w-0 flex-col gap-1 py-4 text-sm sm:flex-row sm:justify-between sm:gap-4"
@@ -571,8 +610,12 @@ export default async function AdminPage({
             </>
           )}
           {active === "Orders" && (
-            <Panel title={t("orderFulfilment")}>
-              <AdminOrders
+            <>
+              <div className="flex justify-end">
+                <Link href={`/admin/print/orders?lang=${locale}`} className="inline-flex min-h-11 items-center justify-center rounded-md border border-black bg-white px-5 text-[10px] font-semibold tracking-wider transition hover:bg-black hover:text-white">{t("printAllOrders")}</Link>
+              </div>
+              <Panel title={t("orderFulfilment")}>
+                <AdminOrders
                 locale={locale}
                 orders={orders.map((order) => ({
                   ...order,
@@ -594,8 +637,9 @@ export default async function AdminPage({
                     createdAt: item.createdAt.toISOString(),
                   })),
                 }))}
-              />
-            </Panel>
+                />
+              </Panel>
+            </>
           )}
           {active === "Settings" && (
             <Panel title={t("storeSettings")}>
@@ -627,7 +671,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-5 min-w-0 border border-black/10 bg-white p-3 sm:mt-8 sm:p-5 md:p-7">
+    <section className="mt-5 w-full max-w-full min-w-0 overflow-hidden border border-black/10 bg-white p-3 sm:mt-8 sm:p-5 md:p-7">
       <h3 className="break-words font-display text-2xl sm:text-3xl">{title}</h3>
       <div className="mt-4 min-w-0 sm:mt-5">{children}</div>
     </section>
@@ -645,7 +689,7 @@ function Products({
     <div>
       {rows.length > 0 && (
         <>
-          <div className="space-y-2 sm:hidden">
+          <div className="max-h-[min(68dvh,42rem)] space-y-2 overflow-y-auto overscroll-contain pe-1 [scrollbar-gutter:stable] sm:hidden">
             {rows.map((p) => (
               <article
                 key={p.id}
@@ -680,9 +724,9 @@ function Products({
               </article>
             ))}
           </div>
-          <div className="hidden overflow-x-auto sm:block">
+          <div className="hidden max-h-[min(68dvh,42rem)] overflow-auto overscroll-contain [scrollbar-gutter:stable] sm:block">
             <table className="w-full min-w-[650px] text-start text-xs">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-white">
                 <tr className="border-b border-black">
                   <th className="py-3">{t("product")}</th>
                   <th>{t("status")}</th>
