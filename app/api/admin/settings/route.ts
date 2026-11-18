@@ -12,6 +12,7 @@ const schema = z.object({
   defaultLowStockThreshold: z.coerce.number().int().min(0).max(10_000),
   announcement: z.string().trim().max(500),
   announcementActive: z.boolean(),
+  globalPreOrderMode: z.boolean(),
   notificationPreferences: z.object({ newOrder: z.boolean(), lowStock: z.boolean(), contactMessage: z.boolean(), preOrder: z.boolean() }).strict(),
 }).strict();
 export async function PATCH(request: Request) {

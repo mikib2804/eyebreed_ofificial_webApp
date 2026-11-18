@@ -4,10 +4,6 @@
 
 * {
   box-sizing: border-box;
-  scrollbar-width: none;
-}
-*::-webkit-scrollbar {
-  display: none;
 }
 html {
   width: 100%;
@@ -160,8 +156,85 @@ button {
   }
 }
 :focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 4px;
+  outline: 3px solid #ffbf47 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 2px #111 !important;
+}
+
+html[data-a11y-font="1"] {
+  font-size: 112.5%;
+}
+
+html[data-a11y-font="2"] {
+  font-size: 125%;
+}
+
+html[data-a11y-readable="true"] body,
+html[data-a11y-readable="true"] .font-display {
+  font-family: Arial, Helvetica, sans-serif !important;
+  letter-spacing: normal !important;
+  word-spacing: 0.08em;
+}
+
+html[data-a11y-links="true"] #main-content a {
+  text-decoration: underline !important;
+  text-decoration-thickness: 0.12em !important;
+  text-underline-offset: 0.22em !important;
+}
+
+html[data-a11y-monochrome="true"] #main-content {
+  filter: grayscale(1);
+}
+
+html[data-a11y-motion="true"] {
+  scroll-behavior: auto !important;
+}
+
+html[data-a11y-motion="true"] *,
+html[data-a11y-motion="true"] *::before,
+html[data-a11y-motion="true"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+html[data-a11y-contrast="true"] {
+  --ink: #000 !important;
+  --charcoal: #111 !important;
+  --cream: #fff !important;
+  --espresso: #4d3700 !important;
+  --color-ink: 0 0 0 !important;
+  --color-charcoal: 17 17 17 !important;
+  --color-cream: 255 255 255 !important;
+  --color-paper: 255 255 255 !important;
+  --color-accent: 77 55 0 !important;
+  --color-strong: 0 0 0 !important;
+  --color-soft: 255 255 255 !important;
+  --color-accent-text: 0 0 0 !important;
+}
+
+html[data-a11y-contrast="true"] #main-content [class*="text-white/"] {
+  color: #fff !important;
+}
+
+html[data-a11y-contrast="true"] #main-content [class*="text-black/"] {
+  color: #000 !important;
+}
+
+html[data-a11y-contrast="true"] #main-content [class*="border-white/"] {
+  border-color: #fff !important;
+}
+
+html[data-a11y-contrast="true"] #main-content [class*="border-black/"] {
+  border-color: #000 !important;
+}
+
+@media print {
+  .accessibility-trigger,
+  #accessibility-panel {
+    display: none !important;
+  }
 }
 .palette-popover {
   position: fixed;

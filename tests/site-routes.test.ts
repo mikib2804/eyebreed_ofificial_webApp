@@ -17,14 +17,16 @@ test("global site routes are unique and resolve to internal destinations", () =>
 });
 
 test("navigation and footer expose every intended public route", () => {
-  const navigationIds = new Set(
+  const navigationIds = new Set<string>(
     primaryNavigationRoutes.map((route) => route.id),
   );
-  const footerIds = new Set(
+  const footerIds = new Set<string>(
     [...footerShopRoutes, ...footerHelpRoutes].map((route) => route.id),
   );
 
   assert.ok(navigationIds.has("terms"));
   assert.ok(navigationIds.has("size-guide"));
+  assert.ok(footerIds.has("accessibility"));
+  assert.ok(!navigationIds.has("accessibility"));
   publicSiteRoutes.forEach((route) => assert.ok(footerIds.has(route.id)));
 });

@@ -7,9 +7,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { StoreProduct } from "@/lib/catalog";
 import { money } from "@/lib/i18n";
 import { useStore } from "@/components/store-provider";
+import { PreOrderInfoButton, usePreOrder } from "@/components/pre-order-provider";
 
 export function ProductDetail({ product }: { product: StoreProduct }) {
   const { locale, currency, addToCart } = useStore();
+  const { enabled: preOrderMode } = usePreOrder();
   const firstAvailable = useMemo(
     () => product.sizes.find((variant) => variant.inventory > 0)?.size ?? "",
     [product.sizes],
@@ -59,9 +61,6 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
     (variant) => variant.size === selectedSize,
   );
   const soldOut = product.inventory < 1 || !firstAvailable;
-  const salePercentage = product.compareAtPrices
-    ? Math.round((1 - product.prices.ILS / product.compareAtPrices.ILS) * 100)
-    : 0;
 
   const text =
     locale === "he"
@@ -98,6 +97,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
             {text.back}
           </Link>
           <div className="relative aspect-[2/3] w-full">
+          {preOrderMode && <span className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-[#76513f] px-3 py-2 text-center text-[9px] font-semibold tracking-[.14em] text-white shadow-lg">הזמנה מוקדמת</span>}
           <div
             ref={galleryRef}
             dir="ltr"
@@ -182,13 +182,24 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
           </h1>
           <div className="mt-7 flex items-center gap-4 text-lg">
             <span className={product.compareAtPrices ? "font-semibold text-red-700" : ""}>{money(product.prices[currency], currency, locale)}</span>
-              {product.compareAtPrices && (
-              <><span className="text-sm text-black/45 line-through">{money(product.compareAtPrices[currency], currency, locale)}</span><span className="border-y-2 border-white bg-red-600 px-3 py-1 text-[9px] font-bold uppercase tracking-[.16em] text-white shadow-[3px_3px_0_#111]">{product.saleLabel ?? `${salePercentage}% SALE`}</span></>
-            )}
+            {product.compareAtPrices && <span className="text-sm text-black/45 line-through">{money(product.compareAtPrices[currency], currency, locale)}</span>}
+            {product.saleLabel && <span className="border-y-2 border-white bg-red-600 px-3 py-1 text-[9px] font-bold uppercase tracking-[.16em] text-white shadow-[3px_3px_0_#111]">{product.saleLabel}</span>}
           </div>
           <p className="mt-8 max-w-xl whitespace-pre-line text-sm leading-7 text-black/75">
             {locale === "he" ? product.descriptionHe : product.description}
           </p>
+          {product.discountConditions?.[locale]?.length ? (
+            <div className="mt-5 border-s-2 border-red-700 bg-red-50 p-4 text-xs leading-6 text-red-900">
+              <strong className="block">{locale === "he" ? "תנאי ההנחה" : "Discount conditions"}</strong>
+              <ul className="mt-2 list-disc ps-5">{product.discountConditions[locale].map((condition) => <li key={condition}>{condition}</li>)}</ul>
+            </div>
+          ) : null}
+          {preOrderMode && (
+            <div className="mt-6 flex items-start gap-3 rounded-lg border border-[#76513f]/30 bg-[#76513f]/10 p-4 text-sm leading-6">
+              <PreOrderInfoButton inverse />
+              <div><strong className="block text-[#5f3f30]">PRE-ORDER · {locale === "he" ? "הזמנה מוקדמת" : "PRE-ORDERED ITEM"}</strong><p className="mt-1 text-black/75">{locale === "he" ? "זמן האספקה המשוער הוא בין 30 ל-60 ימים ממועד ההזמנה." : "Estimated delivery is 30–60 days from the order date."}</p></div>
+            </div>
+          )}
 
           <div className="mt-10 border-t border-black/20 pt-8">
             <div className="mb-4 flex items-center justify-between">

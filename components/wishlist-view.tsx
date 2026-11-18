@@ -8,11 +8,13 @@ import { EmptyState, PageTitle } from "@/components/account-shell";
 import { useStore } from "@/components/store-provider";
 import type { StoreProduct } from "@/lib/catalog";
 import { money } from "@/lib/i18n";
+import { usePreOrder } from "@/components/pre-order-provider";
 
 type WishlistProduct = StoreProduct;
 
 export function WishlistView({ initialItems }: { initialItems: WishlistProduct[] }) {
   const { locale, currency, addToCart } = useStore();
+  const { enabled: preOrderMode } = usePreOrder();
   const [items, setItems] = useState(initialItems);
 
   async function remove(productId: string) {
@@ -39,7 +41,7 @@ export function WishlistView({ initialItems }: { initialItems: WishlistProduct[]
                 <X size={14} aria-hidden="true" />
               </button>
               <Link href={`/products/${product.slug}`} className="flex flex-1 flex-col">
-                <div className="relative h-40 shrink-0 overflow-hidden bg-white sm:h-36">{product.image && <Image src={product.image} alt={product.name} fill sizes="(max-width: 639px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw" className="object-contain transition duration-500 hover:scale-[1.02]" />}</div>
+                <div className="relative h-40 shrink-0 overflow-hidden bg-white sm:h-36">{product.image && <Image src={product.image} alt={product.name} fill sizes="(max-width: 639px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw" className="object-contain transition duration-500 hover:scale-[1.02]" />}{preOrderMode && <span className="absolute inset-x-0 bottom-0 bg-[#76513f] px-2 py-1 text-center text-[7px] font-semibold tracking-wider text-white">הזמנה מוקדמת</span>}</div>
                 <h2 className="mt-1.5 line-clamp-2 min-h-10 px-2 font-display text-lg leading-5">{locale === "he" ? product.nameHe : product.name}</h2>
                 <p className="mt-auto px-2 text-[11px]">{money(product.prices[currency], currency, locale)}</p>
               </Link>

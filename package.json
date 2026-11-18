@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/palettes.test.ts tests/site-routes.test.ts tests/request-security.test.ts tests/pricing.test.ts tests/product-reference.test.ts tests/cart-promotion.test.ts tests/address-validation.test.ts tests/admin-product-validation.test.ts",
+    "test": "tsx --test tests/accessibility.test.ts tests/bit-whatsapp.test.ts tests/discount-conditions.test.ts tests/pre-order-content.test.ts tests/palettes.test.ts tests/site-routes.test.ts tests/request-security.test.ts tests/pricing.test.ts tests/product-reference.test.ts tests/cart-promotion.test.ts tests/address-validation.test.ts tests/admin-product-validation.test.ts",
     "check": "npm run typecheck && npm test",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",

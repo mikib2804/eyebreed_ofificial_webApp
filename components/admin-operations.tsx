@@ -170,18 +170,19 @@ export function AdminPreOrders({ items, locale }: { items: PreOrder[]; locale: A
   </div>;
 }
 
-type Settings = { contactEmail: string; contactPhone: string; shippingInfo: string; defaultLowStockThreshold: number; announcement: string; announcementActive: boolean; notificationPreferences: { newOrder: boolean; lowStock: boolean; contactMessage: boolean; preOrder: boolean } };
+type Settings = { contactEmail: string; contactPhone: string; shippingInfo: string; defaultLowStockThreshold: number; announcement: string; announcementActive: boolean; globalPreOrderMode: boolean; notificationPreferences: { newOrder: boolean; lowStock: boolean; contactMessage: boolean; preOrder: boolean } };
 
 export function AdminSettings({ settings, locale }: { settings: Settings; locale: AdminLocale }) {
   const [message, setMessage] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = new FormData(event.currentTarget); setMessage(adminText(locale, "saving"));
     try {
-      await send("/api/admin/settings", "PATCH", { ...Object.fromEntries(form), announcementActive: form.get("announcementActive") === "on", notificationPreferences: { newOrder: form.get("notifyNewOrder") === "on", lowStock: form.get("notifyLowStock") === "on", contactMessage: form.get("notifyContactMessage") === "on", preOrder: form.get("notifyPreOrder") === "on" } });
+      await send("/api/admin/settings", "PATCH", { ...Object.fromEntries(form), announcementActive: form.get("announcementActive") === "on", globalPreOrderMode: form.get("globalPreOrderMode") === "on", notificationPreferences: { newOrder: form.get("notifyNewOrder") === "on", lowStock: form.get("notifyLowStock") === "on", contactMessage: form.get("notifyContactMessage") === "on", preOrder: form.get("notifyPreOrder") === "on" } });
       setMessage(adminText(locale, "settingsSaved"));
     } catch (error) { setMessage(error instanceof Error ? error.message : adminText(locale, "updateFailed")); }
   }
   return <form onSubmit={submit} className="grid min-w-0 gap-5 md:grid-cols-2">
+    <input type="hidden" name="globalPreOrderMode" value={settings.globalPreOrderMode ? "on" : "off"} />
     <label className="admin-field">{adminText(locale, "contactEmail")}<input name="contactEmail" type="email" maxLength={254} defaultValue={settings.contactEmail} /></label>
     <label className="admin-field">{adminText(locale, "contactPhone")}<input name="contactPhone" {...phoneInputAttributes} onInput={(event) => { event.currentTarget.value = sanitizePhoneInput(event.currentTarget.value); }} defaultValue={settings.contactPhone} /></label>
     <label className="admin-field md:col-span-2">{adminText(locale, "shippingInfo")}<textarea name="shippingInfo" rows={5} defaultValue={settings.shippingInfo} /></label>
@@ -196,6 +197,42 @@ export function AdminSettings({ settings, locale }: { settings: Settings; locale
     </fieldset>
     <button className="min-h-11 w-full bg-black px-4 py-3 text-xs text-white sm:w-auto">{adminText(locale, "saveSettings")}</button><p role="status" className="break-words">{message}</p>
   </form>;
+}
+
+export function AdminPreOrderModeToggle({ enabled, locale }: { enabled: boolean; locale: AdminLocale }) {
+  const [active, setActive] = useState(enabled);
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function toggle() {
+    if (pending) return;
+    const next = !active;
+    setPending(true);
+    setMessage("");
+    try {
+      await send("/api/admin/settings/pre-order", "PATCH", { enabled: next });
+      setActive(next);
+      setMessage(locale === "he" ? "מצב החנות עודכן." : "Store mode updated.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : adminText(locale, "updateFailed"));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return <section className="mt-5 rounded-lg border border-[#76513f]/30 bg-white p-4 shadow-sm sm:mt-8 sm:p-6" aria-labelledby="pre-order-mode-heading">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h3 id="pre-order-mode-heading" className="font-display text-2xl sm:text-3xl">{locale === "he" ? "מצב החנות" : "Store mode"}</h3>
+        <p className="mt-2 max-w-2xl text-xs leading-6 text-black/60">{locale === "he" ? "כאשר המתג פעיל, החנות מוצגת כחנות הזמנה מוקדמת: תופיע הודעה בכניסה, תוויות על המוצרים ושאלה בעמוד השאלות והתשובות." : "When enabled, the store runs in Pre-Order mode with an entry notice, product labels, and an FAQ entry."}</p>
+      </div>
+      <button type="button" role="switch" aria-checked={active} disabled={pending} onClick={toggle} className={`relative inline-flex min-h-12 w-full shrink-0 items-center justify-between rounded-full border px-4 py-2 text-xs font-semibold transition sm:w-52 ${active ? "border-[#76513f] bg-[#76513f] text-white" : "border-black/25 bg-[#f1eee8] text-black"} disabled:cursor-wait disabled:opacity-60`}>
+        <span>{active ? (locale === "he" ? "הזמנה מוקדמת פעילה" : "PRE-ORDER ON") : (locale === "he" ? "חנות רגילה" : "PRE-ORDER OFF")}</span>
+        <span aria-hidden="true" className={`h-6 w-6 rounded-full bg-white shadow transition-transform ${active ? "translate-x-0" : "opacity-70"}`} />
+      </button>
+    </div>
+    {message && <p role="status" className="mt-3 text-xs text-black/65">{message}</p>}
+  </section>;
 }
 
 type Customer = { id: string; name: string | null; email: string | null; phone: string | null; emailVerified: string | null; createdAt: string; counts: { orders: number; preOrders: number; addresses: number; wishlist: number }; orders: Array<{ orderNumber: string; total: number; currency: string; status: string; createdAt: string }> };

@@ -105,7 +105,7 @@ export function Footer() {
               <p
                 role={contactError ? "alert" : "status"}
                 aria-live="polite"
-                className={`mt-3 cursor-pointer text-xs ${contactError ? "text-red-300" : "text-green-300"}`}
+                className={`mt-3 text-xs ${contactError ? "text-red-300" : "text-green-300"}`}
               >
                 {contactMessage}
               </p>

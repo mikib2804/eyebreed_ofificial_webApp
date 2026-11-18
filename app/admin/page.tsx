@@ -12,6 +12,7 @@ import {
   AdminInventory,
   AdminMessages,
   AdminOrders,
+  AdminPreOrderModeToggle,
   AdminPreOrders,
   AdminSettings,
 } from "@/components/admin-operations";
@@ -44,7 +45,6 @@ const sections = [
   ["Products", "products"],
   ["Discounts", "discounts"],
   ["Orders", "orders"],
-  ["Pre-orders", "preOrders"],
   ["Messages", "messages"],
   ["Customers", "customers"],
   ["Inventory", "inventory"],
@@ -384,6 +384,7 @@ export default async function AdminPage({
           </header>
           {active === "Overview" && (
             <>
+              <AdminPreOrderModeToggle enabled={settings?.globalPreOrderMode ?? false} locale={locale} />
               <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
                 {cards.map(([label, value]) => (
                   <article
@@ -653,6 +654,7 @@ export default async function AdminPage({
                     settings?.defaultLowStockThreshold ?? 5,
                   announcement: settings?.announcement ?? "",
                   announcementActive: settings?.announcementActive ?? false,
+                  globalPreOrderMode: settings?.globalPreOrderMode ?? false,
                   notificationPreferences,
                 }}
               />

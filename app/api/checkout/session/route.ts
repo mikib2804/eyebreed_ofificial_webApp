@@ -27,7 +27,7 @@ function appOrigin() {
 export async function POST(request: Request) {
   const requestId = getRequestId(request);
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
-  if (process.env.STRIPE_CHECKOUT_ENABLED !== "true") return NextResponse.json({ error: "Test checkout is not enabled yet." }, { status: 503 });
+  if (process.env.STRIPE_CHECKOUT_ENABLED !== "true") return NextResponse.json({ error: "Checkout is not enabled yet." }, { status: 503 });
   const session = await auth();
   if (!session?.user.id) return NextResponse.json({ error: "Sign in before checkout." }, { status: 401 });
   const rate = await consumeRateLimit("checkout", session.user.id, 10, 15 * 60);
@@ -112,6 +112,6 @@ export async function POST(request: Request) {
       if (redemption) await transaction.discount.update({ where: { id: redemption.discountId }, data: { usageCount: { decrement: 1 } } });
     }).catch(() => null);
     logServerEvent("error", "checkout", requestId, "stripe_session_failed", { orderId: pendingOrder.id, errorType: error instanceof Error ? error.name : "unknown" });
-    return NextResponse.json({ error: "Stripe test checkout is not configured or could not be created." }, { status: 503, headers: { "X-Request-ID": requestId } });
+    return NextResponse.json({ error: "Stripe checkout is not configured or could not be created." }, { status: 503, headers: { "X-Request-ID": requestId } });
   }
 }

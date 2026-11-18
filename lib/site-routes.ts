@@ -58,6 +58,13 @@ export const publicSiteRoutes = [
     footerGroup: "help",
     showInNavigation: true,
   },
+  {
+    id: "accessibility",
+    href: "/accessibility",
+    label: { en: "Accessibility", he: "הצהרת נגישות" },
+    footerGroup: "help",
+    showInNavigation: false,
+  },
 ] as const satisfies readonly PublicSiteRoute[];
 
 export const primaryNavigationRoutes = publicSiteRoutes.filter(

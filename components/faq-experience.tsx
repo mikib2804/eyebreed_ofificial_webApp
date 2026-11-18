@@ -7,17 +7,25 @@ import { useStore } from "@/components/store-provider";
 import { ContactForm } from "@/components/contact-form";
 import { faqContent } from "@/lib/faq-data";
 import ContactOptions from "./Contact-options";
+import { usePreOrder } from "@/components/pre-order-provider";
+import { preOrderFaqAnswer } from "@/lib/pre-order-content";
 
 const normalize = (value: string) => value.trim().toLocaleLowerCase();
 
 export function FaqExperience() {
   const { locale } = useStore();
+  const { enabled: preOrderMode } = usePreOrder();
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [openAnswers, setOpenAnswers] = useState<Set<string>>(() => new Set());
   const searchSectionRef = useRef<HTMLElement>(null);
-  const content = faqContent[locale];
+  const content = useMemo(() => faqContent[locale].map((category, index) => ({
+    ...category,
+    items: index === 1 && preOrderMode
+      ? [{ id: "global-pre-order", question: locale === "he" ? "מהי הזמנה מוקדמת (PRE-ORDER)?" : "What is a PRE-ORDER?", answer: preOrderFaqAnswer(locale) }, ...category.items]
+      : category.items,
+  })), [locale, preOrderMode]);
   const normalizedQuery = normalize(query);
   const allItems = useMemo(
     () => content.flatMap((category) => category.items),
@@ -184,7 +192,7 @@ export function FaqExperience() {
                           className={`grid transition-[grid-template-rows,opacity,transform] duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${isOpen ? "grid-rows-[1fr] translate-y-0 opacity-100" : "grid-rows-[0fr] -translate-y-2 opacity-0"}`}
                         >
                           <div className="overflow-hidden">
-                            <div className="max-w-3xl pb-8 pe-12 text-sm leading-8 text-black/65 sm:text-base sm:leading-8">
+                            <div className="max-w-3xl whitespace-pre-line pb-8 pe-12 text-sm leading-8 text-black/65 sm:text-base sm:leading-8">
                               {item.answer}
                             </div>
                           </div>

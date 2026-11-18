@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { usePreOrder } from "@/components/pre-order-provider";
 
 export function ProductGrid({
   products,
@@ -19,11 +20,14 @@ export function ProductGrid({
   displayImages?: Record<string, string>;
 }) {
   const { locale, currency, addToCart, t } = useStore();
+  const { enabled: preOrderMode } = usePreOrder();
   const router = useRouter();
   const { data: session, status } = useSession();
   const [liked, setLiked] = useState<boolean[]>([]);
   const wishlistLocks = useRef(new Set<string>());
-  const [wishlistPending, setWishlistPending] = useState<Set<string>>(() => new Set());
+  const [wishlistPending, setWishlistPending] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [likeBurst, setLikeBurst] = useState<{
     index: number;
     key: number;
@@ -73,12 +77,6 @@ export function ProductGrid({
             {products.map((product, index) => {
               const displayImage = displayImages[product.slug] ?? product.image;
               const imageFailed = failedImages.has(displayImage);
-              const salePercentage = product.compareAtPrices
-                ? Math.round(
-                    (1 - product.prices.ILS / product.compareAtPrices.ILS) *
-                      100,
-                  )
-                : 0;
               return (
                 <article
                   key={product.id}
@@ -86,10 +84,17 @@ export function ProductGrid({
                 >
                   {!imageFailed && (
                     <div className="relative aspect-square overflow-hidden bg-white">
-                      {product.compareAtPrices && (
+                      {product.saleLabel && (
                         <div className="absolute -right-12 top-7 z-20 w-44 rotate-45 whitespace-nowrap border-y-2 border-white bg-red-600 px-2 py-1.5 text-center text-[7px] font-bold uppercase tracking-[.08em] text-white shadow-[3px_4px_0_#fff] lg:left-0 lg:right-auto lg:top-5 lg:w-auto lg:rotate-0 lg:border-b-2 lg:border-t-0 lg:border-black lg:px-4 lg:py-2 lg:text-[10px] lg:tracking-[.2em] lg:shadow-[4px_5px_0_#fff]">
-                          {product.saleLabel ?? `${salePercentage}% SALE`}
+                          {product.saleLabel}
                         </div>
+                      )}
+                      {preOrderMode && (
+                        <span className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-2 border-t border-[#d8c2ad]/30 bg-[#76513f]/95 px-3 py-2.5 text-center text-[9px] font-medium tracking-[.22em] text-[#f4f0e8] shadow-[0_-4px_16px_rgba(26,17,16,0.12)] backdrop-blur-sm transition-all duration-500 ease-out">
+                          <span className="h-1 w-1 rounded-full bg-[#d8c2ad]" />
+                          הזמנה מוקדמת
+                          <span className="h-1 w-1 rounded-full bg-[#d8c2ad]" />
+                        </span>
                       )}
                       <Link
                         href={`/products/${product.slug}`}
@@ -123,7 +128,9 @@ export function ProductGrid({
                           }
                           if (wishlistLocks.current.has(product.id)) return;
                           wishlistLocks.current.add(product.id);
-                          setWishlistPending((current) => new Set(current).add(product.id));
+                          setWishlistPending((current) =>
+                            new Set(current).add(product.id),
+                          );
 
                           const next = !(liked[index] ?? false);
                           setLiked((prev) => {

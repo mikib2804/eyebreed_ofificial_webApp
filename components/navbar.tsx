@@ -232,7 +232,7 @@ export function Navbar() {
             </NavTooltip>
           </button>
           <select
-            aria-label="Currency"
+            aria-label={locale === "he" ? "בחירת מטבע" : "Choose currency"}
             value={currency}
             onChange={(e) => setCurrency(e.target.value as typeof currency)}
             className="bg-transparent text-[10px] tracking-wider outline-none p-2 cursor-pointer text-white"

@@ -11,6 +11,8 @@ import PaymentSupport from "@/components/PaymentSupport";
 import { useStore } from "@/components/store-provider";
 import { personNameInputAttributes, phoneInputAttributes, placeNameInputAttributes, postalCodeInputAttributes, sanitizePhoneInput } from "@/lib/input-constraints";
 import { useSubmitGuard } from "@/lib/use-submit-guard";
+import { buildBitWhatsappUrl } from "@/lib/bit-whatsapp";
+import { usePreOrder } from "@/components/pre-order-provider";
 
 type Address = {
   id: string;
@@ -27,12 +29,23 @@ type Address = {
 
 type CartQuote = {
   currency: "USD" | "ILS" | "EUR";
+  lines: Array<{
+    productId: string;
+    slug: string;
+    name: string;
+    quantity: number;
+    size: string | null;
+    color: string | null;
+    unitAmount: number;
+    lineAmount: number;
+  }>;
   subtotal: number;
   discountAmount: number;
   shippingAmount: number;
   total: number;
   freeShipping: boolean;
-  promotion: { label: string };
+  discountCode: string | null;
+  promotion: { label: string; percentage: number };
 };
 
 const fieldClass = "mt-2 min-h-12 w-full border border-black/20 bg-white px-4 text-sm outline-none transition focus:border-black focus:ring-1 focus:ring-black";
@@ -40,6 +53,7 @@ const fieldClass = "mt-2 min-h-12 w-full border border-black/20 bg-white px-4 te
 export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
   const router = useRouter();
   const { cart, currency, locale } = useStore();
+  const { enabled: preOrderMode } = usePreOrder();
   const hebrew = locale === "he";
   const paidItems = useMemo(() => cart.filter((item) => !isPromotionGiftLine(item)), [cart]);
   const quoteItems = useMemo(() => paidItems.map((item) => ({ productId: item.id, slug: item.slug, quantity: item.quantity, size: item.selectedSize, color: null })), [paidItems]);
@@ -57,6 +71,26 @@ export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
   const [paymentError, setPaymentError] = useState("");
   const { blocked: addressBlocked, run: runAddressSubmit } = useSubmitGuard();
   const { blocked: paymentBlocked, run: runPaymentSubmit } = useSubmitGuard(2_000);
+  const selectedAddress = addresses.find((address) => address.id === selectedAddressId) ?? null;
+  const bitWhatsappUrl = useMemo(() => {
+    if (!quote || !selectedAddress) return null;
+    return buildBitWhatsappUrl({
+      locale,
+      currency: quote.currency,
+      address: selectedAddress,
+      lines: quote.lines.map((line) => ({
+        ...line,
+        name: paidItems.find((item) => item.slug === line.slug)?.[hebrew ? "nameHe" : "name"] ?? line.name,
+      })),
+      subtotal: quote.subtotal,
+      discountAmount: quote.discountAmount,
+      shippingAmount: quote.shippingAmount,
+      total: quote.total,
+      freeShipping: quote.freeShipping,
+      promotion: quote.promotion,
+      discountCode: quote.discountCode,
+    });
+  }, [hebrew, locale, paidItems, quote, selectedAddress]);
 
   useEffect(() => {
     setMounted(true);
@@ -177,7 +211,8 @@ export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
 
         <aside className="h-fit border border-black/15 bg-white p-6 lg:sticky lg:top-8" aria-labelledby="summary-heading">
           <h2 id="summary-heading" className="font-display text-4xl">{hebrew ? "סיכום הזמנה" : "Order summary"}</h2>
-          <div className="mt-6 space-y-5">{paidItems.map((item) => <div key={`${item.id}:${item.selectedSize}`} className="grid grid-cols-[64px_1fr_auto] gap-3 border-b border-black/10 pb-5"><div className="relative aspect-[4/5] bg-cream"><Image src={item.image} alt={item.name} fill sizes="64px" className="object-cover" /></div><div><p className="text-xs">{hebrew ? item.nameHe : item.name}</p><p className="mt-2 text-[9px] text-black/55">{hebrew ? "מידה" : "SIZE"} {item.selectedSize} · {hebrew ? "כמות" : "QTY"} {item.quantity}</p></div><p className="text-xs">{money(item.prices[currency] * item.quantity, currency, locale)}</p></div>)}</div>
+          <div className="mt-6 space-y-5">{paidItems.map((item) => <div key={`${item.id}:${item.selectedSize}`} className="grid grid-cols-[64px_1fr_auto] gap-3 border-b border-black/10 pb-5"><div className="relative aspect-[4/5] bg-cream"><Image src={item.image} alt={item.name} fill sizes="64px" className="object-cover" />{preOrderMode && <span className="absolute inset-x-0 bottom-0 bg-[#76513f] px-1 py-1 text-center text-[5px] font-semibold tracking-wider text-white">הזמנה מוקדמת</span>}</div><div><p className="text-xs">{hebrew ? item.nameHe : item.name}</p><p className="mt-2 text-[9px] text-black/55">{hebrew ? "מידה" : "SIZE"} {item.selectedSize} · {hebrew ? "כמות" : "QTY"} {item.quantity}</p></div><p className="text-xs">{money(item.prices[currency] * item.quantity, currency, locale)}</p></div>)}</div>
+          {preOrderMode && <p className="mt-5 rounded-md border border-[#76513f]/30 bg-[#76513f]/10 p-3 text-xs leading-5 text-[#5f3f30]">{hebrew ? "כל הפריטים בהזמנה זו הם בהזמנה מוקדמת. זמן האספקה המשוער הוא 30–60 ימים ממועד ההזמנה." : "All items in this order are Pre-Orders. Estimated delivery is 30–60 days from the order date."}</p>}
           {quotePending && <p role="status" className="mt-5 text-xs text-black/55">{hebrew ? "מאמת מחיר ומלאי…" : "Verifying price and inventory…"}</p>}
           {quoteError && <p role="alert" className="mt-5 text-xs text-red-700">{quoteError}</p>}
           <dl className="mt-6 space-y-3 text-sm"><div className="flex justify-between"><dt>{hebrew ? "סכום ביניים" : "Subtotal"}</dt><dd>{quote ? money(quote.subtotal, currency, locale) : "—"}</dd></div>{quote && <div className="flex justify-between text-green-800"><dt>{quote.promotion.label}</dt><dd>−{money(quote.discountAmount, currency, locale)}</dd></div>}<div className="flex justify-between"><dt>{hebrew ? "משלוח" : "Shipping"}</dt><dd>{quote ? (quote.freeShipping ? (hebrew ? "חינם" : "FREE") : money(quote.shippingAmount, currency, locale)) : "—"}</dd></div><div className="flex justify-between border-t border-black/15 pt-4 text-base font-semibold"><dt>{hebrew ? "סה״כ" : "Total"}</dt><dd>{quote ? money(quote.total, currency, locale) : "—"}</dd></div></dl>
@@ -185,6 +220,25 @@ export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
           {paymentError && <p role="alert" className="mt-4 text-xs leading-5 text-red-700">{paymentError}</p>}
           {!selectedAddressId && <p role="status" className="mt-4 text-xs text-amber-800">{hebrew ? "שמרו כתובת למשלוח כדי להמשיך." : "Save a shipping address to continue."}</p>}
           <button type="button" onClick={continueToPayment} disabled={!selectedAddressId || !quote || quotePending || paymentPending || paymentBlocked} className="mt-5 w-full bg-ink py-5 text-[10px] tracking-luxury text-white disabled:opacity-40">{paymentPending ? (hebrew ? "מעביר ל-Stripe…" : "OPENING STRIPE…") : (hebrew ? "המשך לתשלום מאובטח" : "CONTINUE TO SECURE PAYMENT")}</button>
+          {bitWhatsappUrl ? (
+            <a
+              href={bitWhatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 flex min-h-14 w-full items-center justify-center border-2 border-[#08a88a] bg-white px-5 py-4 text-center text-[10px] font-semibold tracking-luxury text-[#087a68] transition hover:bg-[#eafff9]"
+            >
+              {hebrew ? "תשלום ב-Bit דרך WhatsApp" : "PAY WITH BIT VIA WHATSAPP"}
+            </a>
+          ) : (
+            <button type="button" disabled className="mt-3 min-h-14 w-full border-2 border-black/15 px-5 py-4 text-[10px] tracking-luxury text-black/40">
+              {hebrew ? "תשלום ב-Bit דרך WhatsApp" : "PAY WITH BIT VIA WHATSAPP"}
+            </button>
+          )}
+          <p className="mt-3 text-[10px] leading-5 text-black/60">
+            {hebrew
+              ? "בלחיצה ייפתח WhatsApp עם פרטי המשלוח, הפריטים והמחיר המאומת. ההזמנה אינה מאושרת עד לקבלת אישור תשלום."
+              : "WhatsApp will open with the shipping details, selected items, and verified price. The order is not confirmed until payment is approved."}
+          </p>
           <PaymentSupport variant="checkout" />
         </aside>
       </div>

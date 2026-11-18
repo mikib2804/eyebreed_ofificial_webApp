@@ -25,18 +25,37 @@ export default async function Home() {
       where: {
         active: true,
         code: null,
-        type: "PERCENTAGE",
-        scope: "PRODUCT",
+        type: { in: ["PERCENTAGE", "FIXED"] },
         AND: [
           { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
           { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
         ],
       },
-      select: { name: true, value: true, products: { select: { id: true } } },
+      select: {
+        name: true,
+        type: true,
+        scope: true,
+        value: true,
+        products: { select: { id: true } },
+        categories: { select: { id: true } },
+      },
     }), getInstagramVideos()]);
   const discountByProductId = new Map<string, { percentage: number; label: string }>();
+  const bundleLabelByProductId = new Map<string, string>();
   for (const discount of productDiscounts) {
-    for (const product of discount.products) {
+    const linkedProductIds = new Set(discount.products.map((product) => product.id));
+    const linkedCategoryIds = new Set(discount.categories.map((category) => category.id));
+    if (discount.type === "FIXED") {
+      if (discount.scope === "PRODUCT" && linkedProductIds.size > 1) {
+        for (const productId of linkedProductIds) bundleLabelByProductId.set(productId, discount.name);
+      }
+      continue;
+    }
+    for (const product of databaseProducts) {
+      const applies = discount.scope === "STORE"
+        || (discount.scope === "PRODUCT" && linkedProductIds.has(product.id))
+        || (discount.scope === "CATEGORY" && linkedCategoryIds.has(product.categoryId));
+      if (!applies) continue;
       const percentage = Number(discount.value);
       const current = discountByProductId.get(product.id);
       if (!current || percentage > current.percentage) discountByProductId.set(product.id, { percentage, label: discount.name });
@@ -45,7 +64,11 @@ export default async function Home() {
   const productsBySlug = new Map(databaseProducts.map((item) => {
     const product = toStoreProduct(item);
     const discount = discountByProductId.get(item.id);
-    return [item.slug, applyPercentageDiscount(product, discount?.percentage ?? 0, discount?.label)] as const;
+    const discountedProduct = applyPercentageDiscount(product, discount?.percentage ?? 0, discount?.label);
+    return [item.slug, {
+      ...discountedProduct,
+      saleLabel: discountedProduct.saleLabel ?? bundleLabelByProductId.get(item.id),
+    }] as const;
   }));
   const products = visionSlugs.flatMap((slug) => {
     const product = productsBySlug.get(slug);

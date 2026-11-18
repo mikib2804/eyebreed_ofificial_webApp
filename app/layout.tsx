@@ -7,6 +7,9 @@ import { PaletteProvider } from "@/components/palette-provider";
 import { paletteBootstrap, palettes, paletteVariables } from "@/lib/palettes";
 import type { CSSProperties } from "react";
 import { AuthProvider } from "@/components/auth-provider";
+import { AccessibilityMenu } from "@/components/accessibility-menu";
+import { accessibilityBootstrap } from "@/lib/accessibility";
+import { PreOrderProvider } from "@/components/pre-order-provider";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -38,12 +41,16 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className={`${cormorant.variable} ${montserrat.variable}`}>
-        <a href="#main-content" className="sr-only z-[100] rounded bg-white px-4 py-3 text-sm text-black focus:not-sr-only focus:fixed focus:start-4 focus:top-4">Skip to main content</a>
+        <a href="#main-content" className="sr-only z-[110] rounded bg-white px-4 py-3 text-sm font-semibold text-black focus:not-sr-only focus:fixed focus:start-4 focus:top-4">דלג לתוכן הראשי / Skip to main content</a>
         <script dangerouslySetInnerHTML={{ __html: paletteBootstrap }} />
+        <script dangerouslySetInnerHTML={{ __html: accessibilityBootstrap }} />
         <PaletteProvider>
           <AuthProvider><StoreProvider>
-            <div id="main-content" tabIndex={-1}>{children}</div>
+            <PreOrderProvider>
+              <div id="main-content" tabIndex={-1}>{children}</div>
+            </PreOrderProvider>
             <CookieConsent />
+            <AccessibilityMenu />
           </StoreProvider></AuthProvider>
         </PaletteProvider>
       </body>

@@ -7,6 +7,7 @@ import { Gift, Minus, Plus, Tag, Truck, X } from "lucide-react";
 import { money } from "@/lib/i18n";
 import { isPromotionGiftLine } from "@/lib/cart-promotion";
 import { useStore } from "@/components/store-provider";
+import { usePreOrder } from "@/components/pre-order-provider";
 
 type CartQuote = {
   currency: "USD" | "ILS" | "EUR";
@@ -36,6 +37,7 @@ function quoteFailureMessage(code: unknown, serverMessage: unknown, locale: "en"
 export function CartDrawer() {
   const router = useRouter();
   const { cart, cartOpen, setCartOpen, updateQuantity, removeFromCart, currency, locale, t } = useStore();
+  const { enabled: preOrderMode } = usePreOrder();
   const paidItems = useMemo(() => cart.filter((item) => !isPromotionGiftLine(item)), [cart]);
   const localSubtotal = paidItems.reduce((sum, item) => sum + item.prices[currency] * item.quantity, 0);
   const paidItemCount = paidItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -136,7 +138,7 @@ export function CartDrawer() {
           const lineId = `${item.id}:${item.selectedSize}`;
           const isGift = isPromotionGiftLine(item);
           return <div key={lineId} className="grid grid-cols-[90px_1fr_auto] gap-4 border-b border-black/15 py-6">
-            <div className="relative aspect-[4/5] bg-white"><Image src={item.image} alt={item.name} fill className="object-cover" sizes="90px" /></div>
+            <div className="relative aspect-[4/5] bg-white"><Image src={item.image} alt={item.name} fill className="object-cover" sizes="90px" />{preOrderMode && !isGift && <span className="absolute inset-x-0 bottom-0 bg-[#76513f] px-1 py-1 text-center text-[6px] font-semibold tracking-wider text-white">הזמנה מוקדמת</span>}</div>
             <div><h3 className="text-xs uppercase tracking-wider">{locale === "he" ? `${item.nameHe}${isGift ? " (מתנה)" : ""}` : `${item.name}${isGift ? " (GIFT)" : ""}`}</h3>
               {isGift ? <p className="mt-2 inline-flex items-center gap-2 text-[10px] font-semibold tracking-wider text-red-700"><Gift size={13} />{locale === "he" ? "כובע מתנה · חינם" : "FREE GIFT HAT"}</p> : <div className="mt-2 flex items-center gap-2 text-xs"><span className={item.compareAtPrices ? "font-semibold text-red-700" : "text-black/75"}>{money(item.prices[currency], currency, locale)}</span>{item.compareAtPrices && <span className="text-[10px] text-black/40 line-through">{money(item.compareAtPrices[currency], currency, locale)}</span>}</div>}
               <p className="mt-2 text-[10px] tracking-wider text-black/75">{locale === "he" ? "מידה" : "SIZE"} {item.selectedSize}</p>

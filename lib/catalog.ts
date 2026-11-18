@@ -15,4 +15,5 @@ export type StoreProduct = {
   prices: { USD: number; ILS: number; EUR: number };
   compareAtPrices?: { USD: number; ILS: number; EUR: number };
   saleLabel?: string;
+  discountConditions?: Record<"en" | "he", string[]>;
 };

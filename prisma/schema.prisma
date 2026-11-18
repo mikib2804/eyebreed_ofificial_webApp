@@ -507,6 +507,7 @@ model StoreSettings {
   defaultLowStockThreshold Int      @default(5)
   announcement             String?
   announcementActive       Boolean  @default(false)
+  globalPreOrderMode       Boolean  @default(false)
   notificationPreferences  Json?
   updatedAt                DateTime @updatedAt
 }
