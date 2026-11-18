@@ -121,19 +121,17 @@ type InventoryHistory = { id: string; productName: string; variantLabel: string 
 export function AdminInventory({ products, history, locale }: { products: InventoryProduct[]; history: InventoryHistory[]; locale: AdminLocale }) {
   const [message, setMessage] = useState("");
   const [productId, setProductId] = useState(products[0]?.id ?? "");
-  const selected = products.find((product) => product.id === productId);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setMessage(adminText(locale, "saving"));
     const values = Object.fromEntries(new FormData(event.currentTarget));
     try {
-      await send("/api/admin/inventory", "POST", { ...values, variantId: values.variantId || null });
+      await send("/api/admin/inventory", "POST", values);
       setMessage(adminText(locale, "inventoryAdjusted")); window.location.reload();
     } catch (error) { setMessage(error instanceof Error ? error.message : adminText(locale, "updateFailed")); }
   }
   return <div className="min-w-0 space-y-6">
-    <form onSubmit={submit} className="grid min-w-0 gap-4 border border-black/10 bg-white p-3 sm:grid-cols-2 sm:p-5 md:grid-cols-4">
+    <form onSubmit={submit} className="grid min-w-0 gap-4 border border-black/10 bg-white p-3 sm:grid-cols-2 sm:p-5 md:grid-cols-3">
       <label className="admin-field">{adminText(locale, "product")}<select name="productId" value={productId} onChange={(event) => setProductId(event.target.value)}>{products.map((product) => <option value={product.id} key={product.id}>{product.name} ({product.inventory})</option>)}</select></label>
-      <label className="admin-field">{adminText(locale, "variant")}<select name="variantId"><option value="">{adminText(locale, "wholeProduct")}</option>{selected?.variants.map((variant) => <option key={variant.id} value={variant.id}>{variant.size}{variant.color ? ` · ${variant.color}` : ""} ({variant.inventory})</option>)}</select></label>
       <label className="admin-field">{adminText(locale, "adjustment")}<input name="delta" type="number" required /></label>
       <label className="admin-field">{adminText(locale, "reason")}<input name="reason" minLength={3} required /></label>
       <button className="min-h-11 w-full bg-black px-4 py-3 text-xs text-white sm:w-fit">{adminText(locale, "applyAdjustment")}</button><p role="status" className="self-center text-xs">{message}</p>
@@ -170,14 +168,14 @@ export function AdminPreOrders({ items, locale }: { items: PreOrder[]; locale: A
   </div>;
 }
 
-type Settings = { contactEmail: string; contactPhone: string; shippingInfo: string; defaultLowStockThreshold: number; announcement: string; announcementActive: boolean; globalPreOrderMode: boolean; notificationPreferences: { newOrder: boolean; lowStock: boolean; contactMessage: boolean; preOrder: boolean } };
+type Settings = { contactEmail: string; contactPhone: string; shippingInfo: string; shippingEnabled: boolean; shippingPriceIls: number; shippingPriceUsd: number; shippingPriceEur: number; freeShippingEnabled: boolean; freeShippingThresholdIls: number | null; freeShippingThresholdUsd: number | null; freeShippingThresholdEur: number | null; defaultLowStockThreshold: number; announcement: string; announcementActive: boolean; globalPreOrderMode: boolean; notificationPreferences: { newOrder: boolean; lowStock: boolean; contactMessage: boolean; preOrder: boolean } };
 
 export function AdminSettings({ settings, locale }: { settings: Settings; locale: AdminLocale }) {
   const [message, setMessage] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = new FormData(event.currentTarget); setMessage(adminText(locale, "saving"));
     try {
-      await send("/api/admin/settings", "PATCH", { ...Object.fromEntries(form), announcementActive: form.get("announcementActive") === "on", globalPreOrderMode: form.get("globalPreOrderMode") === "on", notificationPreferences: { newOrder: form.get("notifyNewOrder") === "on", lowStock: form.get("notifyLowStock") === "on", contactMessage: form.get("notifyContactMessage") === "on", preOrder: form.get("notifyPreOrder") === "on" } });
+      await send("/api/admin/settings", "PATCH", { ...Object.fromEntries(form), shippingEnabled: form.get("shippingEnabled") === "on", freeShippingEnabled: form.get("freeShippingEnabled") === "on", announcementActive: form.get("announcementActive") === "on", globalPreOrderMode: form.get("globalPreOrderMode") === "on", notificationPreferences: { newOrder: form.get("notifyNewOrder") === "on", lowStock: form.get("notifyLowStock") === "on", contactMessage: form.get("notifyContactMessage") === "on", preOrder: form.get("notifyPreOrder") === "on" } });
       setMessage(adminText(locale, "settingsSaved"));
     } catch (error) { setMessage(error instanceof Error ? error.message : adminText(locale, "updateFailed")); }
   }
@@ -186,6 +184,17 @@ export function AdminSettings({ settings, locale }: { settings: Settings; locale
     <label className="admin-field">{adminText(locale, "contactEmail")}<input name="contactEmail" type="email" maxLength={254} defaultValue={settings.contactEmail} /></label>
     <label className="admin-field">{adminText(locale, "contactPhone")}<input name="contactPhone" {...phoneInputAttributes} onInput={(event) => { event.currentTarget.value = sanitizePhoneInput(event.currentTarget.value); }} defaultValue={settings.contactPhone} /></label>
     <label className="admin-field md:col-span-2">{adminText(locale, "shippingInfo")}<textarea name="shippingInfo" rows={5} defaultValue={settings.shippingInfo} /></label>
+    <fieldset className="grid gap-4 border border-black/10 p-3 sm:grid-cols-2 sm:p-4 md:col-span-2 lg:grid-cols-3"><legend className="px-2 text-xs font-medium">{adminText(locale, "shippingSettings")}</legend>
+      <p className="text-xs leading-5 text-black/55 sm:col-span-2 lg:col-span-3">{locale === "he" ? "השאירו את ספי המשלוח החינם ריקים כדי להעניק משלוח חינם לכל הזמנה כאשר האפשרות פעילה." : "Leave the free-shipping thresholds blank to make every order eligible when free shipping is enabled."}</p>
+      <label className="flex min-h-11 items-center gap-2 sm:col-span-2 lg:col-span-3"><input name="shippingEnabled" type="checkbox" defaultChecked={settings.shippingEnabled} /> {adminText(locale, "shippingEnabled")}</label>
+      <label className="admin-field">{adminText(locale, "shippingPriceIls")}<input name="shippingPriceIls" type="number" min="0" step="0.01" defaultValue={settings.shippingPriceIls} required /></label>
+      <label className="admin-field">{adminText(locale, "shippingPriceUsd")}<input name="shippingPriceUsd" type="number" min="0" step="0.01" defaultValue={settings.shippingPriceUsd} required /></label>
+      <label className="admin-field">{adminText(locale, "shippingPriceEur")}<input name="shippingPriceEur" type="number" min="0" step="0.01" defaultValue={settings.shippingPriceEur} required /></label>
+      <label className="flex min-h-11 items-center gap-2 sm:col-span-2 lg:col-span-3"><input name="freeShippingEnabled" type="checkbox" defaultChecked={settings.freeShippingEnabled} /> {adminText(locale, "freeShippingEnabled")}</label>
+      <label className="admin-field">{adminText(locale, "freeShippingThresholdIls")}<input name="freeShippingThresholdIls" type="number" min="0" step="0.01" defaultValue={settings.freeShippingThresholdIls ?? ""} /></label>
+      <label className="admin-field">{adminText(locale, "freeShippingThresholdUsd")}<input name="freeShippingThresholdUsd" type="number" min="0" step="0.01" defaultValue={settings.freeShippingThresholdUsd ?? ""} /></label>
+      <label className="admin-field">{adminText(locale, "freeShippingThresholdEur")}<input name="freeShippingThresholdEur" type="number" min="0" step="0.01" defaultValue={settings.freeShippingThresholdEur ?? ""} /></label>
+    </fieldset>
     <label className="admin-field">{adminText(locale, "lowStockThreshold")}<input name="defaultLowStockThreshold" type="number" min="0" defaultValue={settings.defaultLowStockThreshold} /></label>
     <label className="admin-field">{adminText(locale, "announcement")}<input name="announcement" defaultValue={settings.announcement} /></label>
     <label className="flex min-h-11 items-center gap-2"><input name="announcementActive" type="checkbox" defaultChecked={settings.announcementActive} /> {adminText(locale, "announcementActive")}</label>

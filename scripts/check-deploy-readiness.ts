@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { resolveSmtpConfiguration } from "../lib/smtp-config";
 
 type Level = "PASS" | "WARN" | "FAIL";
 type Check = { level: Level; name: string; detail: string };
@@ -58,12 +59,17 @@ check(stripeLevel(stripePublic.startsWith(stripePublicPrefix) && !isPlaceholder(
 check(stripeLevel(/^whsec_.+/.test(stripeWebhook) && !isPlaceholder(stripeWebhook)), "STRIPE_WEBHOOK_SECRET", stripeEnabled ? "Use this deployment's webhook signing secret." : "Optional while Stripe checkout is disabled.");
 check(stripeEnabled ? "PASS" : "WARN", "STRIPE_CHECKOUT_ENABLED", "Keep false until webhook delivery and one complete test payment are verified.");
 
-const gmailUser = value("GMAIL_USER");
-const gmailAppPassword = value("GMAIL_APP_PASSWORD").replace(/\s+/g, "");
-const genericSmtp = Boolean(value("SMTP_HOST") && value("SMTP_USER") && value("SMTP_PASSWORD"));
-const gmailSmtp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmailUser) && gmailAppPassword.length === 16 && !isPlaceholder(gmailUser) && !isPlaceholder(gmailAppPassword);
-check(genericSmtp || gmailSmtp ? "PASS" : "WARN", "SMTP delivery", "Configure SMTP_HOST/SMTP_USER/SMTP_PASSWORD or the Gmail fallback variables.");
-check(value("EMAIL_FROM").includes("@") && !isPlaceholder(value("EMAIL_FROM")) ? "PASS" : "WARN", "EMAIL_FROM", "Use an address on a domain verified by your email provider.");
+const emailRequired = value("EMAIL_DELIVERY_REQUIRED").toLowerCase() === "true";
+const smtp = resolveSmtpConfiguration();
+const smtpReady = Boolean(
+  smtp
+  && !isPlaceholder(smtp.user)
+  && !isPlaceholder(smtp.password)
+  && (smtp.host !== "smtp.gmail.com" || smtp.password.length === 16),
+);
+check(smtpReady ? "PASS" : emailRequired ? "FAIL" : "WARN", "SMTP delivery", "Configure SMTP_HOST/SMTP_USER/SMTP_PASSWORD or a Gmail mailbox with a 16-character App Password.");
+check(value("EMAIL_FROM").includes("@") && !isPlaceholder(value("EMAIL_FROM")) ? "PASS" : emailRequired ? "FAIL" : "WARN", "EMAIL_FROM", "Use the authenticated mailbox or a sender verified by your email provider.");
+check(value("ADMIN_NOTIFICATION_EMAIL").includes("@") && !isPlaceholder(value("ADMIN_NOTIFICATION_EMAIL")) ? "PASS" : "WARN", "ADMIN_NOTIFICATION_EMAIL", "Set the admin inbox for contact and paid-order notifications; Store Settings can override it.");
 check(value("CRON_SECRET").length >= 32 && !isPlaceholder(value("CRON_SECRET")) ? "PASS" : stripeEnabled ? "FAIL" : "WARN", "CRON_SECRET", "Required to protect interrupted-checkout processing.");
 check(!value("NEXT_PUBLIC_STRIPE_SECRET_KEY") ? "PASS" : "FAIL", "Secret exposure guard", "Never define NEXT_PUBLIC_STRIPE_SECRET_KEY.");
 check(!value("NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET") ? "PASS" : "FAIL", "Webhook exposure guard", "Never define NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET.");

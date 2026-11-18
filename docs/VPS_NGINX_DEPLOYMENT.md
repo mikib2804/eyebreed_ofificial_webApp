@@ -100,6 +100,30 @@ AUTH_URL=https://shop.eyebreedofficial.com
 NEXT_PUBLIC_APP_URL=https://shop.eyebreedofficial.com
 ```
 
+For Gmail SMTP, create a fresh Google App Password. Do not use the normal
+Google account password; Gmail rejects it for SMTP authentication. Keep the
+SMTP username, sender address, and App Password on the same mailbox:
+
+    SMTP_HOST=smtp.gmail.com
+    SMTP_PORT=465
+    SMTP_SECURE=true
+    SMTP_REQUIRE_TLS=false
+    SMTP_USER=your-mailbox@gmail.com
+    SMTP_PASSWORD=YOUR_16_CHARACTER_APP_PASSWORD
+    EMAIL_FROM=EYEBREED <your-mailbox@gmail.com>
+    EMAIL_REPLY_TO=your-mailbox@gmail.com
+    ADMIN_NOTIFICATION_EMAIL=your-admin-inbox@example.com
+    EMAIL_DELIVERY_REQUIRED=true
+
+Verify SMTP authentication from the VPS before starting or restarting the
+application:
+
+    sudo -u eyebreed -H bash -c 'cd /var/www/eyebreed/app && npm run smtp:verify'
+
+This verification opens an authenticated SMTP connection but does not send an
+email. After that succeeds, `npm run smtp:smoke` sends one real test message to
+the most recently updated customer who opted in to marketing email.
+
 Generate `AUTH_SECRET` on the server with:
 
 ```bash

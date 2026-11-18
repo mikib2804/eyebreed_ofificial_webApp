@@ -12,9 +12,10 @@ import { PreOrderInfoButton, usePreOrder } from "@/components/pre-order-provider
 export function ProductDetail({ product }: { product: StoreProduct }) {
   const { locale, currency, addToCart } = useStore();
   const { enabled: preOrderMode } = usePreOrder();
+  const hasSizes = product.sizes.length > 0;
   const firstAvailable = useMemo(
-    () => product.sizes.find((variant) => variant.inventory > 0)?.size ?? "",
-    [product.sizes],
+    () => product.inventory > 0 ? product.sizes[0]?.size ?? "" : "",
+    [product.inventory, product.sizes],
   );
   const [selectedSize, setSelectedSize] = useState(firstAvailable);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -57,10 +58,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
     resizeObserver.observe(gallery);
     return () => resizeObserver.disconnect();
   }, []);
-  const selectedVariant = product.sizes.find(
-    (variant) => variant.size === selectedSize,
-  );
-  const soldOut = product.inventory < 1 || !firstAvailable;
+  const soldOut = product.inventory < 1 || (hasSizes && !firstAvailable);
 
   const text =
     locale === "he"
@@ -202,6 +200,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
           )}
 
           <div className="mt-10 border-t border-black/20 pt-8">
+            {hasSizes && <>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-[11px] uppercase tracking-[.18em]">
                 {text.size}
@@ -210,7 +209,6 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
                 <Link href="/size-guide" className="border-b border-black/50 pb-1 text-[10px] uppercase tracking-[.14em] transition hover:border-espresso-700 hover:text-accent-readable">
                   {locale === "he" ? "מדריך מידות" : "Size Guide"}
                 </Link>
-                {selectedVariant && <span className="text-[10px] text-black/75">{selectedVariant.inventory} {text.left}</span>}
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
@@ -218,7 +216,7 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
                 <button
                   key={variant.size}
                   onClick={() => setSelectedSize(variant.size)}
-                  disabled={variant.inventory < 1}
+                  disabled={soldOut}
                   className={`relative border px-3 py-4 text-[11px] transition ${selectedSize === variant.size ? "border-ink bg-ink text-white" : "border-black/25 hover:border-black"} disabled:cursor-not-allowed disabled:text-black/25 disabled:line-through`}
                 >
                   {variant.size}
@@ -228,10 +226,11 @@ export function ProductDetail({ product }: { product: StoreProduct }) {
                 </button>
               ))}
             </div>
+            </>}
             <button
-              onClick={() => addToCart(product, selectedSize)}
-              disabled={soldOut || !selectedSize}
-              className="mt-5 w-full bg-ink py-5 text-[10px] uppercase tracking-luxury text-white transition hover:bg-espresso-700 disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={() => addToCart(product, hasSizes ? selectedSize : undefined)}
+              disabled={soldOut || (hasSizes && !selectedSize)}
+              className={`${hasSizes ? "mt-5" : ""} w-full bg-ink py-5 text-[10px] uppercase tracking-luxury text-white transition hover:bg-espresso-700 disabled:cursor-not-allowed disabled:opacity-40`}
             >
               {soldOut ? text.soldOut : text.add}
             </button>

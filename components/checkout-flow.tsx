@@ -43,9 +43,10 @@ type CartQuote = {
   discountAmount: number;
   shippingAmount: number;
   total: number;
+  shippingEnabled: boolean;
   freeShipping: boolean;
   discountCode: string | null;
-  promotion: { label: string; percentage: number };
+  promotion: { source: "AUTOMATIC" | "BUNDLE" | "CODE"; label: string; percentage: number } | null;
 };
 
 const fieldClass = "mt-2 min-h-12 w-full border border-black/20 bg-white px-4 text-sm outline-none transition focus:border-black focus:ring-1 focus:ring-black";
@@ -56,7 +57,7 @@ export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
   const { enabled: preOrderMode } = usePreOrder();
   const hebrew = locale === "he";
   const paidItems = useMemo(() => cart.filter((item) => !isPromotionGiftLine(item)), [cart]);
-  const quoteItems = useMemo(() => paidItems.map((item) => ({ productId: item.id, slug: item.slug, quantity: item.quantity, size: item.selectedSize, color: null })), [paidItems]);
+  const quoteItems = useMemo(() => paidItems.map((item) => ({ productId: item.id, slug: item.slug, quantity: item.quantity, size: item.sizes.length ? item.selectedSize : null, color: null })), [paidItems]);
   const preferredAddress = addresses.find((address) => address.isDefault)?.id ?? addresses[0]?.id ?? "";
   const [selectedAddressId, setSelectedAddressId] = useState(preferredAddress);
   const [showAddressForm, setShowAddressForm] = useState(addresses.length === 0);
@@ -211,11 +212,11 @@ export function CheckoutFlow({ addresses }: { addresses: Address[] }) {
 
         <aside className="h-fit border border-black/15 bg-white p-6 lg:sticky lg:top-8" aria-labelledby="summary-heading">
           <h2 id="summary-heading" className="font-display text-4xl">{hebrew ? "סיכום הזמנה" : "Order summary"}</h2>
-          <div className="mt-6 space-y-5">{paidItems.map((item) => <div key={`${item.id}:${item.selectedSize}`} className="grid grid-cols-[64px_1fr_auto] gap-3 border-b border-black/10 pb-5"><div className="relative aspect-[4/5] bg-cream"><Image src={item.image} alt={item.name} fill sizes="64px" className="object-cover" />{preOrderMode && <span className="absolute inset-x-0 bottom-0 bg-[#76513f] px-1 py-1 text-center text-[5px] font-semibold tracking-wider text-white">הזמנה מוקדמת</span>}</div><div><p className="text-xs">{hebrew ? item.nameHe : item.name}</p><p className="mt-2 text-[9px] text-black/55">{hebrew ? "מידה" : "SIZE"} {item.selectedSize} · {hebrew ? "כמות" : "QTY"} {item.quantity}</p></div><p className="text-xs">{money(item.prices[currency] * item.quantity, currency, locale)}</p></div>)}</div>
+          <div className="mt-6 space-y-5">{paidItems.map((item) => <div key={`${item.id}:${item.selectedSize}`} className="grid grid-cols-[64px_1fr_auto] gap-3 border-b border-black/10 pb-5"><div className="relative aspect-[4/5] bg-cream"><Image src={item.image} alt={item.name} fill sizes="64px" className="object-cover" />{preOrderMode && <span className="absolute inset-x-0 bottom-0 bg-[#76513f] px-1 py-1 text-center text-[5px] font-semibold tracking-wider text-white">הזמנה מוקדמת</span>}</div><div><p className="text-xs">{hebrew ? item.nameHe : item.name}</p><p className="mt-2 text-[9px] text-black/55">{item.sizes.length > 0 && <>{hebrew ? "מידה" : "SIZE"} {item.selectedSize} · </>}{hebrew ? "כמות" : "QTY"} {item.quantity}</p></div><p className="text-xs">{money(item.prices[currency] * item.quantity, currency, locale)}</p></div>)}</div>
           {preOrderMode && <p className="mt-5 rounded-md border border-[#76513f]/30 bg-[#76513f]/10 p-3 text-xs leading-5 text-[#5f3f30]">{hebrew ? "כל הפריטים בהזמנה זו הם בהזמנה מוקדמת. זמן האספקה המשוער הוא 30–60 ימים ממועד ההזמנה." : "All items in this order are Pre-Orders. Estimated delivery is 30–60 days from the order date."}</p>}
           {quotePending && <p role="status" className="mt-5 text-xs text-black/55">{hebrew ? "מאמת מחיר ומלאי…" : "Verifying price and inventory…"}</p>}
           {quoteError && <p role="alert" className="mt-5 text-xs text-red-700">{quoteError}</p>}
-          <dl className="mt-6 space-y-3 text-sm"><div className="flex justify-between"><dt>{hebrew ? "סכום ביניים" : "Subtotal"}</dt><dd>{quote ? money(quote.subtotal, currency, locale) : "—"}</dd></div>{quote && <div className="flex justify-between text-green-800"><dt>{quote.promotion.label}</dt><dd>−{money(quote.discountAmount, currency, locale)}</dd></div>}<div className="flex justify-between"><dt>{hebrew ? "משלוח" : "Shipping"}</dt><dd>{quote ? (quote.freeShipping ? (hebrew ? "חינם" : "FREE") : money(quote.shippingAmount, currency, locale)) : "—"}</dd></div><div className="flex justify-between border-t border-black/15 pt-4 text-base font-semibold"><dt>{hebrew ? "סה״כ" : "Total"}</dt><dd>{quote ? money(quote.total, currency, locale) : "—"}</dd></div></dl>
+          <dl className="mt-6 space-y-3 text-sm"><div className="flex justify-between"><dt>{hebrew ? "סכום ביניים" : "Subtotal"}</dt><dd>{quote ? money(quote.subtotal, currency, locale) : "—"}</dd></div>{quote && quote.discountAmount > 0 && quote.promotion && <div className="flex justify-between text-green-800"><dt>{quote.promotion.label}{quote.promotion.percentage > 0 ? ` (${quote.promotion.percentage}%)` : ""}</dt><dd>−{money(quote.discountAmount, currency, locale)}</dd></div>}<div className="flex justify-between"><dt>{hebrew ? "משלוח" : "Shipping"}</dt><dd>{quote ? (!quote.shippingEnabled ? (hebrew ? "ללא חיוב" : "NO CHARGE") : quote.freeShipping ? (hebrew ? "חינם" : "FREE") : money(quote.shippingAmount, currency, locale)) : "—"}</dd></div><div className="flex justify-between border-t border-black/15 pt-4 text-base font-semibold"><dt>{hebrew ? "סה״כ" : "Total"}</dt><dd>{quote ? money(quote.total, currency, locale) : "—"}</dd></div></dl>
           <div className="mt-6 flex gap-3 bg-cream p-4 text-xs leading-5 text-black/65"><LockKeyhole size={18} className="mt-0.5 shrink-0" /><p>{hebrew ? "פרטי הכרטיס מוזנים באופן מאובטח בעמוד התשלום של Stripe בשלב הבא. האתר אינו שומר פרטי כרטיס." : "Card details are entered securely on Stripe in the next step. This store does not save card details."}</p></div>
           {paymentError && <p role="alert" className="mt-4 text-xs leading-5 text-red-700">{paymentError}</p>}
           {!selectedAddressId && <p role="status" className="mt-4 text-xs text-amber-800">{hebrew ? "שמרו כתובת למשלוח כדי להמשיך." : "Save a shipping address to continue."}</p>}

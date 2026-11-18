@@ -9,6 +9,7 @@ import { sendContactRequestConfirmation, sendContactRequestNotification } from "
 const MAX_BODY_CHARS = 12_000;
 const MIN_COMPLETION_MS = 2_000;
 const MAX_COMPLETION_MS = 2 * 60 * 60 * 1_000;
+const LOOPBACK_ADDRESSES = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 
 const contactSchema = z.object({
   fullName: personNameSchema,
@@ -19,9 +20,16 @@ const contactSchema = z.object({
   startedAt: z.number().int().positive(),
 }).strict();
 
-function clientFingerprint(request: Request) {
+function reportedClientAddress(request: Request) {
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const address = request.headers.get("x-real-ip")?.trim() || forwarded || "unknown";
+  return request.headers.get("x-real-ip")?.trim() || forwarded;
+}
+
+function clientFingerprint(request: Request, email: string) {
+  const reportedAddress = reportedClientAddress(request);
+  const address = !reportedAddress || LOOPBACK_ADDRESSES.has(reportedAddress)
+    ? `local:${email.toLowerCase()}`
+    : reportedAddress;
   return createHash("sha256").update(`eyebreed-contact:${address}`).digest("hex");
 }
 
@@ -66,36 +74,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Please remove extra links from the message." }, { status: 400 });
   }
 
-  const ipHash = clientFingerprint(request);
   const { email, fullName, message, locale } = parsed.data;
+  const ipHash = clientFingerprint(request, email);
+  const reportedAddress = reportedClientAddress(request);
+  const localDevelopment = process.env.NODE_ENV !== "production" && (!reportedAddress || LOOPBACK_ADDRESSES.has(reportedAddress));
 
   try {
-    const [recentByIp, dailyByIp, recentByEmail, duplicate] = await Promise.all([
-      prisma.$queryRaw<Array<{ count: bigint }>>`
-        SELECT COUNT(*)::bigint AS "count" FROM "ContactMessage"
-        WHERE "ipHash" = ${ipHash} AND "createdAt" > NOW() - INTERVAL '30 minutes'
-      `,
-      prisma.$queryRaw<Array<{ count: bigint }>>`
-        SELECT COUNT(*)::bigint AS "count" FROM "ContactMessage"
-        WHERE "ipHash" = ${ipHash} AND "createdAt" > NOW() - INTERVAL '24 hours'
-      `,
-      prisma.$queryRaw<Array<{ count: bigint }>>`
-        SELECT COUNT(*)::bigint AS "count" FROM "ContactMessage"
-        WHERE "email" = ${email} AND "createdAt" > NOW() - INTERVAL '60 minutes'
-      `,
-      prisma.$queryRaw<Array<{ count: bigint }>>`
-        SELECT COUNT(*)::bigint AS "count" FROM "ContactMessage"
-        WHERE "email" = ${email} AND "message" = ${message}
-          AND "createdAt" > NOW() - INTERVAL '24 hours'
-      `,
-    ]);
+    const [limits] = await prisma.$queryRaw<Array<{ recentByIp: bigint; dailyByIp: bigint; recentByEmail: bigint; duplicate: bigint }>>`
+      SELECT
+        COUNT(*) FILTER (WHERE "ipHash" = ${ipHash} AND "createdAt" > NOW() - INTERVAL '30 minutes')::bigint AS "recentByIp",
+        COUNT(*) FILTER (WHERE "ipHash" = ${ipHash})::bigint AS "dailyByIp",
+        COUNT(*) FILTER (WHERE "email" = ${email} AND "createdAt" > NOW() - INTERVAL '60 minutes')::bigint AS "recentByEmail",
+        COUNT(*) FILTER (WHERE "email" = ${email} AND "message" = ${message})::bigint AS "duplicate"
+      FROM "ContactMessage"
+      WHERE "createdAt" > NOW() - INTERVAL '24 hours'
+        AND ("ipHash" = ${ipHash} OR "email" = ${email})
+    `;
 
-    if (
-      Number(recentByIp[0]?.count ?? 0) >= 3 ||
-      Number(dailyByIp[0]?.count ?? 0) >= 10 ||
-      Number(recentByEmail[0]?.count ?? 0) >= 3 ||
-      Number(duplicate[0]?.count ?? 0) >= 1
-    ) {
+    if (Number(limits?.duplicate ?? 0) >= 1) {
+      return NextResponse.json(
+        { message: locale === "he" ? "הפנייה כבר התקבלה ותטופל בהקדם." : "This request was already received and will be handled shortly." },
+        { status: 200, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    if (!localDevelopment && (
+      Number(limits?.recentByIp ?? 0) >= 3 ||
+      Number(limits?.dailyByIp ?? 0) >= 10 ||
+      Number(limits?.recentByEmail ?? 0) >= 3
+    )) {
       return NextResponse.json(
         { message: locale === "he" ? "נשלחו יותר מדי הודעות. נסו שוב מאוחר יותר." : "Too many messages. Please try again later." },
         { status: 429, headers: { "Retry-After": "1800" } },
@@ -113,6 +120,7 @@ export async function POST(request: Request) {
       ? settings.notificationPreferences as Record<string, unknown>
       : {};
     const teamEmail = settings?.contactEmail?.trim()
+      || process.env.ADMIN_NOTIFICATION_EMAIL?.trim()
       || process.env.CONTACT_NOTIFICATION_EMAIL?.trim()
       || process.env.EMAIL_REPLY_TO?.trim()
       || process.env.SMTP_USER?.trim()

@@ -20,6 +20,7 @@ const validProduct = {
   bestSeller: false,
   isNew: true,
   lowStockThreshold: 5,
+  inventory: 4,
   images: ["/products/archive-hoodie.jpg"],
   videoUrl: "",
   variants: [{ size: "M", color: "Black", inventory: 4 }],
@@ -27,6 +28,7 @@ const validProduct = {
 
 test("accepts bounded local product media and unique variants", () => {
   assert.equal(adminProductSchema.safeParse(validProduct).success, true);
+  assert.equal(adminProductSchema.safeParse({ ...validProduct, inventory: 12, variants: [] }).success, true);
 });
 
 test("rejects unsafe media URLs and duplicate variants", () => {

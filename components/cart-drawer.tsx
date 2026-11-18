@@ -15,9 +15,12 @@ type CartQuote = {
   discountAmount: number;
   shippingAmount: number;
   total: number;
+  shippingEnabled: boolean;
   freeShipping: boolean;
+  freeShippingThreshold: number | null;
+  freeShippingRemaining: number | null;
   discountCode: string | null;
-  promotion: { source: "WEBSITE_15" | "CODE"; label: string; percentage: number };
+  promotion: { source: "AUTOMATIC" | "BUNDLE" | "CODE"; label: string; percentage: number } | null;
   codeMessage: string | null;
 };
 
@@ -40,9 +43,6 @@ export function CartDrawer() {
   const { enabled: preOrderMode } = usePreOrder();
   const paidItems = useMemo(() => cart.filter((item) => !isPromotionGiftLine(item)), [cart]);
   const localSubtotal = paidItems.reduce((sum, item) => sum + item.prices[currency] * item.quantity, 0);
-  const paidItemCount = paidItems.reduce((sum, item) => sum + item.quantity, 0);
-  const hasZipAndPolo = paidItems.some((item) => item.slug === "vision-washed-zip-hoodie") && paidItems.some((item) => item.slug === "vision-25-layered-jersey");
-  const localFreeShipping = paidItemCount >= 3 || hasZipAndPolo;
   const [codeInput, setCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [quote, setQuote] = useState<CartQuote | null>(null);
@@ -71,7 +71,7 @@ export function CartDrawer() {
     return () => { document.removeEventListener("keydown", keydown); document.body.style.overflow = originalOverflow; previous?.focus(); };
   }, [cartOpen, setCartOpen]);
 
-  const quoteItems = useMemo(() => paidItems.map((item) => ({ productId: item.id, slug: item.slug, quantity: item.quantity, size: item.selectedSize, color: null })), [paidItems]);
+  const quoteItems = useMemo(() => paidItems.map((item) => ({ productId: item.id, slug: item.slug, quantity: item.quantity, size: item.sizes.length ? item.selectedSize : null, color: null })), [paidItems]);
 
   useEffect(() => {
     if (!quoteItems.length) { setQuote(null); setQuoteError(""); return; }
@@ -126,13 +126,12 @@ export function CartDrawer() {
     router.push("/checkout");
   }
 
-  const freeShipping = quote?.freeShipping ?? localFreeShipping;
   const trustedQuoteReady = Boolean(quote && quote.currency === currency);
 
   return <>
     <button tabIndex={cartOpen ? 0 : -1} aria-hidden={!cartOpen} aria-label={locale === "he" ? "סגירת הסל" : "Close cart"} onClick={() => setCartOpen(false)} className={`fixed inset-0 z-40 bg-black/60 transition duration-500 ${cartOpen ? "visible opacity-100" : "invisible opacity-0"}`} />
     <aside ref={dialogRef} id="cart-dialog" role="dialog" aria-modal="true" aria-labelledby="cart-title" inert={!cartOpen} className={`fixed inset-y-0 end-0 z-50 flex w-full max-w-md flex-col bg-cream text-ink shadow-2xl transition-transform duration-500 ease-luxury ${cartOpen ? "translate-x-0" : "pointer-events-none translate-x-full rtl:-translate-x-full"}`} aria-hidden={!cartOpen}>
-      <div className="flex items-center justify-between border-b border-black/20 px-6 py-7"><h2 id="cart-title" className="font-display text-4xl">{t.cart}</h2><button ref={closeRef} onClick={() => setCartOpen(false)} aria-label={locale === "he" ? "סגירה" : "Close"} className="grid h-11 w-11 place-items-center"><X strokeWidth={1.3} /></button></div>
+      <div className="sticky top-0 z-10 flex flex-col border-b border-black/20 bg-cream px-6 pb-7 pt-4"><button ref={closeRef} type="button" onClick={() => setCartOpen(false)} aria-label={locale === "he" ? "סגירת הסל" : "Close cart"} className="grid h-11 w-11 self-start place-items-center rounded-full border border-black/30 bg-white text-ink transition hover:border-black hover:bg-ink hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"><X size={20} strokeWidth={1.6} aria-hidden="true" /></button><h2 id="cart-title" className="mt-3 font-display text-4xl">{t.cart}</h2></div>
       <div className="flex-1 overflow-y-auto px-6">
         {cart.length === 0 ? <p className="py-16 text-center text-sm text-black/75">{t.empty}</p> : cart.map((item) => {
           const lineId = `${item.id}:${item.selectedSize}`;
@@ -141,7 +140,7 @@ export function CartDrawer() {
             <div className="relative aspect-[4/5] bg-white"><Image src={item.image} alt={item.name} fill className="object-cover" sizes="90px" />{preOrderMode && !isGift && <span className="absolute inset-x-0 bottom-0 bg-[#76513f] px-1 py-1 text-center text-[6px] font-semibold tracking-wider text-white">הזמנה מוקדמת</span>}</div>
             <div><h3 className="text-xs uppercase tracking-wider">{locale === "he" ? `${item.nameHe}${isGift ? " (מתנה)" : ""}` : `${item.name}${isGift ? " (GIFT)" : ""}`}</h3>
               {isGift ? <p className="mt-2 inline-flex items-center gap-2 text-[10px] font-semibold tracking-wider text-red-700"><Gift size={13} />{locale === "he" ? "כובע מתנה · חינם" : "FREE GIFT HAT"}</p> : <div className="mt-2 flex items-center gap-2 text-xs"><span className={item.compareAtPrices ? "font-semibold text-red-700" : "text-black/75"}>{money(item.prices[currency], currency, locale)}</span>{item.compareAtPrices && <span className="text-[10px] text-black/40 line-through">{money(item.compareAtPrices[currency], currency, locale)}</span>}</div>}
-              <p className="mt-2 text-[10px] tracking-wider text-black/75">{locale === "he" ? "מידה" : "SIZE"} {item.selectedSize}</p>
+              {item.sizes.length > 0 && <p className="mt-2 text-[10px] tracking-wider text-black/75">{locale === "he" ? "מידה" : "SIZE"} {item.selectedSize}</p>}
               {!isGift && <div className="mt-5 flex w-fit items-center border border-black/30"><button onClick={() => updateQuantity(lineId, item.quantity - 1)} aria-label={locale === "he" ? `הפחתת כמות ${item.nameHe}` : `Decrease ${item.name} quantity`} className="grid h-10 w-10 place-items-center"><Minus size={12} /></button><span className="min-w-7 text-center text-xs" aria-live="polite">{item.quantity}</span><button onClick={() => updateQuantity(lineId, item.quantity + 1)} aria-label={locale === "he" ? `הגדלת כמות ${item.nameHe}` : `Increase ${item.name} quantity`} className="grid h-10 w-10 place-items-center"><Plus size={12} /></button></div>}
             </div>
             <button type="button" onClick={() => removeFromCart(lineId)} aria-label={isGift ? (locale === "he" ? "הסרת כובע המתנה" : "Remove free gift hat") : (locale === "he" ? `הסרת ${item.nameHe}` : `Remove ${item.name}`)} className="self-start text-[10px] uppercase underline">{isGift ? (locale === "he" ? "הסרת מתנה" : "Remove gift") : (locale === "he" ? "הסרה" : "Remove")}</button>
@@ -149,9 +148,9 @@ export function CartDrawer() {
         })}
       </div>
       <div className="border-t border-black/20 p-6">
-        {cart.length > 0 && <div className={`mb-5 flex items-center gap-3 rounded-xl px-4 py-3 text-xs ${freeShipping ? "bg-green-100 text-green-900" : "bg-white text-black/65"}`}><Truck size={17} className="shrink-0" /><span>{freeShipping ? (locale === "he" ? "משלוח חינם הופעל להזמנה" : "Free shipping unlocked") : (locale === "he" ? `${Math.max(0, 3 - paidItemCount)} פריטים עד למשלוח חינם + כובע` : `${Math.max(0, 3 - paidItemCount)} items until free shipping + a hat`)}</span></div>}
+        {quote?.shippingEnabled && (quote.freeShipping || quote.freeShippingRemaining !== null) && <div className={`mb-5 flex items-center gap-3 rounded-xl px-4 py-3 text-xs ${quote.freeShipping ? "bg-green-100 text-green-900" : "bg-white text-black/65"}`}><Truck size={17} className="shrink-0" /><span>{quote.freeShipping ? (locale === "he" ? "משלוח חינם הופעל להזמנה" : "Free shipping unlocked") : (locale === "he" ? `עוד ${money(quote.freeShippingRemaining ?? 0, currency, locale)} למשלוח חינם` : `${money(quote.freeShippingRemaining ?? 0, currency, locale)} until free shipping`)}</span></div>}
         {paidItems.length > 0 && <form onSubmit={applyCode} className="mb-5"><label htmlFor="discount-code" className="text-[9px] tracking-wider">{locale === "he" ? "קוד הנחה" : "DISCOUNT CODE"}</label><div className="mt-2 flex gap-2"><div className="relative flex-1"><Tag aria-hidden="true" size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-black/45" /><input id="discount-code" value={codeInput} onChange={(event) => setCodeInput(event.target.value)} disabled={Boolean(appliedCode)} autoComplete="off" maxLength={64} className="min-h-11 w-full border border-black/20 bg-white ps-10 pe-3 text-sm uppercase outline-none focus:border-black" /></div>{appliedCode ? <button type="button" onClick={removeCode} className="min-h-11 border border-black/30 px-4 text-[9px] tracking-wider">{locale === "he" ? "הסרה" : "REMOVE"}</button> : <button disabled={!codeInput.trim() || quotePending} className="min-h-11 bg-ink px-4 text-[9px] tracking-wider text-white disabled:opacity-40">{quotePending ? "…" : locale === "he" ? "החלה" : "APPLY"}</button>}</div>{codeMessage && <p role={codeError ? "alert" : "status"} className={`mt-2 text-xs ${codeError ? "text-red-700" : "text-green-800"}`}>{codeMessage}</p>}</form>}
-        <dl className="mb-6 space-y-2 text-sm"><div className="flex justify-between"><dt>{t.subtotal}</dt><dd>{money(quote?.subtotal ?? localSubtotal, currency, locale)}</dd></div>{quote && <div className="flex justify-between text-green-800"><dt>{quote.promotion.label}</dt><dd>−{money(quote.discountAmount, currency, locale)}</dd></div>}<div className="flex justify-between border-t border-black/15 pt-3 font-semibold"><dt>{locale === "he" ? "סה״כ" : "TOTAL"}</dt><dd>{money(quote?.total ?? localSubtotal, currency, locale)}</dd></div></dl>
+        <dl className="mb-6 space-y-2 text-sm"><div className="flex justify-between"><dt>{t.subtotal}</dt><dd>{money(quote?.subtotal ?? localSubtotal, currency, locale)}</dd></div>{quote && quote.discountAmount > 0 && quote.promotion && <div className="flex justify-between text-green-800"><dt>{quote.promotion.label}{quote.promotion.percentage > 0 ? ` (${quote.promotion.percentage}%)` : ""}</dt><dd>−{money(quote.discountAmount, currency, locale)}</dd></div>}{quote && <div className="flex justify-between"><dt>{locale === "he" ? "משלוח" : "SHIPPING"}</dt><dd>{!quote.shippingEnabled ? (locale === "he" ? "ללא חיוב" : "NO CHARGE") : quote.freeShipping ? (locale === "he" ? "חינם" : "FREE") : money(quote.shippingAmount, currency, locale)}</dd></div>}<div className="flex justify-between border-t border-black/15 pt-3 font-semibold"><dt>{locale === "he" ? "סה״כ" : "TOTAL"}</dt><dd>{money(quote?.total ?? localSubtotal, currency, locale)}</dd></div></dl>
         {!trustedQuoteReady && !quoteError && paidItems.length > 0 && <p role="status" className="mb-3 text-xs leading-5 text-black/60">{locale === "he" ? "מאמת מחיר ומלאי…" : "Verifying price and inventory…"}</p>}
         {!quotePending && !trustedQuoteReady && quoteError && paidItems.length > 0 && <p role="alert" className="mb-3 text-xs leading-5 text-amber-800">{quoteError}</p>}
         <button type="button" onClick={beginCheckout} disabled={!paidItems.length || !trustedQuoteReady || quotePending} className="w-full bg-ink py-5 text-[10px] tracking-luxury text-white disabled:opacity-40">{locale === "he" ? "מעבר לפרטי משלוח" : "CONTINUE TO SHIPPING"}</button>

@@ -11,6 +11,8 @@ import { getStripe } from "@/lib/stripe";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-body";
 import { getRequestId, logServerEvent } from "@/lib/server-log";
+import { maintenanceUnavailableResponse } from "@/lib/maintenance";
+import { toMinorUnits } from "@/lib/pricing";
 
 const checkoutSessionInputSchema = cartQuoteInputSchema.extend({
   addressId: z.string().min(1).max(64).optional(),
@@ -27,6 +29,8 @@ function appOrigin() {
 export async function POST(request: Request) {
   const requestId = getRequestId(request);
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+  const maintenance = await maintenanceUnavailableResponse();
+  if (maintenance) return maintenance;
   if (process.env.STRIPE_CHECKOUT_ENABLED !== "true") return NextResponse.json({ error: "Checkout is not enabled yet." }, { status: 503 });
   const session = await auth();
   if (!session?.user.id) return NextResponse.json({ error: "Sign in before checkout." }, { status: 401 });
@@ -77,7 +81,7 @@ export async function POST(request: Request) {
           total: quote.total,
           currency: quote.currency,
           discountCode: quote.discountCode,
-          promotionSnapshot: { ...quote.promotion, freeShipping: quote.freeShipping, quotedAt: new Date().toISOString() },
+          promotionSnapshot: { promotion: quote.promotion, shippingEnabled: quote.shippingEnabled, freeShipping: quote.freeShipping, freeShippingThreshold: quote.freeShippingThreshold, quotedAt: new Date().toISOString() },
           items: { create: quote.lines.map((line) => ({ productId: line.productId, productName: line.name, size: line.size, color: line.color, quantity: line.quantity, unitPrice: line.unitAmount })) },
           history: { create: { action: "CHECKOUT_CREATED", note: "Trusted server quote accepted; awaiting Stripe payment.", actorId: user.id } },
         },
@@ -97,7 +101,7 @@ export async function POST(request: Request) {
     const checkout = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: pendingOrder.customerEmail,
-      line_items: [{ price_data: { currency: pendingOrder.currency.toLowerCase(), unit_amount: Math.round(Number(pendingOrder.total) * 100), product_data: { name: `EYEBREED order ${pendingOrder.orderNumber}` } }, quantity: 1 }],
+      line_items: [{ price_data: { currency: pendingOrder.currency.toLowerCase(), unit_amount: toMinorUnits(Number(pendingOrder.total)), product_data: { name: `EYEBREED order ${pendingOrder.orderNumber}` } }, quantity: 1 }],
       metadata: { orderId: pendingOrder.id, orderNumber: pendingOrder.orderNumber },
       payment_intent_data: { metadata: { orderId: pendingOrder.id, orderNumber: pendingOrder.orderNumber } },
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,

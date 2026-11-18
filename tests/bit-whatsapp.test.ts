@@ -52,3 +52,8 @@ test("Bit WhatsApp URL targets the configured business number with encoded text"
   assert.ok(url.startsWith(`https://wa.me/${BIT_WHATSAPP_NUMBER}?text=`));
   assert.equal(decodeURIComponent(url.split("?text=")[1]), buildBitWhatsappMessage(order));
 });
+
+test("Bit WhatsApp message omits discount messaging when no discount applies", () => {
+  const message = buildBitWhatsappMessage({ ...order, discountAmount: 0, total: 200, promotion: null, discountCode: null });
+  assert.doesNotMatch(message, /הנחה/);
+});

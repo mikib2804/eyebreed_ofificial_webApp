@@ -25,6 +25,7 @@ type Product = {
   bestSeller: boolean;
   isNew: boolean;
   lowStockThreshold: number;
+  inventory: number;
   images: string[];
   previewImage: string;
   videoUrl: string | null;
@@ -39,12 +40,7 @@ function lines(value: FormDataEntryValue | null) {
     .filter(Boolean);
 }
 function variants(value: FormDataEntryValue | null) {
-  return lines(value).map((line) => {
-    const [size, color = "", inventory = "0"] = line
-      .split("|")
-      .map((item) => item.trim());
-    return { size, color, inventory: Number(inventory) };
-  });
+  return lines(value).map((size) => ({ size, color: "", inventory: 0 }));
 }
 
 export function AdminProductForm({
@@ -82,6 +78,7 @@ export function AdminProductForm({
         bestSeller: form.get("bestSeller") === "on",
         isNew: form.get("isNew") === "on",
         lowStockThreshold: form.get("lowStockThreshold"),
+        inventory: form.get("inventory"),
         images: lines(form.get("images")),
         videoUrl: String(form.get("videoUrl") ?? "").trim(),
         variants: variants(form.get("variants")),
@@ -124,6 +121,7 @@ export function AdminProductForm({
     bestSeller: false,
     isNew: false,
     lowStockThreshold: 5,
+    inventory: 0,
     images: [],
     previewImage: "",
     videoUrl: "",
@@ -349,6 +347,15 @@ function ProductEditor({
                 defaultValue={product.lowStockThreshold}
               />
             </Field>
+            <Field label={adminText(locale, "totalInventory")}>
+              <input
+                name="inventory"
+                type="number"
+                min="0"
+                defaultValue={product.inventory}
+                required
+              />
+            </Field>
             <Field label={adminText(locale, "imagesHelp")} wide>
               <textarea
                 name="images"
@@ -367,12 +374,8 @@ function ProductEditor({
                 name="variants"
                 rows={6}
                 defaultValue={product.variants
-                  .map(
-                    (variant) =>
-                      `${variant.size} | ${variant.color} | ${variant.inventory}`,
-                  )
+                  .map((variant) => variant.size)
                   .join("\n")}
-                required
               />
             </Field>
             <div className="grid gap-2 sm:flex sm:flex-wrap sm:gap-5 md:col-span-2">

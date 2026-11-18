@@ -5,10 +5,20 @@ import { prisma } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-body";
 import { normalizedEmailSchema, phoneOrEmptySchema } from "@/lib/validation";
 
+const optionalMoney = z.preprocess((value) => value === "" || value === undefined ? null : value, z.coerce.number().nonnegative().max(1_000_000).nullable());
+
 const schema = z.object({
   contactEmail: z.union([normalizedEmailSchema, z.literal("")]),
   contactPhone: phoneOrEmptySchema,
   shippingInfo: z.string().trim().max(5_000),
+  shippingEnabled: z.boolean(),
+  shippingPriceIls: z.coerce.number().nonnegative().max(1_000_000),
+  shippingPriceUsd: z.coerce.number().nonnegative().max(1_000_000),
+  shippingPriceEur: z.coerce.number().nonnegative().max(1_000_000),
+  freeShippingEnabled: z.boolean(),
+  freeShippingThresholdIls: optionalMoney,
+  freeShippingThresholdUsd: optionalMoney,
+  freeShippingThresholdEur: optionalMoney,
   defaultLowStockThreshold: z.coerce.number().int().min(0).max(10_000),
   announcement: z.string().trim().max(500),
   announcementActive: z.boolean(),

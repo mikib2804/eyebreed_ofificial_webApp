@@ -10,6 +10,10 @@ import { AuthProvider } from "@/components/auth-provider";
 import { AccessibilityMenu } from "@/components/accessibility-menu";
 import { accessibilityBootstrap } from "@/lib/accessibility";
 import { PreOrderProvider } from "@/components/pre-order-provider";
+import { MaintenanceGate } from "@/components/maintenance-gate";
+import { getActiveMaintenanceNotice } from "@/lib/maintenance";
+
+export const dynamic = "force-dynamic";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -30,9 +34,11 @@ export const metadata: Metadata = {
   description: "Timeless clothing, considered for modern life.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const maintenanceNotice = await getActiveMaintenanceNotice();
+  const maintenanceNow = Date.now();
   return (
     <html
       lang="he"
@@ -46,10 +52,12 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: accessibilityBootstrap }} />
         <PaletteProvider>
           <AuthProvider><StoreProvider>
-            <PreOrderProvider>
-              <div id="main-content" tabIndex={-1}>{children}</div>
-            </PreOrderProvider>
-            <CookieConsent />
+            <MaintenanceGate initialNotice={maintenanceNotice} initialNow={maintenanceNow}>
+              <PreOrderProvider>
+                <div id="main-content" tabIndex={-1}>{children}</div>
+              </PreOrderProvider>
+              <CookieConsent />
+            </MaintenanceGate>
             <AccessibilityMenu />
           </StoreProvider></AuthProvider>
         </PaletteProvider>

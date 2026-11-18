@@ -48,7 +48,7 @@ export function WishlistView({ initialItems }: { initialItems: WishlistProduct[]
               <button
                 type="button"
                 onClick={() => addToCart(product)}
-                disabled={product.inventory < 1 || !product.sizes.some((size) => size.inventory > 0)}
+                disabled={product.inventory < 1}
                 className="mx-2 mt-1.5 flex min-h-9 w-[calc(100%-1rem)] shrink-0 items-center justify-center gap-1.5 rounded-md bg-ink px-2 text-[8px] tracking-wider text-white transition hover:bg-espresso-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ShoppingBag size={12} aria-hidden="true" />

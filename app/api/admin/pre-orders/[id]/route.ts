@@ -6,6 +6,7 @@ import { authorizeAdminMutation } from "@/lib/admin-mutation";
 import { quoteCart, QuoteError } from "@/lib/cart-quote";
 import { prisma } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-body";
+import { maintenanceUnavailableResponse } from "@/lib/maintenance";
 
 const schema = z.object({ status: z.enum(["WAITING", "PRODUCT_AVAILABLE", "CUSTOMER_NOTIFIED", "CONVERTED_TO_ORDER", "CANCELLED"]) }).strict();
 const transitions: Record<string, readonly string[]> = { WAITING: ["PRODUCT_AVAILABLE", "CANCELLED"], PRODUCT_AVAILABLE: ["CUSTOMER_NOTIFIED", "CANCELLED"], CUSTOMER_NOTIFIED: ["CONVERTED_TO_ORDER", "CANCELLED"], CONVERTED_TO_ORDER: [], CANCELLED: [] };
@@ -15,6 +16,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const id = z.string().cuid().safeParse((await params).id); if (!id.success) return NextResponse.json({ error: "Invalid pre-order" }, { status: 400 });
   const raw = await readJsonBody(request, 4_096); if (!raw.ok) return NextResponse.json({ error: raw.error }, { status: raw.status });
   const body = schema.safeParse(raw.data); if (!body.success) return NextResponse.json({ error: "Invalid pre-order update" }, { status: 400 });
+  if (body.data.status === "CONVERTED_TO_ORDER") {
+    const maintenance = await maintenanceUnavailableResponse();
+    if (maintenance) return maintenance;
+  }
   try {
     const result = await prisma.$transaction(async (tx) => {
       const current = await tx.preOrder.findUnique({ where: { id: id.data }, include: { user: { select: { id: true, name: true, email: true } }, product: { select: { name: true } } } });
@@ -31,7 +36,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           customerName: current.user.name ?? current.customerName, customerEmail: current.user.email,
           shippingAddress: { label: address.label, fullName: address.fullName, phone: address.phone, line1: address.line1, line2: address.line2, city: address.city, postalCode: address.postalCode, country: address.country },
           subtotal: quote.subtotal, discountAmount: quote.discountAmount, shippingAmount: quote.shippingAmount, taxAmount: 0, total: quote.total, currency: quote.currency,
-          discountCode: quote.discountCode, promotionSnapshot: { ...quote.promotion, freeShipping: quote.freeShipping, source: "PREORDER_CONVERSION", quotedAt: new Date().toISOString() },
+          discountCode: quote.discountCode, promotionSnapshot: { promotion: quote.promotion, shippingEnabled: quote.shippingEnabled, freeShipping: quote.freeShipping, source: "PREORDER_CONVERSION", quotedAt: new Date().toISOString() },
           items: { create: quote.lines.map((line) => ({ productId: line.productId, productName: line.name, size: line.size, color: line.color, quantity: line.quantity, unitPrice: line.unitAmount })) },
           history: { create: { action: "PREORDER_CONVERTED", note: `Converted from pre-order ${current.id}`, actorId: authorization.access.user.id } },
         } });

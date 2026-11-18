@@ -2,29 +2,45 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Prisma } from "@prisma/client";
-import nodemailer from "nodemailer";
 import { getAppOrigin } from "@/lib/app-origin";
 import { prisma } from "@/lib/prisma";
 import { logServerEvent } from "@/lib/server-log";
+import { createSmtpTransport, resolveSmtpConfiguration } from "@/lib/smtp-config";
 import { normalizedEmailSchema } from "@/lib/validation";
 
 export type EmailLocale = "he" | "en";
 type DeliveryResult = { sent: boolean; duplicate?: boolean; skipped?: boolean };
-let smtpTransport: ReturnType<typeof nodemailer.createTransport> | undefined;
+let smtpTransport: ReturnType<typeof createSmtpTransport> | undefined;
 
 const localeOf = (value?: string | null): EmailLocale => value === "en" ? "en" : "he";
 const escapeHtml = (value: unknown) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character] ?? character);
 
 function smtpConfiguration() {
-  const gmailUser = process.env.GMAIL_USER?.trim();
-  const host = process.env.SMTP_HOST?.trim() || (gmailUser ? "smtp.gmail.com" : "");
-  const user = process.env.SMTP_USER?.trim() || gmailUser;
-  const password = (process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD)?.replace(/\s+/g, "");
-  const port = Number(process.env.SMTP_PORT || (host === "smtp.gmail.com" ? 465 : 587));
-  const secure = process.env.SMTP_SECURE ? process.env.SMTP_SECURE === "true" : port === 465;
-  if (!host || !user || !password || !Number.isInteger(port)) return null;
-  smtpTransport ??= nodemailer.createTransport({ host, port, secure, auth: { user, pass: password }, connectionTimeout: 15_000, greetingTimeout: 15_000, socketTimeout: 20_000 });
-  return { transport: smtpTransport, user };
+  const configuration = resolveSmtpConfiguration();
+  if (!configuration) return null;
+  smtpTransport ??= createSmtpTransport(configuration);
+  return { transport: smtpTransport, configuration };
+}
+
+async function claimEmailNotification(input: { eventKey: string; recipient: string; template: string }) {
+  try {
+    await prisma.emailNotification.create({ data: { eventKey: input.eventKey, recipient: input.recipient, template: input.template, status: "PENDING" } });
+    return true;
+  } catch (error) {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") throw error;
+    const staleBefore = new Date(Date.now() - 10 * 60 * 1_000);
+    const claimed = await prisma.emailNotification.updateMany({
+      where: {
+        eventKey: input.eventKey,
+        OR: [
+          { status: { in: ["FAILED", "SKIPPED"] } },
+          { status: "PENDING", attemptedAt: { lt: staleBefore } },
+        ],
+      },
+      data: { recipient: input.recipient, template: input.template, status: "PENDING", error: null, sentAt: null, attemptedAt: new Date() },
+    });
+    return claimed.count === 1;
+  }
 }
 
 function brandedEmail(locale: EmailLocale, title: string, body: string, action?: { label: string; url: string }, footer?: string) {
@@ -39,9 +55,9 @@ export async function sendCustomerEmail(input: { eventKey: string; to: string; s
     return { sent: false, skipped: true };
   }
   try {
-    await prisma.emailNotification.create({ data: { eventKey: input.eventKey, recipient: parsedEmail.data, template: input.template, status: "PENDING" } });
+    const claimed = await claimEmailNotification({ eventKey: input.eventKey, recipient: parsedEmail.data, template: input.template });
+    if (!claimed) return { sent: false, duplicate: true };
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return { sent: false, duplicate: true };
     logServerEvent("error", "email", input.eventKey, "notification_claim_failed", { template: input.template, errorType: error instanceof Error ? error.name : "unknown" });
     return { sent: false };
   }
@@ -53,7 +69,7 @@ export async function sendCustomerEmail(input: { eventKey: string; to: string; s
   }
   try {
     const parsedReplyTo = input.replyTo ? normalizedEmailSchema.safeParse(input.replyTo) : null;
-    const result = await smtp.transport.sendMail({ from: process.env.EMAIL_FROM?.trim() || `EYEBREED <${smtp.user}>`, replyTo: parsedReplyTo?.success ? parsedReplyTo.data : process.env.EMAIL_REPLY_TO?.trim() || undefined, to: parsedEmail.data, subject: input.subject, html: input.html });
+    const result = await smtp.transport.sendMail({ from: smtp.configuration.from, replyTo: parsedReplyTo?.success ? parsedReplyTo.data : smtp.configuration.replyTo, to: parsedEmail.data, subject: input.subject, html: input.html });
     if (result.rejected.length) throw new Error("SMTP rejected the recipient.");
     await prisma.emailNotification.update({ where: { eventKey: input.eventKey }, data: { status: "SENT", error: null, sentAt: new Date() } });
     return { sent: true };
@@ -116,6 +132,45 @@ export async function sendOrderConfirmationEmail(order: OrderEmail) {
   const address = order.shippingAddress && typeof order.shippingAddress === "object" && !Array.isArray(order.shippingAddress) ? order.shippingAddress as Record<string, unknown> : {};
   const addressText = [address.fullName, address.line1, address.line2, address.city, address.postalCode, address.country].filter(Boolean).map(escapeHtml).join("<br>");
   return sendCustomerEmail({ eventKey: `order-paid:${order.id}`, to: order.customerEmail, subject: he ? `אישור הזמנה ${order.orderNumber}` : `Order confirmation ${order.orderNumber}`, template: "order-confirmation", html: brandedEmail(locale, he ? "ההזמנה התקבלה בהצלחה" : "Your order is confirmed", `<p><strong>${he ? "מספר הזמנה" : "Order"}:</strong> ${escapeHtml(order.orderNumber)}</p><table role="presentation" width="100%" cellspacing="0"><tbody>${rows}</tbody></table><p><strong>${he ? "סה״כ ששולם" : "Total paid"}:</strong> ${escapeHtml(money(order.total, order.currency, locale))}</p><p><strong>${he ? "כתובת משלוח" : "Shipping address"}:</strong><br>${addressText}</p><p>${he ? "תאריך הזמנה" : "Order date"}: ${escapeHtml(order.createdAt.toLocaleDateString(locale === "he" ? "he-IL" : "en-US"))}</p>`, { label: he ? "צפייה בהזמנה" : "VIEW ORDER", url: `${getAppOrigin()}/account/orders/${order.id}` }) });
+}
+
+export async function sendPaidOrderEmails(order: OrderEmail) {
+  const deliveries: Array<Promise<DeliveryResult>> = [sendOrderConfirmationEmail(order)];
+  const settings = await prisma.storeSettings.findUnique({
+    where: { id: "store" },
+    select: { contactEmail: true, notificationPreferences: true },
+  });
+  const preferences = settings?.notificationPreferences && typeof settings.notificationPreferences === "object" && !Array.isArray(settings.notificationPreferences)
+    ? settings.notificationPreferences as Record<string, unknown>
+    : {};
+  const adminEmail = settings?.contactEmail?.trim()
+    || process.env.ADMIN_NOTIFICATION_EMAIL?.trim()
+    || process.env.CONTACT_NOTIFICATION_EMAIL?.trim()
+    || process.env.EMAIL_REPLY_TO?.trim()
+    || process.env.SMTP_USER?.trim()
+    || process.env.GMAIL_USER?.trim();
+
+  if (adminEmail && preferences.newOrder !== false) {
+    const rows = order.items.map((item) => '<tr><td style="padding:10px 0;border-bottom:1px solid #eee">' + escapeHtml(item.productName) + (item.size ? " · " + escapeHtml(item.size) : "") + '</td><td style="padding:10px;border-bottom:1px solid #eee">' + item.quantity + '</td><td style="padding:10px 0;border-bottom:1px solid #eee">' + escapeHtml(money(item.unitPrice, order.currency, "he")) + "</td></tr>").join("");
+    const address = order.shippingAddress && typeof order.shippingAddress === "object" && !Array.isArray(order.shippingAddress) ? order.shippingAddress as Record<string, unknown> : {};
+    const addressText = [address.fullName, address.line1, address.line2, address.city, address.postalCode, address.country].filter(Boolean).map(escapeHtml).join("<br>");
+    const html = brandedEmail(
+      "he",
+      "הזמנה חדשה התקבלה",
+      "<p><strong>מספר הזמנה:</strong> " + escapeHtml(order.orderNumber) + "</p><p><strong>לקוח/ה:</strong> " + escapeHtml(order.customerName) + " · " + escapeHtml(order.customerEmail) + '</p><table role="presentation" width="100%" cellspacing="0"><tbody>' + rows + "</tbody></table><p><strong>סה״כ ששולם:</strong> " + escapeHtml(money(order.total, order.currency, "he")) + "</p><p><strong>כתובת משלוח:</strong><br>" + addressText + "</p>",
+      { label: "פתיחת ההזמנות בניהול", url: getAppOrigin() + "/admin?section=Orders&lang=he" },
+    );
+    deliveries.push(sendCustomerEmail({
+      eventKey: "order-paid-admin:" + order.id,
+      to: adminEmail,
+      replyTo: order.customerEmail,
+      subject: "הזמנה חדשה " + order.orderNumber,
+      template: "order-confirmation-admin",
+      html,
+    }));
+  }
+
+  return Promise.all(deliveries);
 }
 
 export async function sendPaymentUnsuccessfulEmail(order: Pick<OrderEmail, "id" | "orderNumber" | "customerEmail" | "user">, reason: "failed" | "interrupted") {

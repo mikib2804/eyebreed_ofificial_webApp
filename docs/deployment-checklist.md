@@ -8,7 +8,7 @@ Run `npm run check:deploy` after setting the hosting environment. It reports onl
 2. Fill every required variable in `.env.production.example` in the hosting provider. Do not commit `.env` or usable keys.
 3. Set `AUTH_TRUST_HOST=true` in the trusted HTTPS deployment environment. In Google Cloud, add the exact callback URL: `https://shop.eyebreedofficial.com/api/auth/callback/google`.
 4. In Stripe test mode, create a webhook for `https://shop.eyebreedofficial.com/api/stripe/webhook` and subscribe to `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.expired`.
-5. Configure `GMAIL_USER`, a rotated 16-character `GMAIL_APP_PASSWORD`, and `EMAIL_FROM` for account and order email. Never use the Gmail account password.
+5. Configure a fresh Gmail App Password through `SMTP_USER`/`SMTP_PASSWORD` (or the Gmail fallback variables), set `EMAIL_FROM`, `EMAIL_REPLY_TO`, and `ADMIN_NOTIFICATION_EMAIL`, then run `npm run smtp:verify` on the VPS. Never use the normal Gmail account password.
 6. Leave `STRIPE_CHECKOUT_ENABLED=false` until a test deployment receives a signed webhook and a full test purchase is visible in the customer's account and admin area.
 7. Run `npx prisma migrate deploy`, `npm run check`, `npm run test:auth`, `npm run check:deploy`, and `npm run build` using the deployment environment.
 

@@ -19,7 +19,8 @@ export const adminProductSchema = z.object({
   story: z.string().trim().max(10_000).default(""), storyHe: z.string().trim().max(10_000).default(""), material: z.string().trim().max(500).default(""),
   priceUsd: z.coerce.number().nonnegative().max(1_000_000), priceIls: z.coerce.number().nonnegative().max(1_000_000), priceEur: z.coerce.number().nonnegative().max(1_000_000),
   status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]), featured: z.boolean(), bestSeller: z.boolean(), isNew: z.boolean(), lowStockThreshold: z.coerce.number().int().min(0).max(100_000),
-  images: z.array(mediaUrl).min(1).max(12), videoUrl: z.union([mediaUrl, z.literal("")]), variants: z.array(variant).min(1).max(100),
+  inventory: z.coerce.number().int().min(0).max(100_000),
+  images: z.array(mediaUrl).min(1).max(12), videoUrl: z.union([mediaUrl, z.literal("")]), variants: z.array(variant).max(100),
 }).strict().superRefine((data, context) => {
   const keys = new Set<string>();
   data.variants.forEach((item, index) => { const key = `${item.size.toLowerCase()}\0${item.color.toLowerCase()}`; if (keys.has(key)) context.addIssue({ code: "custom", path: ["variants", index], message: "Duplicate size/color variant." }); keys.add(key); });

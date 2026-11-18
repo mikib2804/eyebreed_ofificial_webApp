@@ -2,7 +2,7 @@ import "server-only";
 
 import type { DiscountType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { fixedDiscount, fromMinorUnits, percentageDiscount, toMinorUnits, WEBSITE_PROMOTION_PERCENT } from "@/lib/pricing";
+import { calculateShippingCharge, fixedDiscount, fromMinorUnits, isDiscountActive, percentageDiscount, toMinorUnits } from "@/lib/pricing";
 import { productReferenceKeys, splitProductReferences } from "@/lib/product-reference";
 
 export type QuoteCurrency = "USD" | "ILS" | "EUR";
@@ -13,7 +13,9 @@ export class QuoteError extends Error {
   constructor(public readonly code: string, message: string, public readonly status = 400) { super(message); }
 }
 
-type QuoteDatabase = { product: typeof prisma.product; discount: typeof prisma.discount };
+type QuoteDatabase = { product: typeof prisma.product; discount: typeof prisma.discount; storeSettings: typeof prisma.storeSettings };
+
+export type AppliedPromotion = { source: "AUTOMATIC" | "BUNDLE" | "CODE"; label: string; percentage: number };
 
 function priceFor(product: { priceUsd: unknown; priceIls: unknown; priceEur: unknown }, currency: QuoteCurrency) {
   return Number(currency === "USD" ? product.priceUsd : currency === "EUR" ? product.priceEur : product.priceIls);
@@ -36,6 +38,7 @@ export async function quoteCart(input: CartQuoteInput, database: QuoteDatabase =
   const productMap = new Map(products.flatMap((product) => productReferenceKeys(product).map((key) => [key, product] as const)));
   const productSlugMap = new Map(products.map((product) => [product.slug, product]));
   const lines: Array<{ productId: string; slug: string; name: string; quantity: number; size: string | null; color: string | null; categoryId: string; unitAmount: number; lineAmount: number }> = [];
+  const requestedByProduct = new Map<string, number>();
 
   for (const item of input.items) {
     const product = productMap.get(item.productId) ?? (item.slug ? productSlugMap.get(item.slug) : undefined);
@@ -44,69 +47,64 @@ export async function quoteCart(input: CartQuoteInput, database: QuoteDatabase =
     const color = item.color ?? null;
     const variant = product.variants.find((candidate) => candidate.size === (size ?? "") && candidate.color === (color ?? ""));
     if (product.variants.length && !variant) throw new QuoteError("VARIANT_UNAVAILABLE", `${product.name} is not available in the selected option.`, 409);
-    const stock = variant?.inventory ?? product.inventory;
-    if (item.quantity > stock) throw new QuoteError("INSUFFICIENT_STOCK", `Only ${stock} units of ${product.name} are available.`, 409);
+    const stock = product.inventory;
+    const requestedQuantity = (requestedByProduct.get(product.id) ?? 0) + item.quantity;
+    if (requestedQuantity > stock) throw new QuoteError("INSUFFICIENT_STOCK", `Only ${stock} units of ${product.name} are available.`, 409);
+    requestedByProduct.set(product.id, requestedQuantity);
     const unitAmount = toMinorUnits(priceFor(product, input.currency));
     lines.push({ productId: product.id, slug: product.slug, name: product.name, quantity: item.quantity, size, color, categoryId: product.categoryId, unitAmount, lineAmount: unitAmount * item.quantity });
   }
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineAmount, 0);
   const now = new Date();
-  const configuredPromotion = await database.discount.findFirst({
+  const automaticDiscounts = await database.discount.findMany({
     where: {
-      name: "15% website promotion",
       code: null,
       active: true,
-      scope: "STORE",
       AND: [
         { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
         { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
       ],
     },
+    include: {
+      products: { select: { id: true, priceIls: true, priceUsd: true, priceEur: true } },
+      categories: { select: { id: true } },
+    },
   });
-  const automaticPercentage = !configuredPromotion ? WEBSITE_PROMOTION_PERCENT : configuredPromotion.type === "PERCENTAGE" ? Number(configuredPromotion.value) : 0;
-  const automaticDiscount = configuredPromotion?.type === "FIXED"
-    ? fixedDiscount(subtotal, toMinorUnits(Number(configuredPromotion.value)))
-    : percentageDiscount(subtotal, Math.min(100, Math.max(0, automaticPercentage)));
-  let discountAmount = automaticDiscount;
+  let discountAmount = 0;
   let discountCode: string | null = null;
   let appliedDiscountId: string | null = null;
-  let promotion = { source: "WEBSITE_15" as "WEBSITE_15" | "BUNDLE" | "CODE", label: configuredPromotion?.name ?? "15% website promotion", percentage: automaticPercentage };
+  let promotion: AppliedPromotion | null = null;
   let codeMessage: string | null = null;
 
-  // An automatic fixed PRODUCT promotion is a bundle target price. It only
-  // applies when every linked product is present, so a single suit piece never
-  // receives the bundle reduction. The configured value is the ILS target;
-  // other currencies follow the products' current database price ratio.
-  const bundlePromotions = await database.discount.findMany({
-    where: {
-      code: null,
-      active: true,
-      type: "FIXED",
-      scope: "PRODUCT",
-      AND: [
-        { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
-        { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
-      ],
-    },
-    include: { products: { select: { id: true, priceIls: true, priceUsd: true, priceEur: true } } },
-  });
+  for (const discount of automaticDiscounts) {
+    if (!isDiscountActive(discount, now)) continue;
+    if (discount.minimumPurchase !== null && subtotal < toMinorUnits(Number(discount.minimumPurchase))) continue;
 
-  for (const bundle of bundlePromotions) {
-    if (bundle.usageLimit !== null && bundle.usageCount >= bundle.usageLimit) continue;
-    if (bundle.products.length < 2) continue;
-    const quantities = bundle.products.map((product) => lines.filter((line) => line.productId === product.id).reduce((sum, line) => sum + line.quantity, 0));
-    const bundleCount = Math.min(...quantities);
-    if (bundleCount < 1) continue;
-    const regularBundleTotal = bundle.products.reduce((sum, product) => sum + toMinorUnits(priceFor(product, input.currency)), 0);
-    const regularIlsTotal = bundle.products.reduce((sum, product) => sum + Number(product.priceIls), 0);
-    if (regularBundleTotal <= 0 || regularIlsTotal <= 0) continue;
-    const targetInCurrency = toMinorUnits(Number(bundle.value) * (fromMinorUnits(regularBundleTotal) / regularIlsTotal));
-    const bundleDiscount = Math.max(0, regularBundleTotal - targetInCurrency) * bundleCount;
-    if (bundleDiscount > discountAmount) {
-      discountAmount = bundleDiscount;
-      appliedDiscountId = bundle.id;
-      promotion = { source: "BUNDLE", label: bundle.name, percentage: 0 };
+    let candidateAmount = 0;
+    let source: AppliedPromotion["source"] = "AUTOMATIC";
+    if (discount.type === "FIXED" && discount.scope === "PRODUCT" && discount.products.length > 1) {
+      const quantities = discount.products.map((product) => lines.filter((line) => line.productId === product.id).reduce((sum, line) => sum + line.quantity, 0));
+      const bundleCount = Math.min(...quantities);
+      if (bundleCount < 1) continue;
+      const regularBundleTotal = discount.products.reduce((sum, product) => sum + toMinorUnits(priceFor(product, input.currency)), 0);
+      const regularIlsTotal = discount.products.reduce((sum, product) => sum + Number(product.priceIls), 0);
+      if (regularBundleTotal <= 0 || regularIlsTotal <= 0) continue;
+      const targetInCurrency = toMinorUnits(Number(discount.value) * (fromMinorUnits(regularBundleTotal) / regularIlsTotal));
+      candidateAmount = Math.max(0, regularBundleTotal - targetInCurrency) * bundleCount;
+      source = "BUNDLE";
+    } else {
+      const eligibleProductIds = new Set(discount.products.map((product) => product.id));
+      const eligibleCategoryIds = new Set(discount.categories.map((category) => category.id));
+      const eligibleSubtotal = lines.filter((line) => discount.scope === "STORE" || (discount.scope === "PRODUCT" && eligibleProductIds.has(line.productId)) || (discount.scope === "CATEGORY" && eligibleCategoryIds.has(line.categoryId))).reduce((sum, line) => sum + line.lineAmount, 0);
+      if (!eligibleSubtotal) continue;
+      candidateAmount = calculateConfiguredDiscount(discount.type, Number(discount.value), eligibleSubtotal);
+    }
+
+    if (candidateAmount > discountAmount) {
+      discountAmount = candidateAmount;
+      appliedDiscountId = discount.id;
+      promotion = { source, label: discount.name, percentage: discount.type === "PERCENTAGE" ? Number(discount.value) : 0 };
     }
   }
 
@@ -138,9 +136,17 @@ export async function quoteCart(input: CartQuoteInput, database: QuoteDatabase =
     }
   }
 
-  const paidItemCount = lines.reduce((sum, line) => sum + line.quantity, 0);
-  const freeShipping = paidItemCount >= 3 || (lines.some((line) => line.slug === "vision-washed-zip-hoodie") && lines.some((line) => line.slug === "vision-25-layered-jersey"));
-  const shippingAmount = 0;
+  const settings = await database.storeSettings.findUnique({ where: { id: "store" } });
+  const shippingEnabled = settings?.shippingEnabled ?? false;
+  const configuredShipping = Number(input.currency === "USD" ? settings?.shippingPriceUsd ?? 0 : input.currency === "EUR" ? settings?.shippingPriceEur ?? 0 : settings?.shippingPriceIls ?? 0);
+  const configuredThreshold = input.currency === "USD" ? settings?.freeShippingThresholdUsd : input.currency === "EUR" ? settings?.freeShippingThresholdEur : settings?.freeShippingThresholdIls;
+  const threshold = configuredThreshold === null || configuredThreshold === undefined ? null : toMinorUnits(Number(configuredThreshold));
+  const { shippingAmount, freeShipping, freeShippingRemaining } = calculateShippingCharge(subtotal, discountAmount, {
+    enabled: shippingEnabled,
+    price: toMinorUnits(configuredShipping),
+    freeShippingEnabled: Boolean(settings?.freeShippingEnabled),
+    freeShippingThreshold: threshold,
+  });
   const total = Math.max(0, subtotal - discountAmount + shippingAmount);
 
   return {
@@ -150,7 +156,10 @@ export async function quoteCart(input: CartQuoteInput, database: QuoteDatabase =
     discountAmount: fromMinorUnits(discountAmount),
     shippingAmount: fromMinorUnits(shippingAmount),
     total: fromMinorUnits(total),
+    shippingEnabled,
     freeShipping,
+    freeShippingThreshold: threshold === null ? null : fromMinorUnits(threshold),
+    freeShippingRemaining: freeShippingRemaining === null ? null : fromMinorUnits(freeShippingRemaining),
     discountCode,
     appliedDiscountId,
     promotion,

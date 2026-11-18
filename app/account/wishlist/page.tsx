@@ -29,7 +29,7 @@ export default async function WishlistPage() {
           story: product.story ?? "",
           storyHe: product.storyHe ?? product.story ?? "",
           inventory: product.inventory,
-          sizes: product.variants.map((variant) => ({ size: variant.size, inventory: variant.inventory })),
+          sizes: product.variants.map((variant) => ({ size: variant.size, inventory: product.inventory })),
           prices: { USD: Number(product.priceUsd), ILS: Number(product.priceIls), EUR: Number(product.priceEur) },
         };
         return campaignProduct

@@ -24,7 +24,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         name: data.name, nameHe: data.nameHe || null, slug: data.slug, categoryId: data.categoryId,
         description: data.description, descriptionHe: data.descriptionHe || null, story: data.story || null, storyHe: data.storyHe || null,
         material: data.material || null, priceUsd: data.priceUsd, priceIls: data.priceIls, priceEur: data.priceEur,
-        inventory: data.variants.reduce((sum, variant) => sum + variant.inventory, 0), images: data.images, videoUrl: data.videoUrl || null,
+        inventory: data.inventory, images: data.images, videoUrl: data.videoUrl || null,
         status: data.status, featured: data.featured, bestSeller: data.bestSeller, isNew: data.isNew, lowStockThreshold: data.lowStockThreshold,
         variants: { create: data.variants },
       } });

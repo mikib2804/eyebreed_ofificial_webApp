@@ -34,12 +34,13 @@ export default async function ProductPage({
         { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
       ],
     },
-    select: { name: true, type: true, scope: true, value: true, endsAt: true, minimumPurchase: true, usageLimit: true, perCustomerLimit: true, products: { select: { id: true } } },
+    select: { name: true, type: true, scope: true, value: true, endsAt: true, minimumPurchase: true, usageLimit: true, usageCount: true, perCustomerLimit: true, products: { select: { id: true } } },
   });
-  const percentageDiscount = discounts
+  const displayableDiscounts = discounts.filter((discount) => discount.minimumPurchase === null && (discount.usageLimit === null || discount.usageCount < discount.usageLimit));
+  const percentageDiscount = displayableDiscounts
     .filter((discount) => discount.type === "PERCENTAGE")
     .sort((left, right) => Number(right.value) - Number(left.value))[0];
-  const bundleDiscount = discounts.find((discount) => discount.type === "FIXED" && discount.scope === "PRODUCT" && discount.products.length > 1);
+  const bundleDiscount = displayableDiscounts.find((discount) => discount.type === "FIXED" && discount.scope === "PRODUCT" && discount.products.length > 1);
   const displayedDiscount = percentageDiscount ?? bundleDiscount;
   const discountedProduct = applyPercentageDiscount(toStoreProduct(dbProduct), Number(percentageDiscount?.value ?? 0), percentageDiscount?.name);
   const baseConditions = displayedDiscount ? buildDiscountConditions(displayedDiscount) : undefined;

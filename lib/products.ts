@@ -18,8 +18,8 @@ export function toStoreProduct(product: DbProduct): StoreProduct {
     descriptionHe: product.descriptionHe ?? product.description,
     story: product.story ?? "Designed as a lasting part of the modern wardrobe, with considered proportions and an uncompromising attention to material.",
     storyHe: product.storyHe ?? product.story ?? product.descriptionHe ?? product.description,
-    inventory: product.variants.length > 0 ? product.variants.reduce((sum, variant) => sum + variant.inventory, 0) : product.inventory,
-    sizes: product.variants.length > 0 ? product.variants.map(({ size, inventory }) => ({ size, inventory })) : [{ size: "ONE SIZE", inventory: product.inventory }],
+    inventory: product.inventory,
+    sizes: product.variants.map(({ size }) => ({ size, inventory: product.inventory })),
     prices: {
       USD: Number(product.priceUsd),
       ILS: Number(product.priceIls),
@@ -34,7 +34,7 @@ export function applyPercentageDiscount(product: StoreProduct, percentage: numbe
   const multiplier = 1 - safePercentage / 100;
   return {
     ...product,
-    saleLabel: label?.trim() || `${safePercentage}% SALE`,
+    saleLabel: label?.trim() ? `${label.trim()} · ${safePercentage}%` : `${safePercentage}% SALE`,
     compareAtPrices: { ...product.prices },
     prices: {
       USD: Math.round(product.prices.USD * multiplier * 100) / 100,

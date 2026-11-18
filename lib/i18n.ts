@@ -1,7 +1,6 @@
 export const copy = {
   en: {
-    shipping:
-      "BUY 3 ITEMS: FREE SHIPPING + A FREE HAT · BUY THE ZIP-UP + POLO: FREE SHIPPING",
+    shipping: "BUY 3 ITEMS: GET A FREE HAT",
     nav: ["NEW IN", "CLOTHING", "ACCESSORIES", "EDITORIAL"],
     // nav: ["NEW IN", "CLOTHING", "SHOES", "ACCESSORIES", "EDITORIAL"],
     collection: "NEW COLLECTION",
@@ -20,8 +19,7 @@ export const copy = {
     contact: "CONTACT US",
   },
   he: {
-    shipping:
-      "קנו 3 פריטים וקבלו משלוח חינם + כובע מתנה · קנו זיפ אפ ופולו וקבלו משלוח חינם",
+    shipping: "קנו 3 פריטים וקבלו כובע מתנה",
     nav: ["חדש", "ביגוד", "נעליים", "אקססוריז", "מגזין"],
     collection: "קולקציה חדשה",
     headlineA: "ראיית",

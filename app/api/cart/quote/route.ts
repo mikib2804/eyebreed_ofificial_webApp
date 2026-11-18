@@ -4,9 +4,12 @@ import { cartQuoteInputSchema } from "@/lib/cart-quote-schema";
 import { isSameOriginMutation } from "@/lib/request-security";
 import { consumeRateLimit, requestFingerprint } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-body";
+import { maintenanceUnavailableResponse } from "@/lib/maintenance";
 
 export async function POST(request: Request) {
   if (!isSameOriginMutation(request)) return NextResponse.json({ error: "Invalid request origin", code: "INVALID_ORIGIN" }, { status: 403 });
+  const maintenance = await maintenanceUnavailableResponse();
+  if (maintenance) return maintenance;
   const rate = await consumeRateLimit("cart-quote", requestFingerprint(request), 60, 60);
   if (!rate.allowed) return NextResponse.json({ error: "Too many quote requests.", code: "RATE_LIMITED" }, { status: 429, headers: { "Retry-After": String(rate.retryAfter) } });
   const raw = await readJsonBody(request, 32_768);

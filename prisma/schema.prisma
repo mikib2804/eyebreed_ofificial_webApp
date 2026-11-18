@@ -504,12 +504,36 @@ model StoreSettings {
   contactEmail             String?
   contactPhone             String?
   shippingInfo             String?  @db.Text
+  shippingEnabled          Boolean  @default(false)
+  shippingPriceIls         Decimal  @default(0) @db.Decimal(10, 2)
+  shippingPriceUsd         Decimal  @default(0) @db.Decimal(10, 2)
+  shippingPriceEur         Decimal  @default(0) @db.Decimal(10, 2)
+  freeShippingEnabled      Boolean  @default(false)
+  freeShippingThresholdIls Decimal? @db.Decimal(10, 2)
+  freeShippingThresholdUsd Decimal? @db.Decimal(10, 2)
+  freeShippingThresholdEur Decimal? @db.Decimal(10, 2)
   defaultLowStockThreshold Int      @default(5)
   announcement             String?
   announcementActive       Boolean  @default(false)
   globalPreOrderMode       Boolean  @default(false)
   notificationPreferences  Json?
   updatedAt                DateTime @updatedAt
+}
+
+model MaintenanceNotice {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String?
+  message   String   @db.Text
+  duration  String
+  startsAt  DateTime
+  endsAt    DateTime
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, startsAt])
+  @@index([createdAt])
 }
 
 model AuditLog {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Boxes, ClipboardList, ExternalLink, Gauge, Menu, MessageCircle, Package, Percent, Settings, ShoppingBag, Users, X } from "lucide-react";
+import { Boxes, ClipboardList, ExternalLink, Gauge, Menu, MessageCircle, Package, Percent, Settings, ShoppingBag, Users, Wrench, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type AdminSection = { id: string; label: string };
@@ -9,6 +9,7 @@ const icons: Record<string, React.ComponentType<{ size?: number; strokeWidth?: n
   Overview: Gauge, Products: Package, Discounts: Percent, Orders: ShoppingBag,
   "Pre-orders": ClipboardList, Messages: MessageCircle, Customers: Users,
   Inventory: Boxes, Settings,
+  Maintenance: Wrench,
 };
 
 export function AdminMobileNavigation({ active, locale, managerLabel, storeLabel, sections }: {

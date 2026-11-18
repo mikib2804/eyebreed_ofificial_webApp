@@ -4,7 +4,9 @@ import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { getRequestId, logServerEvent } from "@/lib/server-log";
-import { sendOrderConfirmationEmail, sendPaymentUnsuccessfulEmail } from "@/lib/email";
+import { sendPaidOrderEmails, sendPaymentUnsuccessfulEmail } from "@/lib/email";
+import { maintenanceUnavailableResponse } from "@/lib/maintenance";
+import { toMinorUnits } from "@/lib/pricing";
 
 export async function POST(request: Request) {
   const requestId = getRequestId(request);
@@ -31,6 +33,14 @@ export async function POST(request: Request) {
   const orderId = stripeObject.metadata?.orderId;
   if (!orderId) return NextResponse.json({ error: "Missing order metadata." }, { status: 400 });
 
+  if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+    const maintenance = await maintenanceUnavailableResponse();
+    if (maintenance) {
+      logServerEvent("warn", "stripe-webhook", requestId, "payment_deferred_during_maintenance", { eventType: event.type, orderId });
+      return maintenance;
+    }
+  }
+
   try {
     const notification = await prisma.$transaction(async (transaction) => {
       await transaction.stripeWebhookEvent.create({ data: { id: event.id, type: event.type } });
@@ -50,26 +60,36 @@ export async function POST(request: Request) {
 
       if (order.paymentStatus === "PAID") return null;
       if (event.type === "checkout.session.completed" && checkout.payment_status !== "paid") return null;
+      const expectedAmount = toMinorUnits(Number(order.total));
+      if (checkout.amount_total !== expectedAmount || checkout.currency?.toUpperCase() !== order.currency.toUpperCase()) throw new Error("Stripe payment amount does not match the order total");
       for (const item of order.items) {
         if (!item.productId) continue;
-        const variant = await transaction.productVariant.findFirst({ where: { productId: item.productId, size: item.size ?? "", color: item.color ?? "" }, select: { id: true } });
-        if (variant) {
-          const adjusted = await transaction.productVariant.updateMany({ where: { id: variant.id, inventory: { gte: item.quantity } }, data: { inventory: { decrement: item.quantity } } });
-          if (!adjusted.count) throw new Error("Insufficient variant inventory");
-        } else {
-          const adjusted = await transaction.product.updateMany({ where: { id: item.productId, inventory: { gte: item.quantity } }, data: { inventory: { decrement: item.quantity } } });
-          if (!adjusted.count) throw new Error("Insufficient product inventory");
-        }
-        await transaction.inventoryAdjustment.create({ data: { productId: item.productId, variantId: variant?.id, delta: -item.quantity, reason: `Stripe payment for ${order.orderNumber}` } });
+        const adjusted = await transaction.product.updateMany({ where: { id: item.productId, inventory: { gte: item.quantity } }, data: { inventory: { decrement: item.quantity } } });
+        if (!adjusted.count) throw new Error("Insufficient product inventory");
+        await transaction.inventoryAdjustment.create({ data: { productId: item.productId, delta: -item.quantity, reason: `Stripe payment for ${order.orderNumber}` } });
       }
       const paymentIntent = typeof checkout.payment_intent === "string" ? checkout.payment_intent : checkout.payment_intent?.id;
       await transaction.order.update({ where: { id: order.id }, data: { status: "PAID", paymentStatus: "PAID", stripePaymentIntentId: paymentIntent ?? null, paidAt: new Date(), history: { create: { action: "PAYMENT_CONFIRMED", note: `Verified Stripe event ${event.id}.` } } } });
       return { kind: "paid" as const, order };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-    if (notification?.kind === "paid") await sendOrderConfirmationEmail(notification.order).catch((error) => logServerEvent("error", "email", requestId, "order_confirmation_failed", { errorType: error instanceof Error ? error.name : "unknown" }));
+    if (notification?.kind === "paid") {
+      const results = await sendPaidOrderEmails(notification.order);
+      if (results.some((result) => !result.sent && !result.duplicate)) throw new Error("Paid order email delivery did not complete.");
+    }
     else if (notification) await sendPaymentUnsuccessfulEmail(notification.order, notification.kind).catch((error) => logServerEvent("error", "email", requestId, "payment_notification_failed", { errorType: error instanceof Error ? error.name : "unknown" }));
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return NextResponse.json({ received: true, duplicate: true });
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+        const paidOrder = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true, user: { select: { emailLocale: true } } } });
+        if (paidOrder?.paymentStatus === "PAID") {
+          const results = await sendPaidOrderEmails(paidOrder);
+          if (results.some((result) => !result.sent && !result.duplicate)) {
+            return NextResponse.json({ error: "Order email delivery failed." }, { status: 500, headers: { "X-Request-ID": requestId } });
+          }
+        }
+      }
+      return NextResponse.json({ received: true, duplicate: true });
+    }
     logServerEvent("error", "stripe-webhook", requestId, "processing_failed", { eventType: event.type, errorType: error instanceof Error ? error.name : "unknown" });
     return NextResponse.json({ error: "Webhook processing failed." }, { status: 500, headers: { "X-Request-ID": requestId } });
   }

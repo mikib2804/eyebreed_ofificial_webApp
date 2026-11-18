@@ -32,7 +32,7 @@ export type BitWhatsappOrder = {
   shippingAmount: number;
   total: number;
   freeShipping: boolean;
-  promotion: { label: string; percentage: number };
+  promotion: { label: string; percentage: number } | null;
   discountCode: string | null;
 };
 
@@ -60,11 +60,13 @@ export function buildBitWhatsappMessage(order: BitWhatsappOrder) {
     `${he ? "מחיר ליחידה" : "Unit price"}: ${amount(line.unitAmount, order.currency, order.locale)} | ${he ? "סה״כ לפריט" : "Line total"}: ${amount(line.lineAmount, order.currency, order.locale)}`,
   ]);
   const promotionDetails = [
-    order.promotion.label,
-    order.promotion.percentage > 0 ? `${order.promotion.percentage}%` : null,
+    order.promotion?.label,
+    order.promotion && order.promotion.percentage > 0 ? `${order.promotion.percentage}%` : null,
     order.discountCode ? `${he ? "קוד" : "Code"}: ${order.discountCode}` : null,
   ].filter(Boolean).join(" · ");
-  const calculation = `${amount(order.subtotal, order.currency, order.locale)} - ${amount(order.discountAmount, order.currency, order.locale)} + ${amount(order.shippingAmount, order.currency, order.locale)} = ${amount(order.total, order.currency, order.locale)}`;
+  const calculation = order.discountAmount > 0
+    ? `${amount(order.subtotal, order.currency, order.locale)} - ${amount(order.discountAmount, order.currency, order.locale)} + ${amount(order.shippingAmount, order.currency, order.locale)} = ${amount(order.total, order.currency, order.locale)}`
+    : `${amount(order.subtotal, order.currency, order.locale)} + ${amount(order.shippingAmount, order.currency, order.locale)} = ${amount(order.total, order.currency, order.locale)}`;
 
   return [
     he
@@ -82,7 +84,7 @@ export function buildBitWhatsappMessage(order: BitWhatsappOrder) {
     "",
     he ? "*חישוב ההזמנה*" : "*Order calculation*",
     `${he ? "סכום ביניים" : "Subtotal"}: ${amount(order.subtotal, order.currency, order.locale)}`,
-    `${he ? "הנחה" : "Discount"} (${promotionDetails}): -${amount(order.discountAmount, order.currency, order.locale)}`,
+    order.discountAmount > 0 && order.promotion ? `${he ? "הנחה" : "Discount"} (${promotionDetails}): -${amount(order.discountAmount, order.currency, order.locale)}` : null,
     `${he ? "משלוח" : "Shipping"}: ${order.freeShipping ? (he ? "חינם" : "FREE") : amount(order.shippingAmount, order.currency, order.locale)}`,
     `${he ? "חישוב" : "Calculation"}: ${calculation}`,
     `${he ? "סה״כ לתשלום" : "Total to pay"}: *${amount(order.total, order.currency, order.locale)}*`,

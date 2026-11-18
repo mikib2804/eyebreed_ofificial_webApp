@@ -17,6 +17,11 @@ export default async function OrderDetail({ params }: { params: Promise<{ orderI
   if (!order) notFound();
   const active = order.status === "DELIVERED" ? 4 : order.status === "SHIPPED" ? 3 : ["PROCESSING", "READY_FOR_SHIPMENT"].includes(order.status) ? 2 : order.paymentStatus === "PAID" ? 1 : 0;
   const address = order.shippingAddress as Record<string, string>;
+  const snapshot = order.promotionSnapshot && typeof order.promotionSnapshot === "object" && !Array.isArray(order.promotionSnapshot) ? order.promotionSnapshot as Record<string, unknown> : {};
+  const nestedPromotion = snapshot.promotion && typeof snapshot.promotion === "object" && !Array.isArray(snapshot.promotion) ? snapshot.promotion as Record<string, unknown> : snapshot;
+  const promotionLabel = typeof nestedPromotion.label === "string" ? nestedPromotion.label : "PROMOTION";
+  const promotionPercentage = typeof nestedPromotion.percentage === "number" && nestedPromotion.percentage > 0 ? ` · ${nestedPromotion.percentage}%` : "";
+  const shippingWasEnabled = snapshot.shippingEnabled !== false;
 
   return <>
     <PageTitle eyebrow="ORDER DETAILS" title={`Order #${order.orderNumber}`}><p className="mt-3 text-xs text-black/55">Placed {order.createdAt.toLocaleDateString()}</p></PageTitle>
@@ -28,8 +33,8 @@ export default async function OrderDetail({ params }: { params: Promise<{ orderI
         <section><b className="text-[9px] tracking-luxury">TRACKING</b><p className="mt-2">{order.shippingProvider ?? "Not assigned"}<br />{order.trackingNumber ?? "Tracking will appear once shipped."}</p></section>
         <dl className="space-y-2 border-t border-black/10 pt-4">
           <div className="flex justify-between"><dt>SUBTOTAL</dt><dd>{money(order.subtotal, order.currency)}</dd></div>
-          {Number(order.discountAmount) > 0 && <div className="flex justify-between text-green-800"><dt>{order.discountCode ? `DISCOUNT · ${order.discountCode}` : "WEBSITE PROMOTION"}</dt><dd>−{money(order.discountAmount, order.currency)}</dd></div>}
-          <div className="flex justify-between"><dt>SHIPPING</dt><dd>{Number(order.shippingAmount) === 0 ? "FREE" : money(order.shippingAmount, order.currency)}</dd></div>
+          {Number(order.discountAmount) > 0 && <div className="flex justify-between text-green-800"><dt>{order.discountCode ? `DISCOUNT · ${order.discountCode}` : promotionLabel}{promotionPercentage}</dt><dd>−{money(order.discountAmount, order.currency)}</dd></div>}
+          <div className="flex justify-between"><dt>SHIPPING</dt><dd>{!shippingWasEnabled ? "NO CHARGE" : Number(order.shippingAmount) === 0 ? "FREE" : money(order.shippingAmount, order.currency)}</dd></div>
           {Number(order.taxAmount) > 0 && <div className="flex justify-between"><dt>TAX</dt><dd>{money(order.taxAmount, order.currency)}</dd></div>}
           <div className="flex justify-between border-t border-black/10 pt-3 text-sm"><dt className="font-bold">TOTAL</dt><dd className="font-bold">{money(order.total, order.currency)}</dd></div>
         </dl>

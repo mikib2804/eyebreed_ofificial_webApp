@@ -36,6 +36,9 @@ export default async function Home() {
         type: true,
         scope: true,
         value: true,
+        minimumPurchase: true,
+        usageLimit: true,
+        usageCount: true,
         products: { select: { id: true } },
         categories: { select: { id: true } },
       },
@@ -43,6 +46,8 @@ export default async function Home() {
   const discountByProductId = new Map<string, { percentage: number; label: string }>();
   const bundleLabelByProductId = new Map<string, string>();
   for (const discount of productDiscounts) {
+    if (discount.usageLimit !== null && discount.usageCount >= discount.usageLimit) continue;
+    if (discount.minimumPurchase !== null) continue;
     const linkedProductIds = new Set(discount.products.map((product) => product.id));
     const linkedCategoryIds = new Set(discount.categories.map((category) => category.id));
     if (discount.type === "FIXED") {

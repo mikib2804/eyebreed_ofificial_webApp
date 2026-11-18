@@ -4,12 +4,19 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Gift, X } from "lucide-react";
 import type { StoreProduct } from "@/lib/catalog";
 import { copy, type Currency, type Locale } from "@/lib/i18n";
-import { campaignProducts, campaignProductToStoreProduct } from "@/lib/campaign-catalog";
+import {
+  campaignProducts,
+  campaignProductToStoreProduct,
+} from "@/lib/campaign-catalog";
 import { isPromotionGiftLine, PROMOTION_GIFT_ID } from "@/lib/cart-promotion";
 import { useSession } from "next-auth/react";
 import { useRef } from "react";
 
-type CartLine = StoreProduct & { quantity: number; selectedSize: string; isGift?: boolean };
+type CartLine = StoreProduct & {
+  quantity: number;
+  selectedSize: string;
+  isGift?: boolean;
+};
 type StoreState = {
   locale: Locale;
   currency: Currency;
@@ -26,12 +33,12 @@ type StoreState = {
 
 const StoreContext = createContext<StoreState | null>(null);
 const HAT_SLUG = "vision-logo-beanie";
-const ZIP_SLUG = "vision-washed-zip-hoodie";
-const POLO_SLUG = "vision-25-layered-jersey";
 const PROMOTION_REMINDER_MS = 7_000;
 const CART_STORAGE_KEY = "eyebreed.cart.v1";
 const GIFT_DISMISSED_STORAGE_KEY = "eyebreed.cart.gift-dismissed.v1";
-const hatCatalogItem = campaignProducts.find((product) => product.slug === HAT_SLUG)!;
+const hatCatalogItem = campaignProducts.find(
+  (product) => product.slug === HAT_SLUG,
+)!;
 const freeHatProduct: StoreProduct = {
   ...campaignProductToStoreProduct(hatCatalogItem),
   id: PROMOTION_GIFT_ID,
@@ -53,31 +60,134 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
       if (saved) setCart(JSON.parse(saved));
-      setGiftDismissed(localStorage.getItem(GIFT_DISMISSED_STORAGE_KEY) === "true");
-    } catch {} finally {
+      setGiftDismissed(
+        localStorage.getItem(GIFT_DISMISSED_STORAGE_KEY) === "true",
+      );
+    } catch {
+    } finally {
       setHydrated(true);
     }
   }, []);
-  useEffect(() => { if (hydrated) localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart.filter(i => !isPromotionGiftLine(i)))); }, [cart, hydrated]);
+  useEffect(() => {
+    if (hydrated)
+      localStorage.setItem(
+        CART_STORAGE_KEY,
+        JSON.stringify(cart.filter((i) => !isPromotionGiftLine(i))),
+      );
+  }, [cart, hydrated]);
   useEffect(() => {
     const userId = session?.user?.id;
-    if (!hydrated || status !== "authenticated" || !userId || syncedCartUserId.current === userId) return;
+    if (
+      !hydrated ||
+      status !== "authenticated" ||
+      !userId ||
+      syncedCartUserId.current === userId
+    )
+      return;
     syncedCartUserId.current = userId;
     void (async () => {
-      const response = await fetch("/api/account/cart"); if (!response.ok) return;
-      const remote = await response.json() as Array<{productId:string;quantity:number;size:string|null;product:{id:string;slug:string;name:string;nameHe:string|null;material:string|null;images:string[];description:string;descriptionHe:string|null;story:string|null;storyHe:string|null;inventory:number;priceUsd:string;priceIls:string;priceEur:string;variants:Array<{size:string;inventory:number}>}}>; 
-      const incoming: CartLine[] = remote.map(({productId,quantity,size,product}) => ({id:productId,slug:product.slug,name:product.name,nameHe:product.nameHe??product.name,material:product.material??"",image:product.images[0]??"",images:product.images,description:product.description,descriptionHe:product.descriptionHe??product.description,story:product.story??"",storyHe:product.storyHe??product.story??"",inventory:product.inventory,sizes:product.variants.map(v=>({size:v.size,inventory:v.inventory})),prices:{USD:Number(product.priceUsd),ILS:Number(product.priceIls),EUR:Number(product.priceEur)},quantity,selectedSize:size??"ONE SIZE"}));
-      const merged = [...cart]; for (const line of incoming) { const found=merged.find(i=>i.id===line.id&&i.selectedSize===line.selectedSize); if(found) found.quantity=Math.max(found.quantity,line.quantity); else merged.push(line); }
+      const response = await fetch("/api/account/cart");
+      if (!response.ok) return;
+      const remote = (await response.json()) as Array<{
+        productId: string;
+        quantity: number;
+        size: string | null;
+        product: {
+          id: string;
+          slug: string;
+          name: string;
+          nameHe: string | null;
+          material: string | null;
+          images: string[];
+          description: string;
+          descriptionHe: string | null;
+          story: string | null;
+          storyHe: string | null;
+          inventory: number;
+          priceUsd: string;
+          priceIls: string;
+          priceEur: string;
+          variants: Array<{ size: string; inventory: number }>;
+        };
+      }>;
+      const incoming: CartLine[] = remote.map(
+        ({ productId, quantity, size, product }) => ({
+          id: productId,
+          slug: product.slug,
+          name: product.name,
+          nameHe: product.nameHe ?? product.name,
+          material: product.material ?? "",
+          image: product.images[0] ?? "",
+          images: product.images,
+          description: product.description,
+          descriptionHe: product.descriptionHe ?? product.description,
+          story: product.story ?? "",
+          storyHe: product.storyHe ?? product.story ?? "",
+          inventory: product.inventory,
+          sizes: product.variants.map((v) => ({
+            size: v.size,
+            inventory: product.inventory,
+          })),
+          prices: {
+            USD: Number(product.priceUsd),
+            ILS: Number(product.priceIls),
+            EUR: Number(product.priceEur),
+          },
+          quantity,
+          selectedSize: size ?? "",
+        }),
+      );
+      const merged = [...cart];
+      for (const line of incoming) {
+        const found = merged.find(
+          (i) => i.id === line.id && i.selectedSize === line.selectedSize,
+        );
+        if (found) found.quantity = Math.max(found.quantity, line.quantity);
+        else merged.push(line);
+      }
       setCart(merged);
-      await fetch("/api/account/cart",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:merged.filter(i=>!isPromotionGiftLine(i)).map(i=>({productId:i.id,quantity:i.quantity,size:i.selectedSize,color:null}))})});
+      await fetch("/api/account/cart", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: merged
+            .filter((i) => !isPromotionGiftLine(i))
+            .map((i) => ({
+              productId: i.id,
+              quantity: i.quantity,
+              size: i.sizes.length ? i.selectedSize : null,
+              color: null,
+            })),
+        }),
+      });
     })();
   }, [cart, hydrated, session?.user?.id, status]);
   useEffect(() => {
     if (status === "unauthenticated") syncedCartUserId.current = null;
   }, [status]);
   useEffect(() => {
-    if (!session?.user?.id || syncedCartUserId.current !== session.user.id || status !== "authenticated") return;
-    const timer = window.setTimeout(() => { void fetch("/api/account/cart", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: cart.filter(i => !isPromotionGiftLine(i)).map(i => ({ productId: i.id, quantity: i.quantity, size: i.selectedSize, color: null })) }) }); }, 400);
+    if (
+      !session?.user?.id ||
+      syncedCartUserId.current !== session.user.id ||
+      status !== "authenticated"
+    )
+      return;
+    const timer = window.setTimeout(() => {
+      void fetch("/api/account/cart", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart
+            .filter((i) => !isPromotionGiftLine(i))
+            .map((i) => ({
+              productId: i.id,
+              quantity: i.quantity,
+              size: i.sizes.length ? i.selectedSize : null,
+              color: null,
+            })),
+        }),
+      });
+    }, 400);
     return () => window.clearTimeout(timer);
   }, [cart, session?.user?.id, status]);
 
@@ -87,15 +197,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [locale]);
 
   useEffect(() => {
-    const paidItemCount = cart.reduce((sum, item) => sum + (isPromotionGiftLine(item) ? 0 : item.quantity), 0);
+    const paidItemCount = cart.reduce(
+      (sum, item) => sum + (isPromotionGiftLine(item) ? 0 : item.quantity),
+      0,
+    );
     const hasGift = cart.some(isPromotionGiftLine);
     const qualifiesForGift = paidItemCount >= 3;
 
     if (qualifiesForGift && !hasGift && !giftDismissed) {
-      const selectedSize = freeHatProduct.sizes.find((size) => size.inventory > 0)?.size ?? "M";
-      setCart((current) => [...current, { ...freeHatProduct, quantity: 1, selectedSize, isGift: true }]);
+      const selectedSize =
+        freeHatProduct.sizes.find((size) => size.inventory > 0)?.size ?? "M";
+      setCart((current) => [
+        ...current,
+        { ...freeHatProduct, quantity: 1, selectedSize, isGift: true },
+      ]);
     } else if (!qualifiesForGift) {
-      if (hasGift) setCart((current) => current.filter((item) => !isPromotionGiftLine(item)));
+      if (hasGift)
+        setCart((current) =>
+          current.filter((item) => !isPromotionGiftLine(item)),
+        );
       if (giftDismissed) {
         setGiftDismissed(false);
         localStorage.removeItem(GIFT_DISMISSED_STORAGE_KEY);
@@ -104,30 +224,62 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [cart, giftDismissed]);
 
   const addToCart = (product: StoreProduct, size?: string) => {
-    const selectedSize = size ?? product.sizes.find((variant) => variant.inventory > 0)?.size ?? "ONE SIZE";
+    const selectedSize = size ?? product.sizes[0]?.size ?? "";
     const lineId = `${product.id}:${selectedSize}`;
     setCart((current) => {
-      const existing = current.find((item) => `${item.id}:${item.selectedSize}` === lineId);
+      const existing = current.find(
+        (item) => `${item.id}:${item.selectedSize}` === lineId,
+      );
       return existing
-        ? current.map((item) => `${item.id}:${item.selectedSize}` === lineId ? { ...item, quantity: item.quantity + 1 } : item)
+        ? current.map((item) =>
+            `${item.id}:${item.selectedSize}` === lineId
+              ? { ...item, quantity: item.quantity + 1 }
+              : item,
+          )
         : [...current, { ...product, selectedSize, quantity: 1 }];
     });
     setCartOpen(true);
   };
 
-  const value = useMemo(() => ({
-    locale, currency, cart, cartOpen, t: copy[locale],
-    setLocale, setCurrency, setCartOpen, addToCart,
-    updateQuantity: (lineId: string, quantity: number) =>
-      setCart((current) => quantity < 1 ? current.filter((i) => `${i.id}:${i.selectedSize}` !== lineId) : current.map((i) => `${i.id}:${i.selectedSize}` === lineId ? { ...i, quantity } : i)),
-    removeFromCart: (lineId: string) => {
-      if (cart.some((item) => `${item.id}:${item.selectedSize}` === lineId && isPromotionGiftLine(item))) {
-        setGiftDismissed(true);
-        localStorage.setItem(GIFT_DISMISSED_STORAGE_KEY, "true");
-      }
-      setCart((current) => current.filter((item) => `${item.id}:${item.selectedSize}` !== lineId));
-    }
-  }), [locale, currency, cart, cartOpen]);
+  const value = useMemo(
+    () => ({
+      locale,
+      currency,
+      cart,
+      cartOpen,
+      t: copy[locale],
+      setLocale,
+      setCurrency,
+      setCartOpen,
+      addToCart,
+      updateQuantity: (lineId: string, quantity: number) =>
+        setCart((current) =>
+          quantity < 1
+            ? current.filter((i) => `${i.id}:${i.selectedSize}` !== lineId)
+            : current.map((i) =>
+                `${i.id}:${i.selectedSize}` === lineId ? { ...i, quantity } : i,
+              ),
+        ),
+      removeFromCart: (lineId: string) => {
+        if (
+          cart.some(
+            (item) =>
+              `${item.id}:${item.selectedSize}` === lineId &&
+              isPromotionGiftLine(item),
+          )
+        ) {
+          setGiftDismissed(true);
+          localStorage.setItem(GIFT_DISMISSED_STORAGE_KEY, "true");
+        }
+        setCart((current) =>
+          current.filter(
+            (item) => `${item.id}:${item.selectedSize}` !== lineId,
+          ),
+        );
+      },
+    }),
+    [locale, currency, cart, cartOpen],
+  );
 
   return (
     <StoreContext.Provider value={value}>
@@ -147,20 +299,20 @@ function PromotionReminder() {
   const { cart, locale } = useStore();
   const paidItems = cart.filter((item) => !isPromotionGiftLine(item));
   const paidItemCount = paidItems.reduce((sum, item) => sum + item.quantity, 0);
-  const hasZip = paidItems.some((item) => item.slug === ZIP_SLUG);
-  const hasPolo = paidItems.some((item) => item.slug === POLO_SLUG);
-  const signature = paidItems.map((item) => `${item.id}:${item.selectedSize}:${item.quantity}`).sort().join("|");
+  const signature = paidItems
+    .map((item) => `${item.id}:${item.selectedSize}:${item.quantity}`)
+    .sort()
+    .join("|");
   const [dismissedFor, setDismissedFor] = useState("");
 
   useEffect(() => setDismissedFor(""), [signature]);
 
   let message = "";
   if (paidItemCount === 2) {
-    message = locale === "he" ? "עוד פריט אחד למשלוח חינם + כובע מתנה" : "Add 1 more item for free shipping + a free hat";
-  } else if (hasZip && !hasPolo) {
-    message = locale === "he" ? "הוסיפו פולו לזיפ אפ וקבלו משלוח חינם" : "Add the Polo to your Zip Up for free shipping";
-  } else if (hasPolo && !hasZip) {
-    message = locale === "he" ? "הוסיפו זיפ אפ לפולו וקבלו משלוח חינם" : "Add the Zip Up to your Polo for free shipping";
+    message =
+      locale === "he"
+        ? "עוד פריט אחד לכובע מתנה"
+        : "Add 1 more item for a free hat";
   }
 
   useEffect(() => {
@@ -175,11 +327,27 @@ function PromotionReminder() {
   if (!message || dismissedFor === signature) return null;
 
   return (
-    <aside className="fixed bottom-5 start-1/2 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rtl:translate-x-1/2" role="status" aria-live="polite" aria-atomic="true">
-      <div className="flex items-center gap-4 rounded-2xl border border-white/20 bg-ink px-5 py-4 text-white shadow-[0_18px_60px_rgba(0,0,0,.35)]">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-red-600"><Gift size={18} /></span>
+    <aside
+      className="fixed bottom-5 start-1/2 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rtl:translate-x-1/2"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div className="relative flex items-center gap-4 rounded-2xl border border-white/20 bg-ink px-5 py-4 text-white shadow-[0_18px_60px_rgba(0,0,0,.35)]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-red-600">
+          <Gift size={18} />
+        </span>
+
         <p className="flex-1 text-xs leading-6 sm:text-sm">{message}</p>
-        <button type="button" onClick={() => setDismissedFor(signature)} aria-label={locale === "he" ? "סגירה" : "Close"} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/20 transition hover:bg-white hover:text-ink"><X size={15} /></button>
+
+        <button
+          type="button"
+          onClick={() => setDismissedFor(signature)}
+          aria-label={locale === "he" ? "סגירה" : "Close"}
+          className="absolute -left-2 -top-2 grid h-7 w-7 place-items-center rounded-full border border-white/30 bg-ink text-white shadow-md transition hover:bg-white hover:text-ink"
+        >
+          <X size={14} />
+        </button>
       </div>
     </aside>
   );

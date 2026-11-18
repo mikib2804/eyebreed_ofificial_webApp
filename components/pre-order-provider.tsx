@@ -31,14 +31,19 @@ export function PreOrderProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const load = async () => {
       try {
-        const response = await fetch("/api/store/pre-order", { cache: "no-store" });
+        const response = await fetch("/api/store/pre-order", {
+          cache: "no-store",
+        });
         if (!response.ok) return;
         const result = (await response.json()) as { enabled?: boolean };
         if (cancelled) return;
         const active = result.enabled === true;
         setEnabled(active);
         if (active) {
-          setNoticeOpen(sessionStorage.getItem(PRE_ORDER_NOTICE_SESSION_KEY) !== "dismissed");
+          setNoticeOpen(
+            sessionStorage.getItem(PRE_ORDER_NOTICE_SESSION_KEY) !==
+              "dismissed",
+          );
         } else {
           setNoticeOpen(false);
           sessionStorage.removeItem(PRE_ORDER_NOTICE_SESSION_KEY);
@@ -63,7 +68,10 @@ export function PreOrderProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!noticeOpen) return;
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previous =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     closeRef.current?.focus();
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -74,14 +82,18 @@ export function PreOrderProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (event.key !== "Tab") return;
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])');
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      );
       if (!focusable?.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault(); last.focus();
+        event.preventDefault();
+        last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault(); first.focus();
+        event.preventDefault();
+        first.focus();
       }
     };
     document.addEventListener("keydown", keydown);
@@ -97,23 +109,83 @@ export function PreOrderProvider({ children }: { children: React.ReactNode }) {
     <PreOrderContext.Provider value={{ enabled }}>
       {children}
       {enabled && noticeOpen && (
-        <div className="fixed inset-0 z-[105] grid place-items-center px-4 py-6" dir={he ? "rtl" : "ltr"}>
-          <button type="button" tabIndex={-1} aria-hidden="true" onClick={dismissNotice} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="preorder-notice-title" aria-describedby="preorder-notice-description" className="relative z-10 w-full max-w-xl overflow-hidden rounded-2xl border border-white/15 bg-[#1a1110] text-white shadow-[0_30px_100px_rgba(0,0,0,.5)]">
+        <div
+          className="fixed inset-0 z-[105] grid place-items-center px-4 py-6"
+          dir={he ? "rtl" : "ltr"}
+        >
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            onClick={dismissNotice}
+            className="absolute inset-0 bg-black/65 backdrop-blur-[3px] transition-all duration-300"
+          />
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="preorder-notice-title"
+            aria-describedby="preorder-notice-description"
+            className="relative z-10 w-full max-w-xl overflow-hidden rounded-2xl border border-[#B89A7A]/40 bg-[#30241E] text-[#F5EFE6] shadow-[0_30px_100px_rgba(0,0,0,.55)]"
+          >
             <div className="h-1.5 bg-[#8a5f46]" />
-            <button ref={closeRef} type="button" onClick={dismissNotice} aria-label={he ? "סגירת הודעת הזמנה מוקדמת" : "Close pre-order notice"} className="absolute end-4 top-5 grid h-11 w-11 place-items-center rounded-full border border-white/25 transition hover:bg-white hover:text-black"><X size={19} aria-hidden="true" /></button>
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={dismissNotice}
+              aria-label={
+                he ? "סגירת הודעת הזמנה מוקדמת" : "Close pre-order notice"
+              }
+              className="absolute end-4 top-5 grid h-11 w-11 place-items-center rounded-full border border-white/25 transition hover:bg-white hover:text-black"
+            >
+              <X size={19} aria-hidden="true" />
+            </button>
             <div className="p-6 pe-16 sm:p-9 sm:pe-20">
               <div className="flex items-center gap-3">
-                <p className="text-[10px] font-semibold tracking-[.24em] text-[#d9b99f]">VISION DROP</p>
                 <PreOrderInfoButton />
               </div>
-              <h2 id="preorder-notice-title" dir="ltr" className={`mt-5 font-display text-4xl sm:text-5xl ${he ? "text-right" : "text-left"}`}>PRE-ORDER NOTICE</h2>
-              <div id="preorder-notice-description" className="mt-6 space-y-4 text-sm leading-7 text-white/85 sm:text-base">
-                <p>{he ? "כל ההזמנות באתר כרגע מתבצעות בשיטת הזמנה מוקדמת (Pre-Order)." : "All website orders are currently placed as Pre-Orders."}</p>
-                <p>{he ? "זמן האספקה המשוער הוא בין 30 ל-60 ימים ממועד ההזמנה." : "Estimated delivery is 30–60 days from the order date."}</p>
-                <p>{he ? "חשוב לנו שתכירו את התהליך לפני ביצוע ההזמנה." : "We want you to understand the process before placing your order."}</p>
+              <h2
+                id="preorder-notice-title"
+                dir="ltr"
+                className={`mt-5 font-display text-4xl sm:text-5xl ${he ? "text-right" : "text-left"}`}
+              >
+                PRE-ORDER NOTICE
+              </h2>
+              <div className="my-7 flex items-center gap-3">
+                <span className="h-px flex-1 bg-gradient-to-r from-[#b99a7d]/50 to-transparent" />
+                <span className="h-1 w-1 rotate-45 bg-[#c4a486]" />
+                <span className="h-px flex-1 bg-gradient-to-l from-[#b99a7d]/50 to-transparent" />
               </div>
-              <button type="button" onClick={dismissNotice} className="mt-8 min-h-12 w-full rounded-lg bg-[#8a5f46] px-6 py-4 text-sm font-semibold text-white transition hover:bg-[#a87858]">{he ? "הבנתי, להמשך גלישה" : "I understand, continue browsing"}</button>
+              <div
+                id="preorder-notice-description"
+                className="mt-6 space-y-4 text-sm leading-7 text-white/85 sm:text-base"
+              >
+                <p>
+                  {he
+                    ? "כל ההזמנות באתר כרגע מתבצעות בשיטת הזמנה מוקדמת (Pre-Order)."
+                    : "All website orders are currently placed as Pre-Orders."}
+                </p>
+                <p>
+                  {he
+                    ? "זמן האספקה המשוער הוא בין 30 ל-60 ימים ממועד ההזמנה."
+                    : "Estimated delivery is 30–60 days from the order date."}
+                </p>
+                <p>
+                  {he
+                    ? "חשוב לנו שתכירו את התהליך לפני ביצוע ההזמנה."
+                    : "We want you to understand the process before placing your order."}
+                </p>
+              </div>
+              <p className="mt-6 text-center text-[8px] font-medium tracking-[.35em] text-[#b99a7d]/50">
+                VISION — EXCLUSIVE DROP
+              </p>
+              <button
+                type="button"
+                onClick={dismissNotice}
+                className="mt-8 min-h-12 w-full rounded-lg bg-[#8a5f46] px-6 py-4 text-sm font-semibold text-white transition hover:bg-[#a87858]"
+              >
+                {he ? "הבנתי, להמשך גלישה" : "I understand, continue browsing"}
+              </button>
             </div>
           </div>
         </div>
@@ -147,21 +219,81 @@ export function PreOrderInfoButton({ inverse = false }: { inverse?: boolean }) {
   }, [opened]);
 
   return (
-    <div className="relative inline-flex" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <button ref={triggerRef} type="button" aria-label={locale === "he" ? "מידע נוסף על הזמנה מוקדמת" : "More information about pre-orders"} aria-expanded={visible} onClick={() => setOpened((current) => !current)} className={`grid h-9 w-9 place-items-center rounded-full border ${inverse ? "border-black/30 text-black" : "border-white/35 text-white"}`}><HelpCircle size={18} aria-hidden="true" /></button>
+    <div
+      className="relative inline-flex"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-label={
+          locale === "he"
+            ? "מידע נוסף על הזמנה מוקדמת"
+            : "More information about pre-orders"
+        }
+        aria-expanded={visible}
+        onClick={() => setOpened((current) => !current)}
+        className={`grid h-9 w-9 place-items-center rounded-full border ${inverse ? "border-black/30 text-black" : "border-white/35 text-white"}`}
+      >
+        <HelpCircle size={22} aria-hidden="true" />
+      </button>
       {visible && (
-        <div role="dialog" aria-label={content.title} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); setOpened(false); setHovered(false); } }} className="fixed inset-3 z-[120] flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-2xl border border-black/15 bg-white text-[#171412] shadow-2xl sm:inset-auto sm:end-5 sm:top-5 sm:max-h-[calc(100dvh-2.5rem)] sm:w-[min(92vw,560px)]" dir={locale === "he" ? "rtl" : "ltr"}>
+        <div
+          role="dialog"
+          aria-label={content.title}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.stopPropagation();
+              setOpened(false);
+              setHovered(false);
+            }
+          }}
+          className="fixed inset-3 z-[120] flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-2xl border border-black/15 bg-white text-[#171412] shadow-2xl sm:inset-auto sm:end-5 sm:top-5 sm:max-h-[calc(100dvh-2.5rem)] sm:w-[min(92vw,560px)]"
+          dir={locale === "he" ? "rtl" : "ltr"}
+        >
           <div className="flex items-start justify-between gap-4 border-b border-black/15 p-5 sm:p-6">
-            <strong className="pe-3 font-display text-2xl sm:text-3xl">{content.title}</strong>
-            <button ref={closeRef} type="button" onClick={() => { setOpened(false); setHovered(false); }} aria-label={locale === "he" ? "סגירת מידע" : "Close information"} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/20"><X size={18} aria-hidden="true" /></button>
+            <strong className="pe-3 font-display text-2xl sm:text-3xl">
+              {content.title}
+            </strong>
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={() => {
+                setOpened(false);
+                setHovered(false);
+              }}
+              aria-label={locale === "he" ? "סגירת מידע" : "Close information"}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/20"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
           </div>
           <div className="overflow-y-auto p-5 text-sm leading-7 sm:p-6">
-            {content.paragraphs.map((paragraph) => <p key={paragraph} className="mb-4">{paragraph}</p>)}
+            {content.paragraphs.map((paragraph) => (
+              <p key={paragraph} className="mb-4">
+                {paragraph}
+              </p>
+            ))}
             <strong className="mb-3 block">{content.important}</strong>
-            <ul className="list-disc space-y-2 ps-5">{content.bullets.map((item) => <li key={item}>{item}</li>)}</ul>
+            <ul className="list-disc space-y-2 ps-5">
+              {content.bullets.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
             <p className="mt-5">{content.closing}</p>
-            <strong dir="ltr" className={`mt-6 block tracking-[.08em] ${locale === "he" ? "text-right" : "text-left"}`}>IT’S NOT THE EYES, IT’S THE VISION.</strong>
-            <strong dir="ltr" className={`mt-2 block ${locale === "he" ? "text-right" : "text-left"}`}>EYEBREED.</strong>
+            <strong
+              dir="ltr"
+              className={`mt-6 block tracking-[.08em] ${locale === "he" ? "text-right" : "text-left"}`}
+            >
+              IT’S NOT THE EYES, IT’S THE VISION.
+            </strong>
+            <strong
+              dir="ltr"
+              className={`mt-2 block ${locale === "he" ? "text-right" : "text-left"}`}
+            >
+              EYEBREED.
+            </strong>
           </div>
         </div>
       )}

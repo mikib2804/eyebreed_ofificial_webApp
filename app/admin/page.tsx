@@ -6,6 +6,7 @@ import { campaignProducts } from "@/lib/campaign-catalog";
 import { AdminProductForm } from "@/components/admin-product-form";
 import { AdminDiscountManager } from "@/components/admin-discount-manager";
 import { AdminMobileNavigation } from "@/components/admin-navigation";
+import { AdminMaintenanceManager } from "@/components/admin-maintenance-manager";
 import {
   AdminCustomers,
   AdminPreOrderCustomers,
@@ -48,6 +49,7 @@ const sections = [
   ["Messages", "messages"],
   ["Customers", "customers"],
   ["Inventory", "inventory"],
+  ["Maintenance", "websiteMaintenance"],
   ["Settings", "settings"],
 ] as const satisfies ReadonlyArray<readonly [string, AdminTextKey]>;
 
@@ -77,6 +79,7 @@ export default async function AdminPage({
     orders,
     preOrders,
     settings,
+    maintenanceNotices,
     inventoryAdjustments,
   ] = await Promise.all([
     prisma.category.findMany({
@@ -217,6 +220,7 @@ export default async function AdminPage({
       take: 100,
     }),
     prisma.storeSettings.findUnique({ where: { id: "store" } }),
+    prisma.maintenanceNotice.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.inventoryAdjustment.findMany({
       include: { product: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
@@ -435,6 +439,7 @@ export default async function AdminPage({
                 bestSeller: product.bestSeller,
                 isNew: product.isNew,
                 lowStockThreshold: product.lowStockThreshold,
+                inventory: product.inventory,
                 images: product.images,
                 previewImage:
                   campaignProducts.find((item) => item.slug === product.slug)
@@ -650,6 +655,14 @@ export default async function AdminPage({
                   contactEmail: settings?.contactEmail ?? "",
                   contactPhone: settings?.contactPhone ?? "",
                   shippingInfo: settings?.shippingInfo ?? "",
+                  shippingEnabled: settings?.shippingEnabled ?? false,
+                  shippingPriceIls: Number(settings?.shippingPriceIls ?? 0),
+                  shippingPriceUsd: Number(settings?.shippingPriceUsd ?? 0),
+                  shippingPriceEur: Number(settings?.shippingPriceEur ?? 0),
+                  freeShippingEnabled: settings?.freeShippingEnabled ?? false,
+                  freeShippingThresholdIls: settings?.freeShippingThresholdIls === null || settings?.freeShippingThresholdIls === undefined ? null : Number(settings.freeShippingThresholdIls),
+                  freeShippingThresholdUsd: settings?.freeShippingThresholdUsd === null || settings?.freeShippingThresholdUsd === undefined ? null : Number(settings.freeShippingThresholdUsd),
+                  freeShippingThresholdEur: settings?.freeShippingThresholdEur === null || settings?.freeShippingThresholdEur === undefined ? null : Number(settings.freeShippingThresholdEur),
                   defaultLowStockThreshold:
                     settings?.defaultLowStockThreshold ?? 5,
                   announcement: settings?.announcement ?? "",
@@ -659,6 +672,18 @@ export default async function AdminPage({
                 }}
               />
             </Panel>
+          )}
+          {active === "Maintenance" && (
+            <AdminMaintenanceManager
+              locale={locale}
+              notices={maintenanceNotices.map((notice) => ({
+                ...notice,
+                startsAt: notice.startsAt.toISOString(),
+                endsAt: notice.endsAt.toISOString(),
+                createdAt: notice.createdAt.toISOString(),
+                updatedAt: notice.updatedAt.toISOString(),
+              }))}
+            />
           )}
         </section>
       </div>
